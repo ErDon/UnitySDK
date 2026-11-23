@@ -45,3 +45,21 @@ SdkProjectSettings 必须位于同名脚本文件，以便 Unity 保存稳定脚
 工具读取程序集元数据，不执行其代码；检查目标适配器、带 Unity 启动标记和方法体的注册入口，并拒绝其他 ErDon 平台适配器及引用、Editor SDK。目录必须来自本次构建；空目录不会通过。它不检查全部官方二进制、合并后的 JS/Wasm 或资源，不能替代最终产物审计。
 
 此前第一轮成功构建与转换的 ManagedStripped 未包含微信适配器，不能作为自动注册可用的证据。修复后重新构建确认程序集与注册方法保留。开发者工具/真机是否实际初始化成功仍需运行验收。
+
+## 抖音与 TikTok 的同类构建探针
+
+相同模板提供 `MiniGameDevelopmentBuild.ConfigureDouyin` 与 `ConfigureTikTok`，分别保存目标平台及专用编译宏；构建场景中的探针平台从 SdkProjectSettings 读取。只在对应平台的独立工程使用，先安装匹配的官方插件与适配包。配置方法用于测试工程，会替换 WebGL 自定义编译宏，不适合直接用于已有游戏。
+
+配置进程退出后，重开同一工程执行 `-buildTarget WebGL -executeMethod MiniGameDevelopmentBuild.Build`。仍须遵守同项目无并发进程、输出文件可能来自旧运行、成功标记与链接器检查共同核对的规则。抖音/TikTok 的 Unity WebGL 构建与官方小游戏导出是不同阶段；不得把其中一个当作另一个的通过证明。
+
+### Windows 中文环境的构建输出编码
+
+抖音 TTSDK 6.9.7 在 Unity 2022.3.14f1c1 首轮 WebGL 构建中，Emscripten 自带 Python 在 subprocess.communicate 解码输出时触发 GBK UnicodeDecodeError。若日志确认同一错误，在启动 Unity 的 PowerShell 进程内设置以下变量，然后重新执行构建；不需要修改系统区域或官方 SDK。
+
+```powershell
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
+# 在这个终端启动隔离工程的 Unity batchmode 构建
+```
+
+本次重试得到 Succeeded errors=0、SDK_DEVELOPMENT_WEBGL_BUILD_PASS 和退出码 0；对本次 ManagedStripped 的 Douyin 注册检查也通过。环境变量只影响当前终端及其子进程。该结果为 Unity WebGL 开发构建验证，官方小游戏导出与真机仍待验收。

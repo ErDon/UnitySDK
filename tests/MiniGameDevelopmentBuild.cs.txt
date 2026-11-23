@@ -6,10 +6,13 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 public static class MiniGameDevelopmentBuild {
- public static void ConfigureWeChat() {
-  PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL,"ERDON_PLATFORM_WECHAT");
+ public static void ConfigureWeChat() { Configure(DistributionPlatform.WeChat,"ERDON_PLATFORM_WECHAT"); }
+ public static void ConfigureDouyin() { Configure(DistributionPlatform.Douyin,"ERDON_PLATFORM_DOUYIN"); }
+ public static void ConfigureTikTok() { Configure(DistributionPlatform.TikTok,"ERDON_PLATFORM_TIKTOK"); }
+ static void Configure(DistributionPlatform platform,string symbol) {
+  PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL,symbol);
   var s=SdkProjectSettings.instance;
-  s.platform=DistributionPlatform.WeChat;s.gameId="development-build-probe";s.appId="build-only-placeholder";
+  s.platform=platform;s.gameId="development-build-probe";s.appId="build-only-placeholder";
   s.production=false;s.login=false;s.storage=true;s.share=true;s.rewardedAds=true;s.analytics=true;
   s.network=false;s.payments=false;s.SaveSettings();
   Debug.Log("SDK_DEVELOPMENT_BUILD_CONFIGURED");
@@ -17,7 +20,10 @@ public static class MiniGameDevelopmentBuild {
  public static void Build() {
   if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("Run with -buildTarget WebGL");
   var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
-  new GameObject("SDK Build Probe").AddComponent<MiniGameBuildProbe>();
+  var settings=SdkProjectSettings.instance;
+  if(settings.Validate(true).Count!=0)throw new Exception("Invalid development configuration");
+  var probe=new GameObject("SDK Build Probe").AddComponent<MiniGameBuildProbe>();
+  probe.platform=settings.platform.ToString();
   const string scenePath="Assets/DevelopmentBuildProbe.unity";
   if(!EditorSceneManager.SaveScene(scene,scenePath))throw new Exception("Scene save failed");
   PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Disabled;

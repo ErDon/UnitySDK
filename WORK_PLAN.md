@@ -6,13 +6,13 @@
 
 ## 进度总览
 
-已完成并按列明范围验证 **60 / 76 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
+已完成并按列明范围验证 **61 / 77 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
 | --- | ---: | ---: |
 | 设计基线与仓库骨架 | 1 | 0 |
 | 第一阶段：聚合核心与生命周期 | 11 | 1 |
-| 第二阶段：配置面板、装配与裁剪 | 9 | 3 |
+| 第二阶段：配置面板、装配与裁剪 | 10 | 3 |
 | 第三阶段：微信登录与服务端 | 4 | 1 |
 | 第四阶段：广告、分享、存储、网络与上报 | 22 | 4 |
 | 第五阶段：支付与订单 | 4 | 2 |
@@ -51,6 +51,7 @@
 - [ ] 面板交互与导出操作的视觉验收。
 - [x] 微信本地 0.1.23 隔离 WebGL Development Build，配置跨进程恢复及现有 BuildReport 审计通过；不含小游戏转换/真机。
 - [x] 微信官方固定提交 915d4bf 的开发构建与小游戏转换，输出文件及 JSON 检查通过；不含最终隔离和真机。
+- [x] 抖音 TTSDK 6.9.7 隔离 WebGL Development Build，零错误及链接后适配器/自动注册方法保留验证；不含官方小游戏导出或真机。
 - [ ] 实际目标平台导出及最终 JS/Wasm/原生/资源包裁剪证明；仅开放非生产 Development Build 技术验证，正式构建仍阻断。
 
 ## 第三阶段：微信登录与服务端（适配实现完成，联调待办）
@@ -638,3 +639,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 
 公共回归通过，新增抖音/TikTok 网络配置映射、缺工厂预检、平台身份保留与 provider 单次释放验证。实际小游戏网络调用仍待真机，配置装配不作为网络兼容认证。
 隔离抖音工程加入可选 HTTP 包后，douyin-network-confirm.log 无 C# 错误，输出 SDK_PLATFORM_NETWORK_PASS: Douyin。检查实际 provider 构造和真实平台注册的配置解析，未执行平台初始化或 HTTP 请求。首轮测试的反射调用因 Unity 对象隐式 bool 选错重载，已改为显式 object[] 参数后通过。
+
+### 抖音开发构建与链接后注册验证（2026-11-23）
+
+隔离 DouyinBuildProject 首轮在 Emscripten Python 捕获子进程输出时发生 GBK UnicodeDecodeError。只为构建进程设置 PYTHONUTF8=1、PYTHONIOENCODING=utf-8 后重新构建，douyin-development-build-utf8.log 包含 SDK_DEVELOPMENT_WEBGL_BUILD_PASS 和退出码 0，BuildReport 为 Succeeded errors=0。check-linked-platform.ps1 对本次 ManagedStripped 检查通过，ErDon.UnitySDK.Douyin 及自动注册方法保留；未发现其他 ErDon 平台适配器。此检查范围不包含所有官方 JS/Wasm/资源，也不证明官方小游戏导出或真机运行。

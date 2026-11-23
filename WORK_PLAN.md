@@ -127,6 +127,12 @@
 
 ## 2026-11-24 执行记录
 
+### TikTok 压缩 Wasm 与数据包内容核对
+
+将既有 TikTok 资源导出的两个 Brotli 文件解压到独立审查目录，未修改导出：Wasm 30,717,797 字节、数据包 4,725,909 字节。字面检查发现 Douyin 命名符号，随后对照官方 1.1.6 原件清单核验的 Runtime/Editor DLL，确认 ShowDouyinOpenAuth、HasBoundDouyin、IsFollowDouyin 也存在于 TikTok 官方程序集，不能仅据名称判定混入抖音插件。
+
+新增只读标识检查工具及计数/编码/偏移回归，保存压缩源、解压内容、合并 JS 与官方参考文件的哈希和结果。未命中自有微信/抖音程序集标识不等于外平台代码不存在；报告明确不判定完整隔离，最终产物子项保持未勾选，统计仍为 65/78。
+
 ### 上层接口索引、生命周期与日志回调
 
 对照 SDK、SDKNetwork、SDKAnalytics 和 UnitySdkHost 源码公开入口，新增 docs/api-reference.md：覆盖能力方法及重载、ActivePlatform、宿主启动/装配/取消/关闭、自定义宿主 Tick，逐项链接能力说明。补充日志由 SDK 格式化、上层仅转发、异常回退与不得重入的示例，以及本地取消不撤销平台动作、唯一生命周期负责人和 Shutdown 抑制旧回调的边界。

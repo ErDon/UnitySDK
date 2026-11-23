@@ -1,0 +1,554 @@
+{
+  "schemaVersion": 1,
+  "artifacts": [
+    {
+      "fileName": "b7cf5f7d5eff158d.webgl.wasm.code.unityweb.wasm.br.decoded",
+      "bytes": 30717797,
+      "sha256": "f5cd97538956b1e177d80a0486024c59a97d12b5936f8d185741bc358594d3fe",
+      "evidence": [
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "ascii",
+          "count": 27,
+          "firstOffsets": [
+            25006727,
+            25006822,
+            25007004,
+            25007098,
+            25007280,
+            25007376,
+            25007580,
+            25007661,
+            25007748,
+            25007836,
+            25007929,
+            25008021,
+            25008115,
+            25008233,
+            25008328,
+            25008468,
+            25008548,
+            25008634,
+            25008721,
+            25008813
+          ]
+        },
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            25552543,
+            25709121,
+            25709217,
+            25709313
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            25552613,
+            25709486,
+            25709582,
+            25709678
+          ]
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 1,
+          "firstOffsets": [
+            19642413
+          ]
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    },
+    {
+      "fileName": "0ceb2fdcfb74c236.webgl.data.unityweb.bin.br.decoded",
+      "bytes": 4725909,
+      "sha256": "6554538343cf77452113c28152e8bb4a40a379080a9937fc95b11d18a37481d8",
+      "evidence": [
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "ascii",
+          "count": 8,
+          "firstOffsets": [
+            366517,
+            746329,
+            747802,
+            787708,
+            787733,
+            787758,
+            789553,
+            789613
+          ]
+        },
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            754068,
+            759720,
+            759741,
+            759762
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "ascii",
+          "count": 7,
+          "firstOffsets": [
+            331937,
+            331951,
+            332000,
+            754083,
+            759805,
+            759826,
+            759847
+          ]
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 16,
+          "firstOffsets": [
+            187217,
+            187253,
+            189966,
+            1044055,
+            1044080,
+            2437374,
+            2437416,
+            2437468,
+            2437519,
+            2437567,
+            2437612,
+            2437656,
+            2437707,
+            2437751,
+            2437791,
+            2437829
+          ]
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    },
+    {
+      "fileName": "webgl.framework.js",
+      "bytes": 766913,
+      "sha256": "f1ce9e017f7cefabccfa23f23a0aebace93ccf35546eb3ad38a975c7478a3e4b",
+      "evidence": [
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "fileName": "ttsdk.dll",
+      "bytes": 528384,
+      "sha256": "35a7dbb619b812d58abf6e33bb3cb05d9e7f77ad0bb1131c898b78d4f38d947d",
+      "evidence": [
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "ascii",
+          "count": 6,
+          "firstOffsets": [
+            334592,
+            338559,
+            342557,
+            369356,
+            369748,
+            371338
+          ]
+        },
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "utf-16-le",
+          "count": 1,
+          "firstOffsets": [
+            423274
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            335040,
+            338889,
+            342827,
+            377494
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            335061,
+            338910,
+            342848,
+            377529
+          ]
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "utf-16-le",
+          "count": 3,
+          "firstOffsets": [
+            404361,
+            438388,
+            438488
+          ]
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ],
+      "baselineMatches": [
+        "TTSDK/ttsdk.dll"
+      ]
+    },
+    {
+      "fileName": "ttsdk-editor.dll",
+      "bytes": 677888,
+      "sha256": "3c9ca4a76ea625d6445f25daaa3679ac9b5bba69ea69e0e35759b21351c645f1",
+      "evidence": [
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "ascii",
+          "count": 6,
+          "firstOffsets": [
+            444709,
+            450271,
+            454816,
+            486154,
+            486546,
+            488138
+          ]
+        },
+        {
+          "marker": "ShowDouyinOpenAuth",
+          "encoding": "utf-16-le",
+          "count": 5,
+          "firstOffsets": [
+            520314,
+            520358,
+            520412,
+            547530,
+            561100
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            445997,
+            450601,
+            455110,
+            495631
+          ]
+        },
+        {
+          "marker": "HasBoundDouyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "ascii",
+          "count": 4,
+          "firstOffsets": [
+            446018,
+            450622,
+            455131,
+            495666
+          ]
+        },
+        {
+          "marker": "IsFollowDouyin",
+          "encoding": "utf-16-le",
+          "count": 5,
+          "firstOffsets": [
+            526917,
+            555417,
+            555453,
+            566601,
+            566701
+          ]
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.WeChat",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ],
+      "baselineMatches": [
+        "TTSDK/ttsdk-editor.dll"
+      ]
+    }
+  ],
+  "isolation": "not-assessed",
+  "limitation": "Literal bytes only, not semantic attribution. A reference match does not prove which file produced the artifact. Missing markers do not prove absent code. Decoding and reference provenance must be verified separately.",
+  "referenceInventory": "tiktok-official-1.1.6.inventory.json",
+  "referenceInventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+  "decoding": {
+    "method": "System.IO.Compression.BrotliStream, Decompress",
+    "sourceExport": ".tests/TikTokConversion-20261123-141938/tt-minigame",
+    "compressedSources": [
+      {
+        "path": "data-package/0ceb2fdcfb74c236.webgl.data.unityweb.bin.br",
+        "bytes": 1135422,
+        "sha256": "de4a587c3caa821ee89cdc241d1dd8aeebd28408c15b1227599ae61c0b6f8576",
+        "decodedFileName": "0ceb2fdcfb74c236.webgl.data.unityweb.bin.br.decoded"
+      },
+      {
+        "path": "wasmcode/b7cf5f7d5eff158d.webgl.wasm.code.unityweb.wasm.br",
+        "bytes": 5685301,
+        "sha256": "2c902a6d5987eac380c541d6047870f4c73ba42010933504b489fdd597a66776",
+        "decodedFileName": "b7cf5f7d5eff158d.webgl.wasm.code.unityweb.wasm.br.decoded"
+      }
+    ]
+  }
+}

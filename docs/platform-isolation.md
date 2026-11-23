@@ -97,3 +97,18 @@ python tools/inspect-export-files.py --root '<小游戏导出目录>' --platform
 工具拒绝缺少任一平台基线、旧版选取文件清单、空导出目录及符号链接/junction；报告不能写进导出目录或覆盖输入清单。回归入口为 `python tests/test_export_files.py`。
 
 2026-11-24 对既有 TikTok 1.1.6 带 StreamingAssets 导出核对 17 个文件，结果记录在 [文件审查报告](../compatibility/tiktok-export-files-2026-11-24.json)。基线为微信本地 0.1.23 完整清单、抖音 6.9.7 独立工程插件完整清单及 TikTok 干净官方 1.1.6 清单；报告记录三份清单哈希。未发现非空文件仅匹配外平台基线，压缩 Wasm、框架 JS 和数据包仍未评估；此报告不与后续重建的 ManagedStripped 混用。
+
+
+## 压缩产物中的标识核对
+
+`tools/inspect-content-markers.py` 对已解压文件及参考文件记录 SHA-256、字节数和指定 ASCII 标识在 ASCII/UTF-16LE 下的出现次数与前 20 个偏移。它不输出周围业务内容，不修改输入；报告不能覆盖输入。运行 `python tests/test_content_markers.py` 检查编码、偏移、计数上限和无匹配行为。
+
+```powershell
+python tools/inspect-content-markers.py --artifact '解压后的.wasm' --reference '核验过的官方.dll' --marker 'ShowDouyinOpenAuth' --output '.tests/marker-review.json'
+```
+
+该工具读取完整文件到内存，仅用于可控大小的本地产物。输入需自行完成格式解码；它不是反编译器，不追踪调用链，不将字符串缺失或存在判定为代码缺失或平台归属。
+
+2026-11-24 对既有 TikTok 资源导出使用 .NET `System.IO.Compression.BrotliStream` 解压两个 `.br` 文件到独立 `.tests/TikTokExportReview`，原导出未改动。Wasm 解压后 30,717,797 字节，头部为 WebAssembly v1；数据包解压后 4,725,909 字节。另检查合并的 `webgl.framework.js`。完整记录见 [标识核对报告](../compatibility/tiktok-decoded-markers-2026-11-24.json)，包含压缩文件与解压文件哈希、参考 DLL 哈希及其原件清单匹配。
+
+Wasm 中 ShowDouyinOpenAuth/HasBoundDouyin/IsFollowDouyin 分别出现 27/4/4 次，数据包中为 8/4/7 次；同名标识也存在于 TikTok 官方 1.1.6 Runtime/Editor DLL。故这些 Douyin 字样不能单独证明混入抖音平台插件。三个检查对象均未命中自有 ErDon.UnitySDK.WeChat/Douyin 标识，但这只是一组字面搜索结果，不证明外平台代码不存在。报告固定 `isolation=not-assessed`，完整产物隔离仍需构建输入、链接关系和最终内容的联合证据。

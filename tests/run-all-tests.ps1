@@ -3,6 +3,10 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\ShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\tests\ShareTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Share compile failed'}
+    & .\.tests\ShareTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Share tests failed'}
     & $compiler /nologo /out:.tests\FactoryTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\tests\FactoryTests.cs
     if($LASTEXITCODE -ne 0){throw 'Factory compile failed'}
     & .\.tests\FactoryTests.exe

@@ -162,3 +162,11 @@ HTTP 客户端 Retry-After 改动经独立 Unity 2022.3 工程编译与 Editor �
 ### 预编译 SDK 引用隔离
 
 修复构建前只检查源码程序集而遗漏官方预编译 DLL 的问题，加入 Unity Player 编译图的 compiledAssemblyReferences。跨系统路径和大小写规范化后按已登记平台清单检查。公共回归通过；独立 Unity Editor 用真实编译引用验证外部平台依赖被拦截，precompiled-audit.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。未引用原生插件、StreamingAssets 与最终合并 JS 仍须后续覆盖。
+
+### 分享公共流程与配置预览
+
+新增 SDK.Share/CancelShare、IShare、不可变 ShareRequest 与 ShareResult；成功语义仅为 Dispatched，不表示送达或可发奖。加入模块开关、可选 IShareProviderFactory、创建失败回收及跨能力对象单次释放。Editor 面板支持勾选与调用 Mock 分享。
+
+公共回归及分享专项测试通过，覆盖禁用不创建、主线程派发、重复回调、并发调用、超时/取消、释放后结果失效和日志脱敏。详见 docs/share.md。平台真实分享适配仍未完成。
+
+独立 Unity 工程 share-play.log 输出 SDK_PLAY_CHECKS_PASS，实际 Play Mode 验证分享发起及模块关闭。

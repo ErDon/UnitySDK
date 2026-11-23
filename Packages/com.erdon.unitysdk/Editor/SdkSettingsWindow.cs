@@ -30,8 +30,8 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("目标平台适配包尚未实现；当前不能生成真实平台接入。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (rewardedAds || payments || share || network || analytics)
-                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录和存储示例。");
+            if (rewardedAds || payments || network || analytics)
+                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储和分享示例。");
             return issues;
         }
     }
@@ -58,7 +58,7 @@ namespace ErDon.UnitySDK.Editor
             settings.login = EditorGUILayout.Toggle("登录", settings.login);
             settings.rewardedAds = EditorGUILayout.Toggle("激励广告（待实现）", settings.rewardedAds);
             settings.payments = EditorGUILayout.Toggle("支付（待实现）", settings.payments);
-            settings.share = EditorGUILayout.Toggle("分享（待实现）", settings.share);
+            settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（待实现）", settings.network);
             settings.analytics = EditorGUILayout.Toggle("数据上报（待实现）", settings.analytics);
@@ -84,6 +84,12 @@ namespace ErDon.UnitySDK.Editor
                 if (GUILayout.Button("按配置初始化 Mock")) {
                     try { EditorSdkBootstrap.Initialize(outcome); lastResult = "Mock 已初始化"; }
                     catch (Exception ex) { lastResult = ex.Message; }
+                }
+                if (GUILayout.Button("调用 SDK.Share（仅模拟发起）")) {
+                    SDK.Share(new ShareRequest("Mock share"), result => {
+                        lastResult = (result.Success ? "Mock 已发起，非真实分享" : result.Error.Code) + " callId=" + result.CallId;
+                        Repaint();
+                    });
                 }
                 if (GUILayout.Button("调用 SDK.Login")) {
                     SDK.Login(result => {

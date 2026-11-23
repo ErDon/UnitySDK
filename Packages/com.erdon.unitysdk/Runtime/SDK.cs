@@ -66,11 +66,39 @@ namespace ErDon.UnitySDK
         StorageResult Get(string key);
         StorageResult Remove(string key);
     }
+    public sealed class ShareRequest
+    {
+        public string Title { get; private set; }
+        public string ImageUrl { get; private set; }
+        public string Query { get; private set; }
+        public ShareRequest(string title, string imageUrl = null, string query = null)
+        { Title = title; ImageUrl = imageUrl; Query = query; }
+    }
+    public sealed class ShareResult
+    {
+        // Dispatched means the platform accepted the invocation, not that a recipient received it.
+        public bool Success { get { return Error == null; } }
+        public SdkError Error { get; private set; }
+        public string CallId { get; internal set; }
+        public string TraceId { get { return CallId; } }
+        public static ShareResult Dispatched() { return new ShareResult(); }
+        public static ShareResult Fail(string code, string reason) { return new ShareResult { Error = new SdkError(code, reason) }; }
+        public static ShareResult Fail(SdkError error) { if(error == null)throw new ArgumentNullException("error");return new ShareResult { Error = error }; }
+    }
+    public interface IShare : IDisposable
+    {
+        void Share(ShareRequest request, Action<ShareResult> callback);
+    }
+    public interface IShareProviderFactory
+    {
+        IShare CreateShare();
+    }
     public sealed class SdkConfig
     {
         public string Platform = "Unconfigured";
         public bool LoginEnabled = true;
         public bool StorageEnabled;
+        public bool ShareEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
     public interface ISdkProviderFactory
@@ -84,6 +112,9 @@ namespace ErDon.UnitySDK
     {
         static IAuth auth;
         static IStorage storage;
+        static IShare share;
+        static bool sharing;
+        static Action cancelShare, checkShareTimeout;
         static SdkConfig config;
         static Action<Action> dispatch;
         static Action<SdkLogLevel, string> fallback;
@@ -100,49 +131,59 @@ namespace ErDon.UnitySDK
             EnsureNotLogging();
             if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
-                StorageEnabled = settings.StorageEnabled, LogCallback = settings.LogCallback };
+                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, LogCallback = settings.LogCallback };
             IAuth createdAuth = null;
             IStorage createdStorage = null;
+            IShare createdShare = null;
             changingLifecycle = true;
             try {
                 if (snapshot.LoginEnabled) {
                     createdAuth = factory.CreateAuth(mainThreadDispatch);
                     if (createdAuth == null) throw new InvalidOperationException("Enabled login has no provider");
-                    if (ReferenceEquals(createdAuth, auth) || ReferenceEquals(createdAuth, storage))
+                    if (ReferenceEquals(createdAuth, auth) || ReferenceEquals(createdAuth, storage) || ReferenceEquals(createdAuth, share))
                         throw new InvalidOperationException("Factory must return a fresh provider");
                 }
                 if (snapshot.StorageEnabled) {
                     createdStorage = factory.CreateStorage();
                     if (createdStorage == null) throw new InvalidOperationException("Enabled storage has no provider");
-                    if (ReferenceEquals(createdStorage, auth) || ReferenceEquals(createdStorage, storage))
+                    if (ReferenceEquals(createdStorage, auth) || ReferenceEquals(createdStorage, storage) || ReferenceEquals(createdStorage, share))
+                        throw new InvalidOperationException("Factory must return a fresh provider");
+                }
+                if (snapshot.ShareEnabled) {
+                    var shareFactory = factory as IShareProviderFactory;
+                    if (shareFactory == null || (createdShare = shareFactory.CreateShare()) == null)
+                        throw new InvalidOperationException("Enabled share has no provider");
+                    if (ReferenceEquals(createdShare, auth) || ReferenceEquals(createdShare, storage) || ReferenceEquals(createdShare, share))
                         throw new InvalidOperationException("Factory must return a fresh provider");
                 }
             } catch {
                 // Only roll back this attempt. Never dispose a provider belonging to the active SDK.
                 DisposeUnowned(createdAuth);
                 if (!ReferenceEquals(createdStorage, createdAuth)) DisposeUnowned(createdStorage);
+                if (!ReferenceEquals(createdShare, createdAuth) && !ReferenceEquals(createdShare, createdStorage)) DisposeUnowned(createdShare);
                 throw;
             } finally { changingLifecycle = false; }
-            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage);
+            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare);
         }
         static void DisposeUnowned(IDisposable provider)
         {
-            if (provider == null || ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage)) return;
+            if (provider == null || ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share)) return;
             try { provider.Dispose(); } catch { /* Preserve the original factory failure. */ }
         }
         public static void Initialize(SdkConfig settings, IAuth provider,
-            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null)
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            if ((provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage))) ||
-                (storageProvider != null && (ReferenceEquals(storageProvider, storage) || ReferenceEquals(storageProvider, auth))))
+            if ((provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share))) ||
+                (storageProvider != null && (ReferenceEquals(storageProvider, storage) || ReferenceEquals(storageProvider, auth) || ReferenceEquals(storageProvider, share))) ||
+                (shareProvider != null && (ReferenceEquals(shareProvider, share) || ReferenceEquals(shareProvider, auth) || ReferenceEquals(shareProvider, storage))))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
             changingLifecycle = true;
             try {
                 ResetCore();
-                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, LogCallback = settings.LogCallback };
-                auth = provider; storage = storageProvider; dispatch = mainThreadDispatch; fallback = engineLog;
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, LogCallback = settings.LogCallback };
+                auth = provider; storage = storageProvider; share = shareProvider; dispatch = mainThreadDispatch; fallback = engineLog;
                 Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             } finally { changingLifecycle = false; }
         }
@@ -220,11 +261,55 @@ namespace ErDon.UnitySDK
             try { callback(result); }
             catch { Log(SdkLogLevel.Error, "SDK.Login", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
         }
+        public static void Share(ShareRequest request, Action<ShareResult> callback, int timeoutMilliseconds = 15000)
+        {
+            EnsureNotLogging();
+            if (callback == null) throw new ArgumentNullException("callback");
+            if (timeoutMilliseconds <= 0) throw new ArgumentOutOfRangeException("timeoutMilliseconds");
+            var call = Guid.NewGuid().ToString("N");
+            Log(SdkLogLevel.Info, "SDK.Share", call, "Start", "{\"content\":\"[REDACTED]\"}", "Pending");
+            string invalid = config == null ? "SDK.NOT_INITIALIZED" : !config.ShareEnabled ? "MODULE.DISABLED" :
+                share == null ? "CAPABILITY.NOT_SUPPORTED" : request == null || string.IsNullOrWhiteSpace(request.Title) ? "SHARE.INVALID_ARGUMENT" :
+                sharing ? "SHARE.IN_PROGRESS" : null;
+            if (invalid != null) { FinishShare(callback, ShareResult.Fail(invalid, invalid), call); return; }
+            sharing = true;
+            int epoch = generation, completed = 0;
+            var post = dispatch;
+            var timer = Stopwatch.StartNew();
+            Action<ShareResult> done = result => {
+                if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
+                post(() => {
+                    if (epoch != generation) return;
+                    sharing = false; cancelShare = null; checkShareTimeout = null;
+                    FinishShare(callback, result ?? ShareResult.Fail("SHARE.INVALID_RESULT", "Share provider returned no result"), call);
+                });
+            };
+            cancelShare = () => done(ShareResult.Fail("SHARE.CANCELLED", "Caller cancelled local share wait"));
+            checkShareTimeout = () => { if (timer.ElapsedMilliseconds >= timeoutMilliseconds) done(ShareResult.Fail("SHARE.TIMEOUT", "Share dispatch timed out")); };
+            try { share.Share(request, done); }
+            catch { done(ShareResult.Fail("SHARE.PROVIDER_FAILED", "Share provider failed")); }
+        }
+        static void FinishShare(Action<ShareResult> callback, ShareResult result, string call)
+        {
+            result.CallId = call;
+            if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = "SDK.Share"; result.Error.Stage = "ShareDispatch"; }
+            Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Share", call, "Complete", "{}", result.Success ? "Dispatched" : result.Error.Code);
+            try { callback(result); }
+            catch { Log(SdkLogLevel.Error, "SDK.Share", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
+        }
+        public static void CancelShare()
+        {
+            EnsureNotLogging();
+            var cancel = cancelShare;
+            if (cancel != null) cancel();
+        }
         public static void Tick()
         {
             EnsureNotLogging();
             var check = checkTimeout;
             if (check != null) check();
+            var shareCheck = checkShareTimeout;
+            if (shareCheck != null) shareCheck();
         }
         public static void CancelLogin()
         {
@@ -269,8 +354,9 @@ namespace ErDon.UnitySDK
         static void ResetCore()
         {
             generation++; busy = false; cancelLogin = null;
+            sharing = false; cancelShare = null; checkShareTimeout = null;
             checkTimeout = null;
-            var old = auth; var oldStorage = storage; auth = null; storage = null; dispatch = null;
+            var old = auth; var oldStorage = storage; var oldShare = share; auth = null; storage = null; share = null; dispatch = null;
             string call = Guid.NewGuid().ToString("N");
             bool failed = false;
             if (old != null) {
@@ -283,6 +369,10 @@ namespace ErDon.UnitySDK
             if (oldStorage != null && !ReferenceEquals(old, oldStorage)) {
                 try { oldStorage.Dispose(); }
                 catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposeStorage", "{}", "SDK.DISPOSE_FAILED"); }
+            }
+            if (oldShare != null && !ReferenceEquals(oldShare, old) && !ReferenceEquals(oldShare, oldStorage)) {
+                try { oldShare.Dispose(); }
+                catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposeShare", "{}", "SDK.DISPOSE_FAILED"); }
             }
             if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
             config = null;

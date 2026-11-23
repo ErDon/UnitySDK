@@ -24,12 +24,13 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class EditorSdkBootstrap
     {
-        sealed class MockFactory : ISdkProviderFactory
+        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory
         {
             readonly MockLoginOutcome outcome;
             public MockFactory(MockLoginOutcome outcome) { this.outcome = outcome; }
             public IAuth CreateAuth(Action<Action> post) { return new EditorMockAuth(outcome); }
             public IStorage CreateStorage() { return new EditorMockStorage(); }
+            public IShare CreateShare() { return new EditorMockShare(); }
         }
         public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null)
         {
@@ -38,9 +39,14 @@ namespace ErDon.UnitySDK.Editor
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
             UnitySdkHost.InitializeWithFactory(new SdkConfig {
-                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, LogCallback = logger
+                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, LogCallback = logger
             }, new MockFactory(outcome));
         }
+    }
+    public sealed class EditorMockShare : IShare
+    {
+        public void Share(ShareRequest request, Action<ShareResult> callback) { callback(ShareResult.Dispatched()); }
+        public void Dispose() { }
     }
     public sealed class EditorMockStorage : IStorage
     {

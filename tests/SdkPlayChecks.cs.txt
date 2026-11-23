@@ -44,6 +44,14 @@ public static class SdkPlayChecks
                 if(!SDK.RemoveStorageSync("play-key").Success || SDK.GetStorageSync("play-key").Error.Code!="STORAGE.NOT_FOUND")throw new Exception("storage removal");
                 settings.storage=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
                 if(SDK.GetStorageSync("play-key").Error.Code!="MODULE.DISABLED")throw new Exception("storage disabled");
+                settings.share=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);phase=8;
+                SDK.Share(new ShareRequest("play share"),r=>{if(!r.Success)Fail("share dispatch failed");else phase=9;});
+            }
+            if(phase==9){
+                SdkProjectSettings.instance.share=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);phase=10;
+                SDK.Share(new ShareRequest("disabled share"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("share disabled failed");else phase=11;});
+            }
+            if(phase==11){
                 finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);
             }
         }catch(Exception e){Fail(e.Message);}

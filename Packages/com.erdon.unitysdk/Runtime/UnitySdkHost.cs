@@ -12,10 +12,10 @@ namespace ErDon.UnitySDK
             var host = GetOrCreate();
             SDK.InitializeWithFactory(config, factory, a => host.queue.Enqueue(a), WriteLog);
         }
-        public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null)
+        public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null, IShare shareProvider = null)
         {
             var host = GetOrCreate();
-            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider);
+            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider, shareProvider);
         }
         static UnitySdkHost GetOrCreate()
         {

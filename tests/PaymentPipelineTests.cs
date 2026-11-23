@@ -23,7 +23,7 @@ class PaymentPipelineTests
     static void Main(){
         var request=new PaymentRequest("secret-session","coins","stable-id");
         var queue=new Queue<Action>();var orders=new Orders();var launcher=new Launcher();
-        var pay=new VerifiedPayment(orders,launcher,a=>queue.Enqueue(a));PaymentResult result=null;int callbacks=0;
+        var pay=new VerifiedPayment(orders,launcher,a=>queue.Enqueue(a),maxQueries:1);PaymentResult result=null;int callbacks=0;
         Action drain=()=>{while(queue.Count>0)queue.Dequeue()();};
         pay.Pay(request,r=>{result=r;callbacks++;});
         PaymentResult busy=null;pay.Pay(request,r=>busy=r);Check(busy.Error.Code=="PAY.IN_PROGRESS","Concurrent launch rejected");
@@ -47,6 +47,24 @@ class PaymentPipelineTests
         pay.Pay(request,r=>callbacks++);orders.Created(Order(OrderState.Created));pay.Dispose();drain();
         Check(callbacks==1&&orders.Disposals==1&&launcher.Disposals==1,"Disposed pipeline ignores queued callbacks");
         Check(!request.ToString().Contains("secret")&&!PaymentLaunchResult.Submitted("secret").ToString().Contains("secret"),"Sensitive data not formatted");
+        double now=0;orders=new Orders();launcher=new Launcher();result=null;
+        pay=new VerifiedPayment(orders,launcher,a=>a(),3,2000,()=>now);
+        pay.Pay(request,r=>result=r);orders.Created(Order(OrderState.Created));launcher.Callback(PaymentLaunchResult.AwaitServerConfirmation());
+        var first=orders.Queried;first(Order(OrderState.Created));first(Order(OrderState.Fulfilled));
+        Check(result==null&&orders.Gets==1,"Duplicate response cannot finish pending polling");
+        now=1999;pay.Tick();Check(orders.Gets==1,"Poll waits for interval");
+        now=2000;pay.Tick();pay.Tick();Check(orders.Gets==2,"One request in flight");
+        orders.Queried(Order(OrderState.Paid));now=4000;pay.Tick();orders.Queried(Order(OrderState.Fulfilled));
+        Check(result.Success&&orders.Gets==3,"Created and paid poll until fulfilled");
+        result=null;pay.Pay(request,r=>result=r);orders.Created(Order(OrderState.Created));launcher.Callback(PaymentLaunchResult.AwaitServerConfirmation());
+        orders.Queried(Order(OrderState.Created));now=6000;pay.Tick();orders.Queried(Order(OrderState.Created));
+        now=8000;pay.Tick();orders.Queried(Order(OrderState.Paid));
+        Check(result.Error.Code=="PAY.FULFILLMENT_PENDING","Exhausted polling preserves pending delivery");
+        int before=orders.Gets;result=null;
+        pay.Pay(request,r=>result=r);orders.Created(Order(OrderState.Created));launcher.Callback(PaymentLaunchResult.AwaitServerConfirmation());
+        var late=orders.Queried;late(Order(OrderState.Created));pay.CancelWait();now=10000;pay.Tick();late(Order(OrderState.Fulfilled));
+        Check(result==null&&orders.Gets==before+1,"Cancel stops scheduled polling and late responses");
+        pay.Dispose();
         Console.WriteLine("PASS: payment verification, idempotent recovery, cancellation race and ownership");
     }
 }

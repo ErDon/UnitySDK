@@ -486,8 +486,14 @@ namespace ErDon.UnitySDK
                     FinishPay(callback, result ?? PaymentResult.Fail("PAY.INVALID_RESULT", "Pay provider returned no result"), call);
                 });
             };
-            cancelPay = () => done(PaymentResult.Fail("PAY.CANCELLED", "Caller cancelled local pay wait"));
-            checkPayTimeout = () => { if (timer.ElapsedMilliseconds >= timeoutMilliseconds) done(PaymentResult.Fail("PAY.TIMEOUT", "Pay dispatch timed out")); };
+            Action stopWait = () => { var wait=pay as IPaymentWait; if(wait!=null)try{wait.CancelWait();}catch{} };
+            cancelPay = () => { stopWait();done(PaymentResult.Fail("PAY.CANCELLED", "Caller cancelled local pay wait")); };
+            checkPayTimeout = () => {
+                if(completed!=0)return;
+                if (timer.ElapsedMilliseconds >= timeoutMilliseconds) { stopWait();done(PaymentResult.Fail("PAY.TIMEOUT", "Pay dispatch timed out"));return; }
+                var wait=pay as IPaymentWait;
+                if(wait!=null)try{wait.Tick();}catch{stopWait();done(PaymentResult.Fail("PAY.POLL_FAILED","Payment polling failed"));}
+            };
             try { pay.Pay(request, done); }
             catch { done(PaymentResult.Fail("PAY.PROVIDER_FAILED", "Pay provider failed")); }
         }

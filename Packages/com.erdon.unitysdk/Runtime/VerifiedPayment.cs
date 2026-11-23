@@ -48,17 +48,25 @@ namespace ErDon.UnitySDK
     // Engine/platform layer only. ID must come from a trusted server prepayment response.
     public interface IPlatformPaymentGateway : IDisposable { void Launch(string tradeOrderId, Action<PaymentLaunchResult> callback); }
     public interface IPay : IDisposable { void Pay(PaymentRequest request,Action<PaymentResult> callback); }
+    // Optional main-thread lifecycle for bounded payment reconciliation.
+    public interface IPaymentWait { void Tick(); void CancelWait(); }
 
     // Owns order client and launcher. Platform launch success never authorizes entitlement delivery.
 #if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
-    public sealed class VerifiedPayment : IPay
+    public sealed class VerifiedPayment : IPay, IPaymentWait
     {
         readonly IOrderClient orders;readonly IPaymentLauncher launcher;readonly Action<Action> post;
         bool disposed,busy;
-        public VerifiedPayment(IOrderClient orders,IPaymentLauncher launcher,Action<Action> mainThreadPost)
+        readonly Func<double> clock; readonly int maxQueries,intervalMilliseconds;
+        Action pendingQuery; double nextQuery; int operation;
+        public VerifiedPayment(IOrderClient orders,IPaymentLauncher launcher,Action<Action> mainThreadPost,
+            int maxQueries=12,int intervalMilliseconds=2000,Func<double> monotonicMilliseconds=null)
         {
             if(orders==null||launcher==null||mainThreadPost==null)throw new ArgumentNullException();
+            if(maxQueries<1||maxQueries>60||intervalMilliseconds<100||intervalMilliseconds>60000)throw new ArgumentOutOfRangeException();
             this.orders=orders;this.launcher=launcher;post=mainThreadPost;
+            this.maxQueries=maxQueries;this.intervalMilliseconds=intervalMilliseconds;
+            clock=monotonicMilliseconds??(()=>System.Diagnostics.Stopwatch.GetTimestamp()*1000.0/System.Diagnostics.Stopwatch.Frequency);
         }
         public void Pay(PaymentRequest request,Action<PaymentResult> callback)
         {
@@ -68,15 +76,15 @@ namespace ErDon.UnitySDK
                 callback(PaymentResult.Fail("PAY.INVALID_REQUEST","Session, product and stable request identifier are required"));return;
             }
             if(busy){callback(PaymentResult.Fail("PAY.IN_PROGRESS","Another payment is still in progress"));return;}
-            busy=true;int completed=0,created=0,launched=0,verified=0;
+            busy=true;int completed=0,created=0,launched=0,epoch=++operation;
             Action<PaymentResult> finish=result=>{
-                if(disposed||Interlocked.Exchange(ref completed,1)!=0)return;
-                busy=false;callback(result);
+                if(disposed||epoch!=operation||Interlocked.Exchange(ref completed,1)!=0)return;
+                busy=false;pendingQuery=null;callback(result);
             };
             Action<OrderResult> onCreated=result=>{
                 if(Interlocked.Exchange(ref created,1)!=0)return;
                 post(()=>{
-                    if(disposed)return;
+                    if(disposed||epoch!=operation)return;
                     if(result==null||!result.Success){finish(PaymentResult.FromOrder(result));return;}
                     var order=result.Order;
                     if(!ValidOrder(order,request.ProductId)){finish(PaymentResult.Fail("PAY.INVALID_RESPONSE","Invalid created order"));return;}
@@ -84,11 +92,16 @@ namespace ErDon.UnitySDK
                     Action<PaymentLaunchResult> onLaunched=launch=>{
                         if(Interlocked.Exchange(ref launched,1)!=0)return;
                         post(()=>{
-                            if(disposed)return;
+                            if(disposed||epoch!=operation)return;
+                            int attempts=0;
+                            Action<bool> verify=null;
+                            verify=confirm=>{
+                            if(disposed||epoch!=operation||completed!=0)return;
+                            attempts++;int verified=0;
                             Action<OrderResult> onVerified=confirmation=>{
                                 if(Interlocked.Exchange(ref verified,1)!=0)return;
                                 post(()=>{
-                                    if(disposed)return;
+                                    if(disposed||epoch!=operation||completed!=0)return;
                                     if(confirmation!=null&&confirmation.Success) {
                                         var current=confirmation.Order;
                                         if(!ValidOrder(current,order.ProductId)||current.OrderId!=order.OrderId||current.AmountMinor!=order.AmountMinor||current.Currency!=order.Currency) {
@@ -97,15 +110,21 @@ namespace ErDon.UnitySDK
                                         if(current.State==OrderState.Created&&launch!=null&&launch.Error!=null) {
                                             finish(PaymentResult.Fail(launch.Error,current));return;
                                         }
+                                        if(current.State!=OrderState.Fulfilled&&attempts<maxQueries) {
+                                            nextQuery=clock()+intervalMilliseconds;
+                                            pendingQuery=()=>verify(false);return;
+                                        }
                                     }
                                     finish(PaymentResult.FromOrder(confirmation));
                                 });
                             };
                             try {
                                 // Even cancellation/failure may race with a completed payment: query before reporting it.
-                                if(launch==null||launch.Error!=null||launch.RequiresServerQuery)orders.Get(request.Session,order.OrderId,onVerified);
+                                if(!confirm)orders.Get(request.Session,order.OrderId,onVerified);
                                 else orders.Confirm(request.Session,order.OrderId,launch.Evidence,onVerified);
                             }catch{onVerified(OrderResult.Fail("PAY.VERIFICATION_FAILED","Order verification failed"));}
+                            };
+                            verify(launch!=null&&launch.Error==null&&!launch.RequiresServerQuery);
                         });
                     };
                     try{launcher.Launch(order,onLaunched);}catch{onLaunched(PaymentLaunchResult.Fail(new SdkError("PAY.LAUNCH_FAILED","Platform payment invocation failed")));}
@@ -118,7 +137,9 @@ namespace ErDon.UnitySDK
             Guid id;return order!=null&&Guid.TryParseExact(order.OrderId,"D",out id)&&order.ProductId==product&&order.AmountMinor>0&&
                 order.AmountMinor<=9007199254740991L&&!string.IsNullOrWhiteSpace(order.Currency)&&Enum.IsDefined(typeof(OrderState),order.State);
         }
-        public void Dispose(){if(disposed)return;disposed=true;try{orders.Dispose();}finally{if(!ReferenceEquals(orders,launcher))launcher.Dispose();}}
+        public void Tick(){if(disposed||pendingQuery==null||clock()<nextQuery)return;var query=pendingQuery;pendingQuery=null;query();}
+        public void CancelWait(){operation++;busy=false;pendingQuery=null;}
+        public void Dispose(){if(disposed)return;disposed=true;CancelWait();try{orders.Dispose();}finally{if(!ReferenceEquals(orders,launcher))launcher.Dispose();}}
     }
 #endif
 }

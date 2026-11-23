@@ -159,7 +159,9 @@ put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 �
 
 `PreparedPaymentLauncher` 实现 IPaymentLauncher，拥有 IPrepaymentClient 与 IPlatformPaymentGateway。前者绑定当前游戏会话，通过 Prepare(orderId, callback) 返回 PrepaymentResult；返回订单号必须与输入一致，平台单号必须合法，才允许调用网关。重复预支付回调和重复终态均忽略，在途新调用返回 PAY.IN_PROGRESS，释放后抑制回调并释放依赖。两个接口的调用和回调均须在 Unity 主线程，HTTP 接入层负责派发。
 
-它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排仅查询服务器状态，不调用 Confirm；查询为 Created 返回 PAY.NOT_PAID，Paid 返回 PAY.FULFILLMENT_PENDING，Fulfilled 才成功。当前只查询一次，不自动轮询或重新拉起收银台。IPrepaymentClient 的 HTTPS 实现与服务端受认证入口已具备；尚未完成令牌托管、平台工厂装配和真实支付联调，不能仅构造启动器就认为完整支付可用。
+它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排查询游戏服务器订单状态，不调用 Confirm。Created 或 Paid 会继续有限轮询，Fulfilled 才成功；次数耗尽时分别返回 PAY.NOT_PAID 或 PAY.FULFILLMENT_PENDING。令牌加密托管、HTTPS 预支付客户端与受认证服务端入口已具备，平台工厂装配和真实支付联调仍待完成。
+
+默认最多 12 次核验，间隔 2000 毫秒，第一次立即执行；构造参数 maxQueries（1–60）、intervalMilliseconds（100–60000）可调整。第一次若使用 Confirm 也计入次数，之后只 Get，不重新拉起收银台。由 SDK.Tick（UnitySdkHost 自动驱动）推进；直接使用 VerifiedPayment 的调用者须自行在主线程调用 Tick。重复回调不会增加轮询，最多一个查询在途；响应错误直接返回，平台取消且服务器仍为 Created 时保留平台错误。初始创建返回已 Paid/Fulfilled 的恢复订单仍立即返回现有状态，不再打开收银台。
 
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。
 2. 订单为 Fulfilled：直接返回成功，不再打开收银台。
@@ -168,7 +170,7 @@ put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 �
 5. 平台返回回执时交 IOrderClient.Confirm；AwaitServerConfirmation 类型改用 Get 查询，成功必须以服务端 Fulfilled 为准。
 6. 平台取消、失败或抛异常时，先 Get 查询服务端状态，处理客户端取消与服务端支付完成同时发生的情况。
 
-不直接发放道具，不自动轮询或自动重复付款。Paid/网络结果不确定时保留 requestId 与 orderId，通过查询或同一个 requestId 恢复；禁止把重试变成新购买。
+不直接发放道具，不自动重复付款。有限轮询结束后仍为 Paid 或网络结果不确定时，保留 requestId 与 orderId，通过查询或同一个 requestId 恢复；禁止把重试变成新购买。
 
 ## 接口示例
 
@@ -228,6 +230,6 @@ SDK.Pay(new PaymentRequest(gameSession, "coins", savedPurchaseRequestId), result
 // SDK.CancelPay(); // 只结束本地等待，不关闭平台收银台、不退款。
 ```
 
-SDK.Pay 对未初始化、模块关闭、缺少 provider、非法请求及并发调用返回明确错误；回调异常被隔离。超时由 SDK.Tick/Unity Update 驱动，迟到结果不再次触发上层回调。超时/取消后，底层 VerifiedPayment 可能仍在核验，继续支付可能返回 PAY.IN_PROGRESS；不得用新 requestId 绕过等待或重复扣款。重建 SDK 也不撤销服务端订单，恢复必须使用原编号。
+SDK.Pay 对未初始化、模块关闭、缺少 provider、非法请求及并发调用返回明确错误；回调异常被隔离。超时由 SDK.Tick/Unity Update 驱动。VerifiedPayment 实现 IPaymentWait，SDK 取消/超时会停止其后续轮询并抑制迟到响应；释放也停止轮询。已经发出的 HTTP 请求和平台收银台未必被终止，底层启动器仍可能返回 PAY.IN_PROGRESS。取消本地等待不撤销交易，恢复必须使用原 requestId/orderId，不得用新编号重复扣款。其他自定义 IPay 可选择实现 IPaymentWait；未实现者维持原有本地回调取消行为。
 
 Tools → ErDon SDK → 配置与预览：勾选支付，选择支付模拟结果，再初始化 Mock。可预览 Fulfilled、Pending、Cancelled、Timeout；按钮不创建真实订单。修改开关或模拟结果后需重新初始化。生产 Mock 构建继续阻断，真实支付平台亦未放行。

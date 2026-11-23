@@ -1,0 +1,8 @@
+{
+  "name": "ErDon.UnitySDK.TikTok",
+  "references": ["ErDon.UnitySDK"],
+  "overrideReferences": false,
+  "includePlatforms": ["Editor", "WebGL"],
+  "defineConstraints": ["ERDON_PLATFORM_TIKTOK"],
+  "autoReferenced": true
+}

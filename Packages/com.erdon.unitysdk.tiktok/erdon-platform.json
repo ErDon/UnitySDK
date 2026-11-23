@@ -1,0 +1,7 @@
+{
+  "Platform": "TikTok",
+  "Package": "com.erdon.unitysdk.tiktok",
+  "Version": "0.1.0",
+  "Assemblies": ["ErDon.UnitySDK.TikTok", "TTWebGL", "ttsdk", "ttsdk-editor", "TTLitJson"],
+  "AssetRoots": ["Packages/com.erdon.unitysdk.tiktok", "Assets/Plugins/com.tiktok.minigame"]
+}

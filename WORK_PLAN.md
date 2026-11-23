@@ -70,3 +70,9 @@ Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白�
 新增独立微信 UPM 包，锁定官方 0.1.23，封装 WX.Login；只返回临时凭证，经 VerifiedAuth 组合后端验证才产生登录结果。支持 SDK 超时传参、重复回调隔离、释放后回调忽略和结构化 errno；任意原始 errMsg 不外泄。登记平台程序集/资源来源并使用独立平台宏，官方二进制未提交到仓库。
 
 验证：使用本机官方 wx-runtime-editor.dll 的真实回调类型编译并运行契约测试，输出 WECHAT_CREDENTIAL_TESTS_PASS；公共核心、登录编排、隔离测试全部通过。WX 调度入口在测试中替换，完整官方运行时集成、后端和真机仍待验证。详见 docs/wechat.md。
+
+### TikTok 凭证适配增量
+
+新增独立 TikTok UPM 包及 TT.Login 凭证适配，按官方 1.1.6 Release 文档和本机 DLL 核对。分别引用 Runtime/Editor DLL 编译真实调用签名并执行契约测试，均输出 TIKTOK_CREDENTIAL_TESTS_PASS；公共回归通过。行为测试使用注入调度，不代表真实容器成功。
+
+发现本机 TikTok 插件 package name 仍为 com.bytedance.starksdk 且导入设置含旧项目宏，不把这两个标识当作跨游戏依赖。独立适配不引用 RS 项目，使用专用平台宏，要求安装官方干净插件。补充安装、初始化顺序、错误/超时、升级及验证边界文档，更新 README 避免继续声称纯设计阶段。

@@ -1,7 +1,7 @@
 # UnitySDK
 面向多个 Unity 游戏复用的跨平台 SDK。以微信小游戏核心能力的接口语义为设计基准，按需适配微信、抖音、TikTok、Android/iOS 各发行渠道。
 
-当前阶段：架构设计，尚未提供可安装的 SDK 或已验证的平台实现。
+当前阶段：实现中的 UPM 开发预览，尚未完成真实平台端到端验收。
 
 - [整体架构与设计图](docs/architecture.md)
 - [错误码与诊断规范](docs/errors.md)
@@ -11,6 +11,6 @@
 
 ## 开发进度
 
-已开始核心实现，详见 [工作计划](WORK_PLAN.md) 和 [第一阶段接入说明](docs/getting-started.md)。目前为未完成验证的开发骨架，不含真实平台适配，不可用于生产接入。主线程初始化/调用、Mock 示例和已知限制见接入说明。
+已实现登录聚合入口、诊断日志、Editor Mock、配置检查与部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md) 与 [TikTok](docs/tiktok.md) 已有登录凭证适配及契约测试；真实后端、官方运行时集成、真机链路与完整产物裁剪尚待验证，不可用于生产接入。抖音适配仍待实现；Android/iOS 本轮仅保留扩展接口。
 
-配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。当前为开发预览，真实平台尚未实现，Player 构建会被明确阻断；请在独立测试工程接入，不要直接引入生产工程。
+配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。当前真实平台装配尚未完成，Player 构建会被明确阻断；请在独立测试工程接入。

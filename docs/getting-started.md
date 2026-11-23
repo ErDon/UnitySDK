@@ -26,6 +26,8 @@ LogCallback 接收级别和 SDK 格式化的完整字符串；不提供则 Unity
 
 上述测试不代替真机、支付或实际发布验证。
 
+配置持久化检查使用 `tests/SettingsPersistenceChecks.cs.txt`：复制为独立工程的 `Assets/Editor/SettingsPersistenceChecks.cs`，依次在三个单独的 Unity 进程中以 `-batchmode -nographics -quit -projectPath <隔离工程> -executeMethod <方法>` 执行 `SettingsPersistenceChecks.SaveA`、`SettingsPersistenceChecks.VerifyAAndSaveB`、`SettingsPersistenceChecks.VerifyB`。每轮正常退出后再启动下一轮。成功标记依次为 `SDK_SETTINGS_SAVE_A_PASS`、`SDK_SETTINGS_RELOAD_A_SAVE_B_PASS`、`SDK_SETTINGS_RELOAD_B_PASS`。它会覆盖该测试工程的 SDK 配置，验证两个游戏/平台标识、环境和七个能力开关在重启后的恢复与 JSON 映射；不会启动官方平台。不要在业务工程执行。
+
 ## 初始化与释放边界
 
 SDK 拥有传入 IAuth 的生命周期，重新初始化或 Shutdown 会释放旧 provider。重新初始化必须创建新的 provider；复用仍在使用的同一个实例会抛 ArgumentException，旧实例保持有效。已释放实例不得再次传入。

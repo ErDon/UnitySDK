@@ -127,6 +127,12 @@
 
 ## 2026-11-24 执行记录
 
+### 七模块配置跨进程持久化检查
+
+新增 SettingsPersistenceChecks 模板，在独立 BuildChecksProject 用三个独立 Unity 进程依次保存 A、读取 A 后保存 B、读取 B。两组数据切换 Game ID、App ID、WeChat/TikTok 平台、测试/生产环境，并反转全部七个能力开关；读取前不赋值，逐字段检查恢复和运行时 JSON 映射。生产配置仍被正式构建门禁拒绝，不启动平台或执行发布。
+
+settings-save-a.log、settings-reload-a-save-b.log、settings-reload-b.log 分别出现 SDK_SETTINGS_SAVE_A_PASS、SDK_SETTINGS_RELOAD_A_SAVE_B_PASS、SDK_SETTINGS_RELOAD_B_PASS，三轮均正常退出码 0。快速入门补充隔离工程复跑方法。此项增强配置保存验收证据，不替代面板全部视觉操作、独立游戏运行或真机验收，顶部保持 65/78。
+
 ### 存储面板实际交互与读取回填修复
 
 在独立 UnityProject 配置面板开启存储并进入 Play Mode，实际点击确认未写入时返回 STORAGE.NOT_FOUND、错误原因与 CallId，写入及读取返回成功。随后聚焦 Value 输入框并输入未保存文字，复现读取成功但输入框仍显示编辑缓冲中的旧文字，导致读取结果无法直观看到。

@@ -1,0 +1,45 @@
+using System;
+using ErDon.UnitySDK.Editor;
+using UnityEngine;
+
+// Run SaveA, VerifyAAndSaveB, VerifyB in THREE separate Unity processes.
+// Isolated project only: overwrites its SDK settings; never run in a business project.
+public static class SettingsPersistenceChecks
+{
+    public static void SaveA() { Assign(false); Debug.Log("SDK_SETTINGS_SAVE_A_PASS"); }
+    public static void VerifyAAndSaveB() {
+        Verify(false);
+        Assign(true);
+        Debug.Log("SDK_SETTINGS_RELOAD_A_SAVE_B_PASS");
+    }
+    public static void VerifyB() { Verify(true); Debug.Log("SDK_SETTINGS_RELOAD_B_PASS"); }
+    static void Assign(bool second) {
+        var s = SdkProjectSettings.instance;
+        s.platform = second ? DistributionPlatform.TikTok : DistributionPlatform.WeChat;
+        s.gameId = second ? "persistence-game-b" : "persistence-game-a";
+        s.appId = second ? "test-app-b" : "test-app-a";
+        s.production = second;
+        s.login = !second; s.storage = second; s.share = !second;
+        s.rewardedAds = second; s.network = !second; s.payments = second; s.analytics = !second;
+        s.SaveSettings();
+    }
+    static void Verify(bool second) {
+        // No assignment before reading: a new process must have loaded the saved asset.
+        var s = SdkProjectSettings.instance;
+        if (s.platform != (second ? DistributionPlatform.TikTok : DistributionPlatform.WeChat)
+            || s.gameId != (second ? "persistence-game-b" : "persistence-game-a")
+            || s.appId != (second ? "test-app-b" : "test-app-a") || s.production != second
+            || s.login != !second || s.storage != second || s.share != !second
+            || s.rewardedAds != second || s.network != !second || s.payments != second || s.analytics != !second)
+            throw new Exception("Persisted SDK settings mismatch");
+        var json = JsonUtility.ToJson(s.CreateRuntimeConfiguration());
+        var c = JsonUtility.FromJson<ErDon.UnitySDK.SdkRuntimeConfiguration>(json);
+        if (c.platform != s.platform.ToString() || c.gameId != s.gameId || c.appId != s.appId
+            || c.production != second || c.Environment != (second ? "production" : "test")
+            || c.login != !second || c.storage != second || c.share != !second
+            || c.rewardedAds != second || c.network != !second || c.payments != second || c.analytics != !second)
+            throw new Exception("Reloaded settings JSON mismatch");
+        // Production persistence is data round-trip only, never permission to build or start.
+        if (second && s.Validate(true).Count == 0) throw new Exception("Production build gate bypassed");
+    }
+}

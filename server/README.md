@@ -33,7 +33,7 @@ async function verify(binding, temporaryCode) {
 }
 ```
 
-只有校验后非空 subject 才允许签发会话。已有独立微信和抖音验证器，TikTok 验证器尚未实现，不使用微信协议代替。微信适配采用固定 `https://api.weixin.qq.com/sns/jscode2session`，请求 appid/secret/js_code/grant_type；暂未从无法读取的官方文档页完成最终复核，也未真实调用。抖音适配及官方依据见 [douyin.md](../docs/douyin.md)。已有本地契约测试不能作为平台验收证据。
+只有校验后非空 subject 才允许签发会话。已有独立微信、抖音和 TikTok 验证器，按受信绑定选择，不使用微信协议代替其他平台。微信适配采用固定 `https://api.weixin.qq.com/sns/jscode2session`，请求 appid/secret/js_code/grant_type；暂未从无法读取的官方文档页完成最终复核，也未真实调用。抖音适配及官方依据见 [douyin.md](../docs/douyin.md)。已有本地契约测试不能作为平台验收证据。
 
 本地启动器可分别用 WECHAT_APP_ID/WECHAT_APP_SECRET 或 DOUYIN_APP_ID/DOUYIN_APP_SECRET 配置一个或两个平台，公用 SDK_GAME_ID；至少配置一个完整应用绑定。创建服务后只按明确匹配的绑定路由到对应验证器。
 
@@ -99,8 +99,14 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 本地启动配置 TIKTOK_APP_ID（值是 Client Key）、TIKTOK_APP_SECRET（Client Secret）和 SDK_GAME_ID，平台名 TikTok。这些值来自服务端环境，客户端不得提供密钥。429/上游故障返回 PLATFORM_UNAVAILABLE；OAuth 错误返回 PLATFORM_REJECTED，当前不向客户端传递任意上游描述，也尚未细分全部 OAuth 错误。
 
-22 项后端测试使用模拟平台响应；未以真实 TikTok code 验收。配置受信绑定不等于平台应用已获准使用对应能力。
+后端测试使用模拟平台响应；未以真实 TikTok code 验收。配置受信绑定不等于平台应用已获准使用对应能力。
 
 ## 订单组件
 
 新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。可使用 createOrderHandler 显式装配订单 HTTP 路由，默认启动器尚未启用；真实平台验签仍待完成，内存订单仅用于开发。
+
+## 多游戏共享存储回归
+
+运行 `node --test test/multi-game.test.mjs`，分别验证 Memory 与 SQLite 存储。六个已授权绑定覆盖游戏、环境、App ID 和平台差异；即使平台用户标识、商品 ID、幂等请求 ID 相同，会话与订单仍须按绑定隔离。测试逐对拒绝跨绑定会话使用、读单及确认，并验证撤销一个会话不影响其他绑定。同平台同应用的 code 不能通过切换游戏或环境再次兑换；不同应用或平台可独立使用相同的不透明 code 文本。
+
+这项回归使用 SQLite 内存数据库和注入的平台身份，证明服务端边界，不证明第二个实际游戏、真机登录、真实支付或生产部署。完整后端回归 `node --test` 在 Node 24.20.0 下共 39 项通过（2026-11-24）。HTTP 测试需要允许连接自身启动的本机回环端口。

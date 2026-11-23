@@ -81,7 +81,9 @@ put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 �
 
 轮换时保留旧 keyId 的密钥并设置新的 currentKeyId；旧记录可读，之后 put 使用新密钥。没有自动批量重加密或自动刷新平台 token。删除密钥前必须处理其仍在使用的记录。SQLite 是单机持久化方案，数据库备份与密钥生命周期由部署管理，不能把数据库加密等同于整个服务已完成安全验收。
 
-可将 store 作为 TikTokPrepaymentService 的 credentials。当前 OAuth 验证器尚未写入它，默认服务器未配置密钥或加载此存储。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭。
+可将同一 store 作为 TikTokPrepaymentService 的 credentials，并通过 `createTikTokVerifier({ credentialStore: store })` 注入登录验证器。验证成功后先等待令牌保存，再由 AuthService 签发游戏会话；不注入时保留仅身份兑换行为。有效期从上游请求开始前计算，避免网络耗时延长令牌寿命，过期或溢出拒绝。写入异常统一返回 HTTP 503 / AUTH.CREDENTIAL_STORAGE_FAILED，客户端应稍后取得新的登录 code，不重用已经提交的 code。平台访问令牌和刷新令牌不返回客户端；当前只保存访问令牌，没有自动刷新或撤销联动。
+
+默认服务器尚未配置密钥或加载此存储。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭；`test/tiktok.test.mjs` 另验证保存先于签发会话、作用域隔离、写入失败不签发、凭证防重放及有效期边界。真实 OAuth 与支付联调仍待完成。
 
 ## HTTP 通知入口装配
 

@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### TikTok 登录写入加密支付凭据
+
+OAuth 验证器可选注入 credentialStore，验证后先持久化访问令牌再返回身份供签发游戏会话；有效期从请求开始计算。存储失败返回脱敏的 AUTH.CREDENTIAL_STORAGE_FAILED / 503，不签发会话，原 code 保留已消费状态。Unity 响应策略识别该错误并提示稍后用新 code 登录。
+
+登录与加密存储共 11 项测试通过，Unity SessionResponseTests 编译及运行通过。默认部署装配、令牌刷新/撤销和真实平台联调仍未完成，整体仍为 66/78，不提前勾选真实支付验收。
+
 ### TikTok 平台令牌加密存储
 
 新增 SQLite TikTokCredentialStore，部署注入密钥环，AES-256-GCM 随机 nonce 加密访问令牌，AAD 绑定版本、完整作用域、用户、有效期和 keyId。支持过期、删除、容量、关闭以及保留旧密钥读取/新密钥写入，不把密钥写库或返回客户端。

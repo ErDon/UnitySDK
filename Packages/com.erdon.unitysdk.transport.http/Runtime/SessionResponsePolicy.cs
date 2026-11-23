@@ -47,6 +47,7 @@ namespace ErDon.UnitySDK
             if (status == 502 && code == "AUTH.PLATFORM_RESPONSE_INVALID") return Error(code, "Server received an invalid platform response", RetryPolicy.Unknown);
             if (status == 502 && code == "AUTH.INVALID_IDENTITY") return Error(code, "Server verifier returned no valid identity", RetryPolicy.Never);
             if (status == 503 && code == "SERVER.CAPACITY") return Error(code, "Session service is at capacity", RetryPolicy.Delayed);
+            if (status == 503 && code == "AUTH.CREDENTIAL_STORAGE_FAILED") return Error(code, "Server could not save platform credentials; retry later with a new login code", RetryPolicy.Delayed);
             return Error("AUTH.SERVER_REJECTED", "Session endpoint rejected request", RetryPolicy.Unknown);
         }
         static SdkError Error(string code, string reason, RetryPolicy retry) { return new SdkError(code, reason).WithRetry(retry); }

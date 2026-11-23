@@ -52,7 +52,8 @@
 - [x] 网络请求/响应契约、数据快照和接收大小限制测试；Unity HTTP 底层实现编译。
 - [x] Unity 网络取消、释放抑制回调、宿主不可用和连接超时的本机 Play Mode 检查。
 - [x] SDK.Request 并发聚合、独立取消/超时、所有权和脱敏日志；公共及 Unity 回归。
-- [ ] 网络配置工厂/面板接入、正常 HTTPS 响应及小游戏平台验证。
+- [x] 网络 Mock 配置工厂/面板接入与 Play Mode 验证。
+- [ ] 真实平台网络工厂、正常 HTTPS 响应及小游戏平台验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -493,3 +494,10 @@ network-play.log 输出 SDK_NETWORK_PLAY_PASS，无 C# 错误。该检查证明�
 新增 SDK.Request，返回独立取消句柄；NetworkEnabled 和 INetworkProviderFactory 纳入快照、按需创建及回收。每个请求独立超时/取消，关闭时中止在途请求并抑制迟到结果。结果 CallId/TraceId、统一日志不包含 URL/头/正文。派发失败沿用主线程恢复队列。配置 JSON/面板尚未开放网络，避免勾选后缺少平台网络工厂。
 
 NetworkFacadeTests 和公共回归通过，抖音实际 DLL 回归通过。Unity 初次测试按同步取消断言失败；修正为等待宿主队列后，network-facade-confirm.log 无 C# 错误并输出 SDK_NETWORK_PLAY_PASS，验证实际 UnityNetwork 经过聚合入口的取消与关联 ID，以及原底层超时/释放行为。
+
+### 网络配置与 Mock 预览
+
+EditorMockNetwork 支持本地 200/401、连接失败和无回调超时；按 NetworkEnabled 创建，释放清理挂起操作。配置面板增加网络模拟结果和最近一次请求取消；运行时 JSON 仅对 Mock 放行 network，三平台真实网络工厂尚未实现仍拒绝。
+
+公共回归与 network-mock-play.log 的 SDK_PLAY_CHECKS_PASS 通过：验证 200/401 区分、连接失败、超时、取消及禁用，并回归原登录/存储/分享/支付/广告流程。没有任何真实外部请求。视觉交互、真实平台和正常 HTTPS 仍未验收。
+network-mock-editor.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0；配置映射及构建阻断检查通过。

@@ -14,7 +14,8 @@ public static class SdkEditorChecks {
   if(s.Validate().Count==0) throw new Exception("production mock allowed");
   s.production=false;s.rewardedAds=true;
   if(s.Validate().Count!=0 || !s.CreateRuntimeConfiguration().ToSdkConfig().RewardedAdsEnabled) throw new Exception("mock ads config rejected");
-  s.network=true; if(s.Validate().Count==0) throw new Exception("unimplemented network allowed"); s.network=false;
+  s.network=true; if(s.Validate().Count!=0 || !s.CreateRuntimeConfiguration().ToSdkConfig().NetworkEnabled) throw new Exception("mock network mapping failed"); s.network=false;
+  s.analytics=true; if(s.Validate().Count==0) throw new Exception("unimplemented analytics allowed"); s.analytics=false;
   s.rewardedAds=false;s.payments=false;s.platform=DistributionPlatform.WeChat;s.appId="test-app";
   s.storage=true;s.share=true;
   var exported=s.CreateRuntimeConfiguration();

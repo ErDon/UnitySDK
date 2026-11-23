@@ -96,7 +96,7 @@ Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面�
 
 ## 通用网络接口（配置工厂接入待完成）
 
-新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志，但配置工厂和面板仍待接入，因此 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
+新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志和 Mock 配置面板；真实平台网络工厂仍待接入，因此真实平台 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
 
 ```csharp
 // 在 MonoBehaviour 内调用；字段保留 provider，并在 OnDestroy 中 Dispose。
@@ -145,6 +145,17 @@ var operation = SDK.Request(new NetworkRequest("https://your-api.example.com/con
 
 SDK.Request 支持并发，每个返回句柄仅取消自己的请求。首个终态胜出，重复取消、迟到回调不重复通知。NetworkRequest.TimeoutSeconds 同时用于 SDK 本地等待超时；本地超时返回 NETWORK.TIMEOUT 并尝试取消底层。底层先返回连接失败时可能是 NETWORK.UNAVAILABLE。取消只能终止客户端等待，不能撤销服务端操作。
 
-SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创建网络对象；未安装 provider 返回 CAPABILITY.NOT_SUPPORTED。SDK.InitializeWithFactory 支持自定义 INetworkProviderFactory，现有三平台工厂暂未提供网络，因此面板和运行时 JSON 的 network 开关保持拒绝。直接注入示例用于验证，不能代替平台网络兼容检查。
+SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创建网络对象；未安装 provider 返回 CAPABILITY.NOT_SUPPORTED。SDK.InitializeWithFactory 支持自定义 INetworkProviderFactory，现有三平台工厂暂未提供网络，因此面板和运行时 JSON 只对 Mock 放行 network 开关。直接注入示例用于验证，不能代替平台网络兼容检查。
 
 结果带 CallId/TraceId，错误包含 Operation=SDK.Request、Stage=Network。日志由 SDK 生成，不输出 URL、查询参数、Headers 或 Body；完成记录 HTTP 状态或统一错误码。用户回调在 Unity 宿主队列派发，因此 Cancel 后不要假定结果已同步送达。Shutdown/重新初始化后旧回调不交给游戏。
+
+## 网络 Mock 预览
+
+面板选 Mock，勾选“网络（Editor Mock）”，进入 Play Mode，选择“网络模拟结果”后重新初始化 Mock，再点击“调用 SDK.Request（不会联网）”。结果展示 HTTP 状态或统一错误码及 CallId。
+
+- HttpOk：本地返回 HTTP 200 与 JSON `{"mock":true}`。
+- HttpUnauthorized：本地返回 HTTP 401，Success=true、IsHttpSuccess=false，用于验证业务对 HTTP 状态的处理。
+- ConnectionFailed：返回 NETWORK.UNAVAILABLE。
+- Timeout：保持请求等待，面板使用 1 秒超时；点击“取消最近一次网络请求”可提前返回 NETWORK.CANCELLED。
+
+取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；真实三平台的网络配置和未实现的数据上报继续拒绝。

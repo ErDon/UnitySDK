@@ -26,27 +26,29 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class EditorSdkBootstrap
     {
-        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory, IPayProviderFactory, IRewardedAdsProviderFactory
+        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory, IPayProviderFactory, IRewardedAdsProviderFactory, INetworkProviderFactory
         {
             readonly MockLoginOutcome outcome;
             readonly MockPaymentOutcome payment;
             readonly MockRewardedAdOutcome ads;
-            public MockFactory(MockLoginOutcome outcome, MockPaymentOutcome payment, MockRewardedAdOutcome ads) { this.outcome = outcome; this.payment = payment; this.ads = ads; }
+            readonly MockNetworkOutcome network;
+            public MockFactory(MockLoginOutcome outcome, MockPaymentOutcome payment, MockRewardedAdOutcome ads, MockNetworkOutcome network) { this.outcome = outcome; this.payment = payment; this.ads = ads; this.network = network; }
             public IAuth CreateAuth(Action<Action> post) { return new EditorMockAuth(outcome); }
             public IStorage CreateStorage() { return new EditorMockStorage(); }
             public IRewardedAds CreateRewardedAds() { return new EditorMockRewardedAds(ads); }
+            public INetwork CreateNetwork() { return new EditorMockNetwork(network); }
             public IShare CreateShare() { return new EditorMockShare(); }
             public IPay CreatePay(Action<Action> post) { return new EditorMockPay(payment); }
         }
-        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null, MockPaymentOutcome payment = MockPaymentOutcome.Fulfilled, MockRewardedAdOutcome ads = MockRewardedAdOutcome.Completed)
+        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null, MockPaymentOutcome payment = MockPaymentOutcome.Fulfilled, MockRewardedAdOutcome ads = MockRewardedAdOutcome.Completed, MockNetworkOutcome network = MockNetworkOutcome.HttpOk)
         {
             var settings = SdkProjectSettings.instance;
             var issues = settings.Validate();
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
             UnitySdkHost.InitializeWithFactory(new SdkConfig {
-                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, PayEnabled = settings.payments, RewardedAdsEnabled = settings.rewardedAds, LogCallback = logger
-            }, new MockFactory(outcome, payment, ads));
+                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, PayEnabled = settings.payments, RewardedAdsEnabled = settings.rewardedAds, NetworkEnabled = settings.network, LogCallback = logger
+            }, new MockFactory(outcome, payment, ads, network));
         }
     }
     public sealed class EditorMockRewardedAds : IRewardedAds

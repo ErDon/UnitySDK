@@ -87,6 +87,29 @@ public static class SdkPlayChecks
                 SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("ad disabled failed");else phase=29;});
             }
             if(phase==29){
+                phase=30;SdkProjectSettings.instance.network=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.Request(new NetworkRequest("https://mock.invalid"),r=>{if(!r.Success||!r.IsHttpSuccess||r.StatusCode!=200)Fail("network 200");else phase=31;});
+            }
+            if(phase==31){
+                phase=32;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,network:MockNetworkOutcome.HttpUnauthorized);
+                SDK.Request(new NetworkRequest("https://mock.invalid"),r=>{if(!r.Success||r.IsHttpSuccess||r.StatusCode!=401)Fail("network 401");else phase=33;});
+            }
+            if(phase==33){
+                phase=34;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,network:MockNetworkOutcome.ConnectionFailed);
+                SDK.Request(new NetworkRequest("https://mock.invalid"),r=>{if(r.Error==null||r.Error.Code!="NETWORK.UNAVAILABLE")Fail("network failure");else phase=35;});
+            }
+            if(phase==35){
+                phase=36;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,network:MockNetworkOutcome.Timeout);
+                SDK.Request(new NetworkRequest("https://mock.invalid",timeoutSeconds:1),r=>{if(r.Error==null||r.Error.Code!="NETWORK.TIMEOUT")Fail("network timeout");else phase=37;});
+            }
+            if(phase==37){
+                phase=38;var operation=SDK.Request(new NetworkRequest("https://mock.invalid"),r=>{if(r.Error==null||r.Error.Code!="NETWORK.CANCELLED")Fail("network cancel");else phase=39;});operation.Cancel();
+            }
+            if(phase==39){
+                phase=40;SdkProjectSettings.instance.network=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.Request(new NetworkRequest("https://mock.invalid"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("network disabled");else phase=41;});
+            }
+            if(phase==41){
                 finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);
             }
         }catch(Exception e){Fail(e.Message);}

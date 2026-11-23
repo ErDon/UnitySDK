@@ -107,7 +107,7 @@ namespace ErDon.UnitySDK.Editor
                             Repaint();
                         });
                     } catch (InvalidOperationException ex) {
-                        lastResult = ex.Message.StartsWith("CONFIG.", StringComparison.Ordinal) ? ex.Message : "平台启动配置失败，检查平台包和后端工厂。";
+                        lastResult = ex.Message.StartsWith("CONFIG.", StringComparison.Ordinal) ? DescribeConfigurationErrors(ex.Message) : "平台启动配置失败，检查平台包和后端工厂。";
                     } catch { lastResult = "平台启动失败，检查配置字段和平台包。"; }
                 }
                 }
@@ -195,6 +195,25 @@ namespace ErDon.UnitySDK.Editor
             }
             EditorGUILayout.LabelField(lastResult, EditorStyles.wordWrappedLabel);
             EditorGUILayout.EndScrollView();
+        }
+        static string DescribeConfigurationErrors(string codes) {
+            var descriptions = new List<string>();
+            foreach (var code in codes.Split(',')) {
+                string reason;
+                switch (code) {
+                    case "CONFIG.APP_ID_REQUIRED": reason = "请填写所选平台的 App ID（非密钥）。"; break;
+                    case "CONFIG.GAME_ID_REQUIRED": reason = "请填写用于区分游戏的 Game ID。"; break;
+                    case "CONFIG.PLATFORM_UNSUPPORTED": reason = "当前配置入口尚未支持该平台，请选择微信、抖音或 TikTok。"; break;
+                    case "CONFIG.PRODUCTION_MOCK": reason = "生产环境不能使用 Mock，请切换真实平台或关闭生产环境。"; break;
+                    case "CONFIG.SESSION_EXCHANGE_REQUIRED": reason = "请注入登录后端工厂，或关闭登录后测试平台启动。"; break;
+                    case "CONFIG.NETWORK_PROVIDER_REQUIRED": reason = "请注入网络工厂，或关闭网络模块。"; break;
+                    case "CONFIG.PLATFORM_NOT_REGISTERED": reason = "请安装所选平台适配包和官方 SDK，并启用对应平台宏。"; break;
+                    case "CONFIG.FOREIGN_VENDOR_INSTALLED": reason = "检测到其他平台官方依赖，请按目标平台整理依赖后重试。"; break;
+                    default: reason = "请根据错误码检查配置、平台包及依赖工厂。"; break;
+                }
+                descriptions.Add(code + " / " + reason);
+            }
+            return string.Join("\n", descriptions.ToArray());
         }
         static string DescribeError(SdkError error) {
             var reason = error.Reason;

@@ -40,3 +40,11 @@
 Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白测试工程 Assets/Editor/SdkEditorChecks.cs，通过 -executeMethod SdkEditorChecks.Run 执行。验证 Editor Mock 合法配置、生产 Mock、未实现模块、缺失真实适配与构建阻断。
 
 验证结果：Unity 2022.3.14f1c1 编译 Editor 包通过，执行 SdkEditorChecks.Run 输出 SDK_EDITOR_CHECKS_PASS；核心回归测试通过。配置界面尚未做交互视觉验收，尚未构建实际平台产物。
+
+### 配置连接与 Play Mode 验证
+
+配置面板已连接 EditorSdkBootstrap：读取登录开关并创建 EditorMockAuth，支持成功、取消、拒绝、限流及无回调超时。新增初始化/调用/取消/释放按钮。Mock 位于 Editor 专属程序集，不参与 Player。
+
+实际 Unity Play Mode 检查输出 SDK_PLAY_CHECKS_PASS，验证成功、模块关闭、Update 超时及拒绝。注意该轮导入期间有一次脚本文件写入顺序触发的瞬时类型缺失，Unity 后续重编译并完成 Play 测试；最终文件还需再次干净导入确认。补齐基础重试元数据与 TraceId（目前同 CallId）；跨服务端传播待实现。修正测试回调内断言被 SDK 隔离的隐患。文档统一 UTF-8。
+
+持续执行中：未完成阶段不打勾；下一步完成依赖隔离和真实平台凭证/服务端协议，平台真机及支付验收仍需有效外部环境。

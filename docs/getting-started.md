@@ -1,21 +1,26 @@
-# ��һ�׶ν�������֤
+# 核心接入（开发版）
 
-��ǰ�汾�Ǻ��ĹǼܣ������κ���ʵƽ̨ SDK��Unity ���� 2022.3���״ο��÷���ǰ���� Unity ���뼰�����֤��
+Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Packages/com.erdon.unitysdk/package.json。本版本不含真实平台适配，Player 构建会被主动阻断。
 
-ͨ�� Unity Package Manager �� Add package from disk ѡ�� `Packages/com.erdon.unitysdk/package.json`������ Mock Login ʾ������ MockLoginExample �ҵ����������� Editor Play �鿴�����ʾ������ Editor ���룬������ʵ�˺š�
+## 配置驱动的 Mock
 
-��ʼ������ `UnitySdkHost.Initialize(config, provider)` ��ʽע�� IAuth�����������������ƽ̨ע�ᣬ��Ҫ����Ϸ�Լ�ѡ��ʵ�֡�Initialize / Login / Shutdown ĿǰҪ���� Unity ���̵߳��ã��첽ƽ̨���ͨ�����̶߳����ɷ���Shutdown ��ɲ����ص����������ȴ����÷���ͬ�������Լ��ļ���״̬��
+打开 Tools → ErDon SDK → 配置与预览，填写 Game ID，选择 Mock，勾选登录。进入 Play Mode，选择模拟结果，点击初始化和登录按钮。关闭登录后重新初始化，应返回 MODULE.DISABLED。该配置只控制 Editor Mock，不代表真实平台装配完成。
 
-`SDK.Login(callback)`���޲��������� LoginResult���ɹ� Session Ϊ�Ựƾ�ݣ���ֹ��������ܴ���SDK.NOT_INITIALIZED��MODULE.DISABLED��CAPABILITY.NOT_SUPPORTED��AUTH.IN_PROGRESS��AUTH.UNKNOWN���Լ��������������ӳ�����Ĭ�ϳ�ʱ 15000ms��Login(callback, timeoutMilliseconds) ��ָ��������ʱ��CancelLogin() �������صȴ������� AUTH.CANCELLED������֤����ƽ̨��Ȩ����ʱ���� AUTH.TIMEOUT������ź��Ե�һ��Ϊ׼���ٵ��ص����ԡ�UnitySdkHost �� Update �Զ����� Tick����ͣ�ڼ䲻�ɷ����ָ����鳬ʱ��
+## 游戏调用
 
-`SdkConfig.LogCallback = (level, message) => GameLogger.Write(level, message)`�������� SDK �ṩ���������� Unity Debug ������ص��쳣����Ĭ����־����ǰ��¼����Σ�params Ϊ {}��ƾ�ݼ�����ƽ̨ԭʼ�쳣��д��־����ʽ����ֶκ͸�������������������
+初始化暂由 UnitySdkHost.Initialize(config, provider) 传入 IAuth；后续真实平台包提供注册。游戏调用 SDK.Login(callback)，结果含 Success、Session、Error、CallId、TraceId。禁止打印 Session。
 
-��֤��tests/CoreTests.cs �����ⲿ�����ĺ�����Ϊ���ԣ��� SDK.cs һ�����ִ�С������ظ��͹��ڻص���ƾ�ݲ�д��־����־�ֶΡ���־�ص��쳣��ģ��رռ�δ��ʼ���������� Unity �������ʵƽ̨��֤��
+默认超时 15000ms；Login(callback, timeoutMilliseconds) 接受正数超时。CancelLogin 只取消本地等待，不保证撤销平台动作。Shutdown 丢弃旧调用回调，游戏需同时结束自己的等待 UI。UnitySdkHost.Update 驱动 Tick；暂停期间不派发，恢复后检查超时。初始化、调用、取消、释放需在主线程进行。
 
-��־�ص�ֻ���ڽ������������������ SDK �ĳ�ʼ������¼��ȡ�����ͷŻ� Tick������ᴥ��Ĭ����־���ˡ���Ϸ��ɻص������ٴη����¼���ص����쳣�����벢��¼ CALLBACK.EXCEPTION�������ԭ�쳣���ݡ�
+## 错误与日志
 
-### 错误关联字段（已实现）
+错误包含 Code、Reason、Operation、Stage、CallId、PlatformCode、PlatformMessage。适配器仅提交脱敏原始信息；未知失败不推断地区或封禁。Retry 默认 Unknown；WithRetry 可设置明确策略与等待秒数，禁止猜测限流恢复时间。当前 TraceId 等于 CallId，尚未实现服务端链路传播。
 
-LoginResult.CallId 由 SDK 在派发时填写，与该调用日志一致。失败时 Error 包含 Code、Reason、Operation、Stage、CallId、PlatformCode、PlatformMessage；适配器必须只提交已脱敏的 PlatformMessage。当前 Stage 默认 Login，后续真实适配细化为授权/凭证交换等阶段。平台原始内容不自动写入日志，避免第三方异常携带凭据。
+LogCallback 接收级别和 SDK 格式化的完整字符串；不提供则 Unity Debug 输出。日志包含时间、接口、参数、调用/日志 ID、平台、阶段和结果。当前登录仅记录 timeoutMilliseconds；Session 和任意平台异常正文不自动记录。回调只能输出，不得重入 SDK 操作；异常回退默认日志。业务结果回调异常会被隔离，记录 CALLBACK.EXCEPTION。
 
-创建失败：`LoginResult.Fail(new SdkError("AUTH.PERMISSION_DENIED", "授权被拒绝", "原始码", "脱敏说明"))`。游戏根据 Code 判断业务，不解析 PlatformMessage。未知错误不推断账号封禁或地区限制。完整重试策略与 traceId 尚待实现。
+## 测试
+
+运行 tests/run-core-tests.ps1 验证核心行为。tests/SdkEditorChecks.cs.txt 和 tests/SdkPlayChecks.cs.txt 复制到独立测试工程 Assets/Editor，改为 .cs 后分别执行静态 Run 方法；Play 检查进入真实 Play Mode 验证配置、成功/失败与 Update 超时。测试会修改测试工程设置并退出 Unity，不要在业务工程运行。
+
+上述测试不代替真机、支付或实际发布验证。
+

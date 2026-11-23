@@ -38,13 +38,15 @@ namespace ErDon.UnitySDK.Editor
     public sealed class SdkSettingsWindow : EditorWindow
     {
         Vector2 scroll;
+        MockLoginOutcome outcome;
+        string lastResult = "尚未调用";
         [MenuItem("Tools/ErDon SDK/配置与预览")]
         public static void Open() { GetWindow<SdkSettingsWindow>("SDK 配置"); }
         void OnGUI()
         {
             var settings = SdkProjectSettings.instance;
             scroll = EditorGUILayout.BeginScrollView(scroll);
-            EditorGUILayout.HelpBox("开发预览版：配置会保存，但尚未连接真实平台装配。当前可运行的示例仅为 Editor Mock 登录。", MessageType.Info);
+            EditorGUILayout.HelpBox("开发预览版：配置已连接 Editor Mock 初始化；真实平台装配尚未实现。", MessageType.Info);
             EditorGUI.BeginChangeCheck();
             settings.gameId = EditorGUILayout.TextField("Game ID", settings.gameId);
             settings.platform = (DistributionPlatform)EditorGUILayout.EnumPopup("发行平台", settings.platform);
@@ -64,7 +66,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("核心包", "com.erdon.unitysdk 0.1.0");
             EditorGUILayout.LabelField("平台实现", settings.platform == DistributionPlatform.Mock ? "Editor 示例；非真实服务" : "未安装 / 未实现");
-            EditorGUILayout.LabelField("登录开关", settings.login ? "计划启用" : "计划关闭");
+            EditorGUILayout.LabelField("登录开关", settings.login ? "Mock 初始化时启用" : "Mock 初始化时关闭");
             EditorGUILayout.HelpBox("没有引入微信、抖音、TikTok 或 Android/iOS 官方包。此预览不是构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             if (GUILayout.Button("检查并保存配置")) {
@@ -72,6 +74,25 @@ namespace ErDon.UnitySDK.Editor
                 var issues = settings.Validate();
                 EditorUtility.DisplayDialog("SDK 配置检查", issues.Count == 0 ? "配置检查通过；仅适用于当前 Editor 示例范围。" : string.Join("\n", issues), "确定");
             }
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Mock 调试（仅 Play Mode）", EditorStyles.boldLabel);
+            outcome = (MockLoginOutcome)EditorGUILayout.EnumPopup("模拟结果", outcome);
+            EditorGUILayout.HelpBox("每次初始化读取当前配置；修改模块开关后重新初始化。超时模拟使用 1 秒；其他调用使用默认超时。", MessageType.Info);
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
+                if (GUILayout.Button("按配置初始化 Mock")) {
+                    try { EditorSdkBootstrap.Initialize(outcome); lastResult = "Mock 已初始化"; }
+                    catch (Exception ex) { lastResult = ex.Message; }
+                }
+                if (GUILayout.Button("调用 SDK.Login")) {
+                    SDK.Login(result => {
+                        lastResult = (result.Success ? "Mock 成功（非真实会话）" : result.Error.Code) + " callId=" + result.CallId;
+                        Repaint();
+                    }, outcome == MockLoginOutcome.Timeout ? 1000 : 15000);
+                }
+                if (GUILayout.Button("取消当前登录")) SDK.CancelLogin();
+                if (GUILayout.Button("释放 SDK")) { SDK.Shutdown(); lastResult = "已释放"; }
+            }
+            EditorGUILayout.LabelField(lastResult, EditorStyles.wordWrappedLabel);
             EditorGUILayout.EndScrollView();
         }
     }

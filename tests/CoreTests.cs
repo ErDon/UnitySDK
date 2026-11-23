@@ -21,9 +21,11 @@ class Tests
         Check(calls==1,"stale completion");
         int fallback=0;
         SDK.Initialize(new SdkConfig { LoginEnabled=false, LogCallback=(l,s)=>{throw new Exception();} },p,a=>a(),(l,s)=>fallback++);
-        SDK.Login(r=>Check(r.Error.Code=="MODULE.DISABLED","disabled"));
+        string disabledCode=null; SDK.Login(r=>disabledCode=r.Error.Code);
+        Check(disabledCode=="MODULE.DISABLED","disabled");
         Check(fallback>=3,"log fallback");
-        SDK.Shutdown(); SDK.Login(r=>Check(r.Error.Code=="SDK.NOT_INITIALIZED","uninitialized"));
+        SDK.Shutdown(); string uninitializedCode=null; SDK.Login(r=>uninitializedCode=r.Error.Code);
+        Check(uninitializedCode=="SDK.NOT_INITIALIZED","uninitialized");
         var pending = new Provider(); var queue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
         SDK.Initialize(new SdkConfig(), pending, a=>queue.Enqueue(a), (l,s)=>{});
         string code = null; int finishes = 0;

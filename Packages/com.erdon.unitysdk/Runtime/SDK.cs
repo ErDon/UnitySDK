@@ -4,11 +4,20 @@ using System.Threading;
 
 namespace ErDon.UnitySDK
 {
+    public enum RetryPolicy { Unknown, Never, UserAction, Delayed }
     public enum SdkLogLevel { Info, Warning, Error }
     public sealed class SdkError
     {
         public string Code { get; private set; }
         public string Reason { get; private set; }
+        public RetryPolicy Retry { get; private set; }
+        public int? RetryAfterSeconds { get; private set; }
+        public string TraceId { get { return CallId; } }
+        public SdkError WithRetry(RetryPolicy policy, int? retryAfterSeconds = null)
+        {
+            if (retryAfterSeconds.HasValue && retryAfterSeconds.Value < 0) throw new ArgumentOutOfRangeException("retryAfterSeconds");
+            Retry = policy; RetryAfterSeconds = retryAfterSeconds; return this;
+        }
         public string Operation { get; internal set; }
         public string Stage { get; internal set; }
         public string CallId { get; internal set; }
@@ -24,6 +33,7 @@ namespace ErDon.UnitySDK
         public string Session { get; private set; }
         public SdkError Error { get; private set; }
         public string CallId { get; internal set; }
+        public string TraceId { get { return CallId; } }
         public static LoginResult Fail(SdkError error) { if (error == null) throw new ArgumentNullException("error"); return new LoginResult { Error = error }; }
         public static LoginResult Ok(string session) { return new LoginResult { Session = session }; }
         public static LoginResult Fail(string code, string reason) { return new LoginResult { Error = new SdkError(code, reason) }; }
@@ -74,7 +84,7 @@ namespace ErDon.UnitySDK
             var backup = fallback;
             string line = DateTimeOffset.Now.ToString("o") + " [" + level + "] platform=" + Safe(config == null ? "Unconfigured" : config.Platform)
                 + " interface=" + api + " callId=" + call + " logId=" + Guid.NewGuid().ToString("N")
-                + " stage=" + stage + " params=" + parameters + " result=" + Safe(result);
+                + " traceId=" + call + " stage=" + stage + " params=" + parameters + " result=" + Safe(result);
             try { if (sink != null) { sink(level, line); return; } } catch { }
             try { if (backup != null) backup(level, line); } catch { }
             } finally { writingLog = false; }

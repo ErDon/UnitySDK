@@ -4,7 +4,7 @@ Unity 菜单：Tools → ErDon SDK → 配置与预览。
 
 设置存储在接入游戏的 ProjectSettings/ErDonSdk.asset，可随游戏版本管理。只填写 Game ID / App ID，禁止填写服务端密钥。平台只能选择一个，模块可以勾选；界面实时显示缺失参数与未实现能力。
 
-目前配置只用于检查与预览，尚未生成运行时装配。不要把保存配置理解为真实平台已接入。Editor Mock 登录仍按 getting-started.md 中的示例初始化。
+配置现已连接 Editor Mock：进入 Play Mode，选择模拟结果，点击“按配置初始化 Mock”，再点击“调用 SDK.Login”。登录未勾选则返回 MODULE.DISABLED。真实平台配置仍未装配，不能认为已接入。可以模拟成功、取消、拒绝、限流和超时；不生成真实账号或订单。
 
 当前开发版本主动阻止所有 Player 构建：Mock 只支持 Editor，其余平台适配尚未实现。后续接入真实适配后才开放对应目标。阻断发生在 IPreprocessBuildWithReport，不修改其他项目的编译宏、插件导入设置或资源。
 

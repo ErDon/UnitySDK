@@ -312,3 +312,10 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 
 官方 DLL 入口编译及初始化行为测试通过。统一启动超时/日志/主线程编排、其他平台初始化以及真机仍待实现；本次不开放正式构建。没有用抖音返回码推断其他平台。
 独立 Unity douyin-runtime.log 输出 DOUYIN_RUNTIME_UNITY_COMPILE_PASS，退出码 0。
+
+### 官方初始化与能力装配编排
+
+新增引擎无关 SdkStartup：校验平台身份、复制配置、等待 runtime 就绪后装配工厂；主线程 Tick 交付后台结果，超时/取消/释放抑制迟到结果。失败保留旧 SDK，按所有权释放初始化桥接，成功能力归 SDK。StartupResult 与 SDK 格式化日志提供关联 ID 及安全错误。
+
+StartupTests 和公共回归通过，覆盖零提前创建、后台派发、成功能力可用、失败保护旧 SDK、错误关联、排队成功取消及超时。UnitySdkHost 便捷入口与 Play Mode 启动流程尚待接入，文档明确当前需独立 Tick。
+独立 Unity startup-core.log 无 C# 错误，输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

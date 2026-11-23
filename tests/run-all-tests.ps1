@@ -4,6 +4,10 @@ try {
     & ./tests/run-inventory-tests.ps1
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\StartupTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\IPlatformRuntime.cs .\Packages\com.erdon.unitysdk\Runtime\SdkStartup.cs .\tests\StartupTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Startup compile failed'}
+    & .\.tests\StartupTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Startup tests failed'}
     & $compiler /nologo /out:.tests\RuntimeConfigurationTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\SdkRuntimeConfiguration.cs .\tests\RuntimeConfigurationTests.cs
     if($LASTEXITCODE -ne 0){throw 'Runtime configuration compile failed'}
     & .\.tests\RuntimeConfigurationTests.exe

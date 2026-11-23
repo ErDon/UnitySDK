@@ -221,6 +221,20 @@ namespace ErDon.UnitySDK
             if (callingStorage) throw new InvalidOperationException("SDK operations cannot be reentered from a storage provider");
         }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
+        internal static void WriteStartupLog(SdkConfig settings, Action<SdkLogLevel,string> engineLog,
+            string call, string stage, string result, int timeoutMilliseconds)
+        {
+            if (writingLog) return;
+            writingLog = true;
+            try {
+                var level = stage == "Start" || result == "Success" ? SdkLogLevel.Info : SdkLogLevel.Error;
+                string line = DateTimeOffset.Now.ToString("o") + " [" + level + "] platform=" + Safe(settings.Platform)
+                    + " interface=SDK.Startup callId=" + call + " logId=" + Guid.NewGuid().ToString("N")
+                    + " traceId=" + call + " stage=" + stage + " params={\"timeoutMilliseconds\":" + timeoutMilliseconds + "} result=" + Safe(result);
+                try { if(settings.LogCallback!=null){settings.LogCallback(level,line);return;} } catch {}
+                try { engineLog(level,line); } catch {}
+            } finally {writingLog=false;}
+        }
         static void Log(SdkLogLevel level, string api, string call, string stage, string parameters, string result)
         {
             if (writingLog) return;

@@ -7,21 +7,31 @@
 ## 接口示例
 
 ```csharp
+using ErDon.UnitySDK;
+
 // 值统一为字符串。对象请先由游戏序列化为 JSON，SDK 不依赖游戏数据类型。
 StorageResult saved = SDK.SetStorageSync("my-game.settings.music", "on");
 if (!saved.Success) {
-    UnityEngine.Debug.Log(saved.Error.Code + " callId=" + saved.CallId);
+    UnityEngine.Debug.Log(saved.Error.Code + ": " + saved.Error.Reason + " callId=" + saved.CallId);
 }
 
 StorageResult loaded = SDK.GetStorageSync("my-game.settings.music");
 if (loaded.Success) {
     bool musicEnabled = loaded.Value == "on";
+    UnityEngine.Debug.Log("音乐开关：" + musicEnabled);
     // 应用设置。
 } else if (loaded.Error.Code == "STORAGE.NOT_FOUND") {
     // 使用游戏默认设置；不存在与空字符串不同。
+} else {
+    UnityEngine.Debug.LogWarning(loaded.Error.Code + ": " + loaded.Error.Reason
+        + " callId=" + loaded.CallId);
 }
 
 StorageResult removed = SDK.RemoveStorageSync("my-game.settings.music");
+if (!removed.Success) {
+    UnityEngine.Debug.LogWarning(removed.Error.Code + ": " + removed.Error.Reason
+        + " callId=" + removed.CallId);
+}
 // 删除不存在的键也成功，便于幂等清理。
 ```
 

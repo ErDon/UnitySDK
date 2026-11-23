@@ -5,6 +5,8 @@
 ## 调用
 
 ```csharp
+using ErDon.UnitySDK;
+
 SDK.Share(new ShareRequest(
     title: "一起来玩",
     imageUrl: "https://your-game.example/share.png",

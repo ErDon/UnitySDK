@@ -1,6 +1,6 @@
 # 激励广告（聚合接口与 Editor 预览）
 
-新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/微信/抖音/TikTok映射广告开关。真实平台自动装配和构建仍未开放。
+新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/微信/抖音/TikTok映射广告开关。三平台已提供自动装配并完成隔离 Development Build；正式生产构建和真机广告验收仍未完成。
 
 抖音 6.9.7 使用 TT.CreateRewardedVideoAd(CreateRewardedVideoAdParam)，关闭 Multiton，再订阅 OnLoad/OnError/OnClose 后 Load。加载完成调用一次 Show；关闭时根据官方 complete 布尔值返回 Completed。Error 只有数字码进入 PlatformCode，自由文本不回传。随包 ttsdk.xml 明确 IsComplete 表示播放完成；不把所有 OnClose 都视为完整观看。
 
@@ -24,10 +24,12 @@ RewardedAdResult.Success 表示调用正常关闭，Completed 表示客户端报
 ## 聚合调用
 
 ```csharp
+using ErDon.UnitySDK;
+
 // 初始化前 config.RewardedAdsEnabled = true；使用支持 IRewardedAdsProviderFactory 的工厂。
 SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
     if (!result.Success) {
-        UnityEngine.Debug.LogWarning(result.Error.Code + " callId=" + result.CallId);
+        UnityEngine.Debug.LogWarning(result.Error.Code + ": " + result.Error.Reason + " callId=" + result.CallId);
         return;
     }
     if (result.Completed) { /* 客户端报告看完，按游戏的奖励验证规则继续处理 */ }
@@ -62,4 +64,4 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 
 `TikTokRewardedAds` 针对本地 `1.1.6-Release` 的 TTSDK Runtime/Editor 两套 DLL 编译。CreateRewardedVideoAdParam 只有 AdUnitId，RewardedAdClosedDelegate 只有 bool 参数，与抖音的参数形态不同。订阅 OnLoad/OnError/OnClose 后 Load，加载成功调用 Show；关闭回调布尔值映射 Completed，提前关闭不视为完整观看。错误保留数值码，不传递原始消息。
 
-本地插件 JS 将 isEnded 转发给关闭回调，作为此次字段映射的来源；该本地插件含项目定制，尚未核验干净官方发行包的完整性，不能据此声称官方原包或线上行为已验收。`tests/run-tiktok-tests.ps1` 分别编译 Runtime/Editor DLL 并注入广告生命周期测试。尚需干净插件工程集成、真实客户端版本能力、广告位授权、填充和奖励验证。
+早期字段映射曾参考项目本地插件，后续已使用官方 1.1.6 安装包与独立工程逐文件核对（104 个文件一致），并完成 Runtime/Editor 双 DLL 的注入广告生命周期回归、开发构建和小游戏导出。证据与版本边界见[兼容矩阵](../compatibility/README.md)。这些检查不证明线上广告行为；真实客户端版本能力、广告位授权、填充、展示和奖励验证仍需真机验收。

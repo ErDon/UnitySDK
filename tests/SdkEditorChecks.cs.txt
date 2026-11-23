@@ -18,6 +18,16 @@ public static class SdkEditorChecks {
   s.analytics=true; if(s.Validate().Count!=0 || !s.CreateRuntimeConfiguration().ToSdkConfig().AnalyticsEnabled) throw new Exception("analytics mapping failed"); s.analytics=false;
   s.rewardedAds=false;s.payments=false;s.platform=DistributionPlatform.WeChat;s.appId="test-app";
   s.storage=true;s.share=true;
+  if(s.Validate(true).Count!=0) throw new Exception("valid development configuration blocked");
+  if(s.Validate(false).Count==0) throw new Exception("release gate removed");
+  s.production=true;
+  if(s.Validate(true).Count==0) throw new Exception("production configuration allowed in development build");
+  s.production=false;s.appId="";
+  if(s.Validate(true).Count==0) throw new Exception("development bypassed app ID validation");
+  s.appId="test-app";s.platform=DistributionPlatform.AndroidChannel;
+  if(s.Validate(true).Count==0) throw new Exception("development enabled unsupported native platform");
+  s.platform=DistributionPlatform.WeChat;
+
   var exported=s.CreateRuntimeConfiguration();
   var roundTrip=JsonUtility.FromJson<ErDon.UnitySDK.SdkRuntimeConfiguration>(JsonUtility.ToJson(exported));
   if(roundTrip.gameId!="test-game" || roundTrip.appId!="test-app" || roundTrip.platform!="WeChat"

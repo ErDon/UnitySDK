@@ -1,6 +1,6 @@
 # 核心接入（开发版）
 
-Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Packages/com.erdon.unitysdk/package.json。微信、抖音、TikTok 适配位于独立平台包。完整产物与真机验收尚未完成，Player 构建仍会被主动阻断。
+Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Packages/com.erdon.unitysdk/package.json。微信、抖音、TikTok 适配位于独立平台包。完整产物与真机验收尚未完成，正式 Player 构建仍被阻断。非生产配置可使用 Development Build 进行技术验证，但必须通过目标适配器、WebGL 平台宏及混装检查；不支持将 Mock 打入 Player。
 
 ## 配置驱动的 Mock
 

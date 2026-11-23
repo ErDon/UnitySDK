@@ -27,15 +27,18 @@ namespace ErDon.UnitySDK.Editor
                 gameId = gameId, appId = appId, login = login, storage = storage, share = share,
                 payments = payments, rewardedAds = rewardedAds, network = network, analytics = analytics };
         }
-        public List<string> Validate()
+        public List<string> Validate(bool developmentBuild = false)
         {
             var issues = new List<string>();
             if (string.IsNullOrWhiteSpace(gameId)) issues.Add("缺少游戏标识 Game ID。");
             if (production && platform == DistributionPlatform.Mock) issues.Add("生产环境禁止 Mock。");
             if (platform != DistributionPlatform.Mock) {
-                issues.Add("真实平台构建依赖与产物验收尚未完成；当前不允许真实平台构建。");
+                if (!developmentBuild || production)
+                    issues.Add("正式构建验收尚未完成；仅允许非生产配置的 Development Build 进行技术验证。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
+            foreach (var issue in CreateRuntimeConfiguration().Validate())
+                if (!issues.Contains(issue)) issues.Add(issue);
             return issues;
         }
     }

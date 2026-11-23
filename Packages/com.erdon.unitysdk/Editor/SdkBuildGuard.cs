@@ -12,7 +12,8 @@ namespace ErDon.UnitySDK.Editor
         public void OnPreprocessBuild(BuildReport report)
         {
             var settings = SdkProjectSettings.instance;
-            var errors = settings.Validate();
+            var developmentBuild = report != null && (report.summary.options & BuildOptions.Development) != 0;
+            var errors = settings.Validate(developmentBuild);
             errors.AddRange(CheckDefines(settings.platform.ToString()));
             errors.AddRange(PlatformIsolationPolicy.CheckTargetAdapter(settings.platform.ToString(),
                 PlatformDependencyCatalog.ReadInstalled(),

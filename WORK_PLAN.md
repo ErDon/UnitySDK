@@ -6,13 +6,13 @@
 
 ## 进度总览
 
-已完成并按列明范围验证 **58 / 74 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
+已完成并按列明范围验证 **59 / 75 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
 | --- | ---: | ---: |
 | 设计基线与仓库骨架 | 1 | 0 |
 | 第一阶段：聚合核心与生命周期 | 11 | 1 |
-| 第二阶段：配置面板、装配与裁剪 | 7 | 3 |
+| 第二阶段：配置面板、装配与裁剪 | 8 | 3 |
 | 第三阶段：微信登录与服务端 | 4 | 1 |
 | 第四阶段：广告、分享、存储、网络与上报 | 22 | 4 |
 | 第五阶段：支付与订单 | 4 | 2 |
@@ -49,6 +49,7 @@
 - [x] 面板平台启动/取消/关闭按钮及后端工厂注入；Play Mode 逻辑回归。
 - [ ] TikTok 注册工程验证与完整构建依赖装配。
 - [ ] 面板交互与导出操作的视觉验收。
+- [x] 微信本地 0.1.23 隔离 WebGL Development Build，配置跨进程恢复及现有 BuildReport 审计通过；不含小游戏转换/真机。
 - [ ] 实际目标平台导出及最终 JS/Wasm/原生/资源包裁剪证明；仅开放非生产 Development Build 技术验证，正式构建仍阻断。
 
 ## 第三阶段：微信登录与服务端（适配实现完成，联调待办）
@@ -122,6 +123,14 @@
 公共回归入口为 `tests/run-all-tests.ps1`；平台测试与版本边界见 [兼容矩阵](compatibility/README.md)。Unity 检查模板在 `tests/*Checks.cs.txt`，具体执行结果见下面对应记录。还未完成的真机、真实支付和正式构建不会标为已完成。
 
 ## 2026-11-23 执行记录
+
+### 微信 WebGL 开发构建与配置持久化修复
+
+新增可重跑的 MiniGameDevelopmentBuild/MiniGameBuildProbe 模板及 docs/development-build.md，在全新 WeChatBuildProject 导入核心、微信适配和本地 0.1.23 包。配置和构建分两次 Unity 进程执行。首次构建发现 SdkProjectSettings 与 SdkSettingsWindow 放在同一脚本文件，保存的 m_Script 为 0，重开后读取默认 Mock，正确被构建检查阻断。将配置类移入同名 SdkProjectSettings.cs 并提交稳定 meta；重新保存后有有效脚本 GUID，重开工程正确读取微信配置。
+
+修复后的 wechat-development-build-fixed.log 输出 SDK_DEVELOPMENT_WEBGL_BUILD_PASS，Build Finished Success，正常 exit 0；本次结果 Succeeded errors=0。生成 DevelopmentWebGL.data 2314541 字节、framework.js 654141 字节、loader.js 46217 字节、wasm 15769598 字节。last-artifact-audit.txt 的目标为 WeChat，登记程序集与 BuildReport 来源检查无错误。探针引用真实启动和按需工厂，未调用登录、展示广告、分享、事件上报或支付。
+
+这只证明本地包的 Unity WebGL 开发编译与现有范围审计，不证明官方包来源、微信转换后的最终产物裁剪、SDK 初始化成功或真机行为。旧开发版无效脚本引用配置需核对、重新填写保存并重启确认，未实现自动迁移。完整平台验收项保持未勾选。
 
 ### 开发构建与正式发布校验分离
 

@@ -1,0 +1,33 @@
+using System;
+using System.IO;
+using ErDon.UnitySDK.Editor;
+using UnityEditor;
+using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+public static class MiniGameDevelopmentBuild {
+ public static void ConfigureWeChat() {
+  PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL,"ERDON_PLATFORM_WECHAT");
+  var s=SdkProjectSettings.instance;
+  s.platform=DistributionPlatform.WeChat;s.gameId="development-build-probe";s.appId="build-only-placeholder";
+  s.production=false;s.login=false;s.storage=true;s.share=true;s.rewardedAds=true;s.analytics=true;
+  s.network=false;s.payments=false;s.SaveSettings();
+  Debug.Log("SDK_DEVELOPMENT_BUILD_CONFIGURED");
+ }
+ public static void Build() {
+  if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("Run with -buildTarget WebGL");
+  var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+  new GameObject("SDK Build Probe").AddComponent<MiniGameBuildProbe>();
+  const string scenePath="Assets/DevelopmentBuildProbe.unity";
+  if(!EditorSceneManager.SaveScene(scene,scenePath))throw new Exception("Scene save failed");
+  PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Disabled;
+  var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+   scenes=new[]{scenePath},locationPathName="Builds/DevelopmentWebGL",target=BuildTarget.WebGL,
+   options=BuildOptions.Development
+  });
+  Directory.CreateDirectory("Builds");
+  File.WriteAllText("Builds/development-build-result.txt",report.summary.result+" errors="+report.summary.totalErrors);
+  if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Development WebGL build failed: "+report.summary.result);
+  Debug.Log("SDK_DEVELOPMENT_WEBGL_BUILD_PASS");
+ }
+}

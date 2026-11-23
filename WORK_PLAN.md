@@ -202,3 +202,11 @@ Runtime/Editor 两套官方 DLL 均通过分享入口编译与注入测试，原
 新增可显式装配的 createOrderHandler，提供会话认证的创建/查询/确认路由，发货不对客户端开放。正文限额、来源限流、禁止 URL token、错误码/callId、no-store 与脱敏日志。默认启动器不加载模拟支付验证器。
 
 37 项后端测试全部通过，含真实回环 HTTP 的篡价、跨账号、撤销、未验证支付拒绝、发货路由不可访问、格式/大小限制与日志失败隔离。真实平台验签、Unity 支付传输/能力入口和端到端闭环仍待完成。
+
+### Unity 订单通信层
+
+新增引擎无关 IOrderClient/订单结果与状态，及可选 HTTP 包 UnityOrderClient：创建、查询、确认，HTTPS 会话头、限额、禁重定向、取消释放。响应核对订单/商品、金额与状态，安全映射错误及 ServerCallId。Success 不等于付款或发货。
+
+公共回归与订单协议测试通过；尚未接 SDK.Pay 聚合、平台收银台和真实 HTTPS 联调。Confirm 暂使用字符串回执，真实平台验证器仍需实现。
+
+独立 Unity 2022.3 工程 order-client.log 编译与 Editor 检查输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

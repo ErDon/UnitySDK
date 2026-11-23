@@ -3,6 +3,10 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\OrderResponseTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk.transport.http\Runtime\OrderResponsePolicy.cs .\tests\OrderResponseTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Order response compile failed'}
+    & .\.tests\OrderResponseTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Order response tests failed'}
     & $compiler /nologo /out:.tests\ShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\tests\ShareTests.cs
     if($LASTEXITCODE -ne 0){throw 'Share compile failed'}
     & .\.tests\ShareTests.exe

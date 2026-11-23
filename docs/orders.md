@@ -79,3 +79,36 @@ createOrderHandler(orderService, options) 位于 server/src/orders-http.mjs，�
 默认每来源 60 秒 30 次、JSON 正文最多 8192 字节，超限分别为 PAY.RATE_LIMITED/429（含 Retry-After）与 REQUEST.TOO_LARGE/413。不信任 X-Forwarded-For，代理后的来源额度需按部署环境配置 limiter。非 JSON 为 415，错误格式为 400，未知路径为 404，无效会话为 401，跨账号订单与不存在订单统一 404。超过正文上限或提前拒绝时关闭连接，不复用带未读正文的连接。
 
 options.log 接收服务端已格式化 JSON，包含 time/interface/callId/logId/stage/params/result；订单正文、授权头和回执整体脱敏，日志回调异常不改变响应。测试中的 evidence.valid 只存在测试验证器中，不能用于真实服务。
+
+
+## Unity 订单通信层
+
+核心提供 IOrderClient、OrderResult、GameOrder、OrderState；可选 HTTP 包提供 UnityOrderClient。它是支付编排的下层接口，尚未接入统一 SDK.Pay，也不直接启动平台收银台或发货。
+
+```csharp
+// this 是存活、启用的 MonoBehaviour；在主线程创建和调用。
+IOrderClient orders = new UnityOrderClient(this, "https://your-game.example/v1/orders");
+orders.Create(gameSession, "coins", purchaseRequestId, result => {
+    if (!result.Success) {
+        UnityEngine.Debug.LogWarning(result.Error.Code + " serverCallId=" + result.ServerCallId);
+        return;
+    }
+    // result.Success 只是操作成功，Created 不代表已付款。
+    string orderId = result.Order.OrderId;
+    orders.Get(gameSession, orderId, latest => {
+        if (latest.Success && latest.Order.State == OrderState.Fulfilled) {
+            // 向游戏服务同步已发放的权益，不能在这里再发一次。
+        }
+    });
+});
+// 平台回执是字符串时：orders.Confirm(gameSession, orderId, receipt, callback);
+// 停止使用时 orders.Dispose(); 中止本实例请求并不撤销服务端已执行的操作。
+```
+
+purchaseRequestId 应在一次购买开始时生成并保存，网络不确定时重试原值，不能每次重试都换号。订单价格完全由服务端返回。Confirm 的 evidence 当前是字符串字段，服务端平台验证器需支持对应字符串回执；结构化平台证据需另行扩展，不能把测试 evidence.valid 当作真实凭证。
+
+请求只走 HTTPS，禁止 URL 凭据/query/fragment，禁用重定向。会话仅放 Authorization 头，不输出会话、回执或响应正文。15 秒超时，JSON 请求 UTF-8 最多 8192 字节；响应收到后检查 64 KiB（不是下载时流量限制）。Dispose 后不再派发在途结果。调用方负责 host 生命周期、结果回调异常与统一 SDK 层日志；当前下层客户端不自行输出日志、不自动重试。
+
+结果策略核对订单 UUID、期望订单/商品、非空商品、正整数金额（不超过 JS 安全整数）、币种形状及三个已知状态。未知状态、矛盾响应、换单响应均为 PAY.INVALID_RESPONSE。服务端错误仅映射已登记 HTTP/错误码组合，其他返回 PAY.SERVER_REJECTED；429 提供 RetryAfterSeconds（仅接受正整数），401 会话错误提示重新登录。ServerCallId 只保留标准 UUID。
+
+协议单元测试覆盖状态、换单、金额与错误字段；Unity 编译验证不等于 HTTPS 实机联调。真实平台支付和 SDK.Pay 聚合仍是后续工作。

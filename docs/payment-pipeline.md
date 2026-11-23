@@ -25,7 +25,7 @@ if (!checked.valid) {
 
 成功仅返回冻结的 notification：clientKey、isSandbox、orderId、tradeOrderId、userOpenId、createdAtSeconds，不透传正文额外字段。官方样例的 user_openid 可以为空，因此用户归属仍必须通过服务端可信的预支付关联记录校验，不能只信通知里的订单号。
 
-后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由和通知到真实发货接入，不能将这两个函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。下述 acceptWebhook 已提供通知到 Paid 的本地事务，当前尚无 webhook HTTP 路由和真实发货接入，不能将这两个解析函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
 
 本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额，以及签名正确但应用/环境/事件不符、非法载荷和解析顺序。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
 
@@ -37,7 +37,13 @@ if (!checked.valid) {
 
 `get({ binding, isSandbox, tradeOrderId })` 返回冻结快照，缺失或跨应用/游戏/环境返回 null；记录容量沿用订单存储的 capacity，满后拒绝新增且保留已有重试。实例不拥有数据库，统一由 orderStore.close() 关闭。数据库独立版本不支持时拒绝初始化；不会自动迁移未知格式。
 
-错误包括 PAY.ORDER_NOT_FOUND、PAY.PREPAYMENT_CONFLICT、PAY.ORDER_ALREADY_PAID、SERVER.CAPACITY、SERVER.STORAGE_UNAVAILABLE。测试 `test/tiktok-prepayments.test.mjs` 验证恢复和隔离。尚需接可信预支付 API、验签通知消费与订单状态原子更新，不能据“关联存在”发货。
+错误包括 PAY.ORDER_NOT_FOUND、PAY.PREPAYMENT_CONFLICT、PAY.ORDER_ALREADY_PAID、SERVER.CAPACITY、SERVER.STORAGE_UNAVAILABLE。测试 `test/tiktok-prepayments.test.mjs` 验证恢复和隔离。尚需接可信预支付 API，不能据“关联存在”发货。
+
+`acceptWebhook({ binding, isSandbox, rawBody, signature, clientSecret, nowSeconds?, toleranceSeconds? })` 先调用验签解析，再于同一 SQLite 事务中检查预支付关联、订单号、可用的 openId、游戏作用域和用户 subject。未通过验签/解析返回 `{ accepted: false, code }`；关联缺失、身份不符或交易冲突抛 OrderError，不改变订单。
+
+首次匹配将 Created 改为 Paid，返回 `{ accepted: true, orderId, state, duplicate: false }`。重启后重复通知仍幂等；已 Fulfilled 订单保持 Fulfilled。另一平台交易尝试再支付同一订单返回 PAY.TRANSACTION_CONFLICT，必须对账处理，不能重复发货或自动声称退款。交易号被其他订单占用返回 PAY.TRANSACTION_REUSED。这些检查与状态写入在同一事务内，避免检查后再写入的竞争。
+
+Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游戏幂等发货接收方完成后续步骤；本方法不发放权益、不暴露 HTTP 服务、不自动查询上游订单。预支付记录仍须来自可信平台下单响应，不能开放 register 给客户端。新增测试覆盖 Paid/重启/已发货重复通知、签名正确但换单/换用户、两连接重复通知及第二笔交易冲突，不代表真实平台沙盒或生产验收。
 
 ## 状态与步骤
 

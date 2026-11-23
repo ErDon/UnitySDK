@@ -21,6 +21,9 @@ public static class WeChatDevelopmentConversion {
   config.CompileOptions.DevelopBuild=true;
   config.CompileOptions.fbslim=false;
   config.CompileOptions.DeleteStreamingAssets=false;
+  var serialized=new SerializedObject(config);
+  var relative=serialized.FindProperty("ProjectConf.relativeDST");
+  if(relative!=null){relative.stringValue="Builds/WeChatConversion";serialized.ApplyModifiedPropertiesWithoutUndo();}
   EditorUtility.SetDirty(config);AssetDatabase.SaveAssets();
   var result=WXConvertCore.DoExport(true);
   if(result!=WXConvertCore.WXExportError.SUCCEED)throw new Exception("Official conversion failed: "+result);

@@ -95,3 +95,11 @@ IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
 Mock 位于 Editor 程序集，不发送统计请求。改变模拟结果后需要重新初始化才能生效；改变配置开关也不修改已经初始化的 SDK 快照。真实平台运行时，这组 Mock 业务按钮保持禁用。面板按钮逻辑和 Play Mode 验证不同于视觉交互验收，后者仍需单独检查。
 
 隔离工程可复制 `tests/AnalyticsPlayChecks.cs.txt` 到 Assets/Editor/AnalyticsPlayChecks.cs，通过 AnalyticsPlayChecks.Run 启动行为测试。测试包含真实 UnitySdkHost 的 Update 派发和超时驱动、模块关闭及关闭后排队结果抑制。
+
+## 微信字符串接口基线
+
+官方仓库 `wechat-miniprogram/minigame-tuanjie-transform-sdk` 提交 `915d4bf4f60ef0cd1c29316a8d67257185d609a7`（包标识0.1.1）与本地0.1.23的接口不同：前者 `WX.ReportEvent` 接受 `Dictionary<string,string>`。使用该固定提交时，在目标平台编译宏中同时设置 `ERDON_PLATFORM_WECHAT;ERDON_WECHAT_STRING_ANALYTICS`。不要根据版本数字大小自动判断接口形式。
+
+兼容宏开启后，字符串和空参数事件可正常派发；Int32/Double 参数返回 `ANALYTICS.PARAMETER_TYPE_UNSUPPORTED`，不会调用官方接口，不会隐式转换成字符串。若业务主动将字段设计成文本，可显式传字符串，但须同时按文本定义后台事件字段。本地0.1.23继续使用原泛型路径，不开启该宏，保留数值类型。此开关只覆盖已核对的上报签名，不代表该官方包全部能力及真机已验收。
+
+`tests/run-wechat-string-analytics-tests.ps1` 接收官方包路径与该包在 Unity 中编译的 Wx.dll，验证真实签名编译、数字拒绝、字符串/空参数派发、快照和释放。旧基线继续运行 `run-wechat-factory-tests.ps1`。两者不得混用 Wx.dll 与插件包。

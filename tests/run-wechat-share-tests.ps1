@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$OfficialPackagePath,
     [Parameter(Mandatory=$true)][string]$CompiledWxAssembly,
+    [string]$UnityMono='C:\Program Files\Unity\Hub\Editor\2022.3.14f1c1\Editor\Data\MonoBleedingEdge\bin\mono.exe',
     [string]$NetStandardFacade="${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\netstandard.dll")
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
@@ -12,6 +13,6 @@ try {
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
     & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-share\WeChatShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.wechat\Runtime\WeChatShare.cs .\tests\WeChatShareTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs
     if($LASTEXITCODE -ne 0){throw 'WeChat share compile failed'}
-    & .\.tests\wechat-share\WeChatShareTests.exe
+    & $UnityMono .\.tests\wechat-share\WeChatShareTests.exe
     if($LASTEXITCODE -ne 0){throw 'WeChat share tests failed'}
 } finally {Pop-Location}

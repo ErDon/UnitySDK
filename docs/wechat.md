@@ -103,3 +103,11 @@ void OnWeChatRuntimeReady()
 SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 微信 SDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
 
 工厂验证命令：tests/run-wechat-factory-tests.ps1 -OfficialPackagePath <0.1.23包目录> -CompiledWxAssembly <Wx.dll路径>。配置及释放测试通过；本机 Wx.dll 与包 DTO 仍存在其他接口类型 CS1684 警告，不能作为干净官方版本组合验收。
+
+## 0.1.23 隔离工程复验（2026-11-23）
+
+用本地 LocalPackages 的 0.1.23 包建立独立 WeChatCompileProject，通过 UPM file 依赖加载该包及本仓库 core/wechat；未复用旧游戏 Library。启用 ERDON_PLATFORM_WECHAT 后，官方源码和适配程序集编译通过，wechat-clean-verify.log 输出 WECHAT_SHARE_UNITY_COMPILE_PASS，退出码 0。该检查确认登录、存储、分享类型加载。测试入口保存在 tests/WeChatCompileCheck.cs.txt，先 Configure，再重新启动执行 Verify。
+
+将测试的 CompiledWxAssembly 改为这个隔离工程生成的 Library/ScriptAssemblies/Wx.dll 后，工厂和分享测试均通过，原 CS1684 类型不匹配警告消失。旧游戏的 Wx.dll 不应继续作为 0.1.23 的验证依赖。工厂/分享脚本使用 Unity Mono 运行，支持通过 -UnityMono 指定安装位置。
+
+上述验证说明本地这份包可以重新编译，不能证明本地文件从未修改。已生成 334 个文件的哈希快照，官方来源完整性、目标导出与真机仍需单独验证。此前的警告记录属于旧程序集组合，不代表此次复验结果。

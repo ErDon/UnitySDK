@@ -274,3 +274,9 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 补齐 WeChatProviderFactory/TikTokProviderFactory，使三平台统一使用配置驱动的工厂装配。各工厂只引用自己的平台实现；登录后端按需创建并移交 VerifiedAuth，存储/分享实例独立，未实现支付明确拒绝。新增初始化示例和宿主生命周期说明。
 
 TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过。微信工厂配置/生命周期测试通过，但本机编译 Wx.dll 与 0.1.23 DTO 的其他类型 CS1684 警告仍在，不宣称完整版本兼容或干净工程验收。平台初始化、面板自动装配及真机验证继续待办。
+
+### 微信 0.1.23 隔离重编译
+
+从本地 0.1.23 包源码创建隔离 Unity 工程，未使用旧项目 Library；启用微信宏后完整官方源码及 SDK 适配编译加载通过，wechat-clean-verify.log 输出 WECHAT_SHARE_UNITY_COMPILE_PASS，退出码 0。
+
+使用新生成 Wx.dll 重跑工厂和分享测试通过，旧组合的 CS1684 警告消失。脚本改用 Unity Mono，新增可重跑的 Unity 检查源码。仍不声称本地包官方完整性、初始化、导出或真机完成。

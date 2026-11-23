@@ -1,0 +1,19 @@
+using UnityEditor;
+using UnityEngine;
+public static class WeChatCompileCheck {
+ public static void Configure() {
+  PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,"ERDON_PLATFORM_WECHAT");
+  Debug.Log("WECHAT_DEFINE_CONFIGURED");
+ }
+ public static void Verify() {
+  var t=System.Type.GetType("ErDon.UnitySDK.WeChat.WeChatCredentialProvider, ErDon.UnitySDK.WeChat");
+  if(t==null) throw new System.Exception("WeChat adapter not loaded");
+  var storage=System.Type.GetType("ErDon.UnitySDK.WeChat.WeChatStorage, ErDon.UnitySDK.WeChat");
+  if(storage==null || !typeof(ErDon.UnitySDK.IStorage).IsAssignableFrom(storage)) throw new System.Exception("WeChat storage not loaded");
+  Debug.Log("WECHAT_UNITY_COMPILE_PASS");
+  var share=System.Type.GetType("ErDon.UnitySDK.WeChat.WeChatShare, ErDon.UnitySDK.WeChat");
+  if(share==null || !typeof(ErDon.UnitySDK.IShare).IsAssignableFrom(share)) throw new System.Exception("WeChat share not loaded");
+  Debug.Log("WECHAT_SHARE_UNITY_COMPILE_PASS");
+ }
+}
+

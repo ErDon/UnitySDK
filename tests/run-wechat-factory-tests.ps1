@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$OfficialPackagePath,
     [Parameter(Mandatory=$true)][string]$CompiledWxAssembly,
+    [string]$UnityMono='C:\Program Files\Unity\Hub\Editor\2022.3.14f1c1\Editor\Data\MonoBleedingEdge\bin\mono.exe',
     [string]$NetStandardFacade="${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\netstandard.dll")
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
@@ -15,7 +16,6 @@ try {
     $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.wechat\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
     & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-factory\WeChatFactoryTests.exe $coreSources $platformSources .\tests\WeChatFactoryTests.cs
     if($LASTEXITCODE -ne 0){throw 'WeChat factory compile failed'}
-    & .\.tests\wechat-factory\WeChatFactoryTests.exe
+    & $UnityMono .\.tests\wechat-factory\WeChatFactoryTests.exe
     if($LASTEXITCODE -ne 0){throw 'WeChat factory tests failed'}
 } finally {Pop-Location}
-

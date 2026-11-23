@@ -70,6 +70,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("登录开关", settings.login ? "Mock 初始化时启用" : "Mock 初始化时关闭");
             EditorGUILayout.HelpBox("没有引入微信、抖音、TikTok 或 Android/iOS 官方包。此预览不是构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
+            foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);
             if (GUILayout.Button("检查并保存配置")) {
                 settings.SaveSettings();
                 var issues = settings.Validate();

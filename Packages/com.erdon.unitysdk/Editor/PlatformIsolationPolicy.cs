@@ -16,6 +16,30 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class PlatformIsolationPolicy
     {
+        public static List<string> CheckPlatformDefines(string target, string defines, string engineTarget)
+        {
+            var errors = new List<string>();
+            var known = new Dictionary<string,string>(StringComparer.Ordinal) {
+                {"WeChat", "ERDON_PLATFORM_WECHAT"},
+                {"Douyin", "ERDON_PLATFORM_DOUYIN"},
+                {"TikTok", "ERDON_PLATFORM_TIKTOK"}
+            };
+            var selected = new HashSet<string>((defines ?? "").Split(';').Select(x=>x.Trim()).Where(x=>x.StartsWith("ERDON_PLATFORM_",StringComparison.Ordinal)), StringComparer.Ordinal);
+            string required;
+            if (target == "Mock") {
+                if(selected.Count != 0)errors.Add("Editor Mock must not enable a real-platform define");
+                return errors;
+            }
+            if(!known.TryGetValue(target ?? "", out required)) {
+                errors.Add("No registered platform define for target: " + target);
+                return errors;
+            }
+            if(!selected.Contains(required))errors.Add("Missing target define: " + required);
+            foreach(var symbol in selected)
+                if(symbol != required)errors.Add("Foreign or unknown platform define: " + symbol);
+            if(engineTarget != "WebGL")errors.Add("Current mini-game adapters require the WebGL build target");
+            return errors;
+        }
         public static List<string> ValidateManifest(PlatformDependency dependency)
         {
             var errors = new List<string>();

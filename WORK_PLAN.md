@@ -692,3 +692,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 聚合日志输出契约复核（2026-11-23）
 
 新增 LogContractTests 并接入公共回归，实际调用初始化、登录、分享、广告、支付、三个存储接口、网络、同步/异步上报、关闭及 Startup 失败。检查 ISO 时间、接口、callId/traceId、逐条唯一 logId、阶段和 JSON 参数；所有 Start 有同 ID 的 Complete，敏感测试值与换行不泄漏。上层日志回调抛异常时默认 sink 接收完全相同日志行，未配置回调时默认输出可用；默认公共回归全通过。官方 SDK 自身日志不在聚合 sink 控制范围，最终全部生命周期/Unity 输出路径复核仍保留未勾选。
+
+### Unity 默认日志输出验证（2026-11-23）
+
+新增 UnityLogSinkChecks，独立 BuildChecksProject Play Mode 监听 Application.logMessageReceived。验证三种级别进入实际 Debug 输出、包含 SDK 字段且不泄露参数、上层回调接管后引擎无重复日志、回调抛异常后输出同一条格式化内容。首次测试错误地以取消后立即 Shutdown 的异步队列路径期待 Warning，修正为同步模块关闭路径后 unity-log-sink-fixed.log 输出 SDK_UNITY_LOG_SINK_CHECKS_PASS，进程结束。剩余生命周期复核重点为宿主在普通参数/工厂失败时是否保留旧启动；整体最终复核项暂不勾选。

@@ -113,3 +113,5 @@ SDK 生成完整日志行，上层回调只接收内容。时间使用带偏移�
 未传上层日志回调时交给引擎输出；上层回调抛异常时，同一条已格式化内容交给默认输出，不重新生成 logId 或时间。Unity 默认输出依级别调用 Debug.Log/LogWarning/LogError。此契约覆盖本 SDK 输出，不拦截官方 SDK、自定义 provider 或游戏自己调用的 Debug.Log。
 
 `tests/LogContractTests.cs` 已并入 run-all-tests.ps1，通过实际聚合调用检查所有能力接口日志、初始化/关闭、Startup 失败、用户回调异常、参数 JSON、字段/ID 关联、敏感值与换行处理，以及上层回调和默认输出的路由与逐字一致性。它验证纯 C# 输出契约，不替代 Unity Console 的视觉验收或第三方 SDK 日志检查。
+
+`tests/UnityLogSinkChecks.cs.txt` 是引擎侧验证：复制到独立测试工程 Assets/Editor，运行 UnityLogSinkChecks.Run（不要传 -quit，检查结束自行退出）。通过 Application.logMessageReceived 观察真实 Play Mode 日志，核对 Info/Warning/Error 映射、回调优先无重复输出、回调异常后的逐字回退。成功标记为 SDK_UNITY_LOG_SINK_CHECKS_PASS。Warning 用关闭登录的同步结果触发；不能取消后立即 Shutdown，再假设队列中的终态已输出。此测试不需要账号或真实平台。

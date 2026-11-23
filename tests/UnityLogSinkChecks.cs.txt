@@ -1,0 +1,49 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+[InitializeOnLoad]
+public static class UnityLogSinkChecks {
+ const string Key="ErDon.Tests.UnityLogSink";
+ sealed class Entry {public string Text;public LogType Type;}
+ static readonly List<Entry> emitted=new List<Entry>();
+ static UnityLogSinkChecks(){EditorApplication.playModeStateChanged+=Changed;}
+ public static void Run(){
+  EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+  SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;
+ }
+ static void Capture(string message,string stack,LogType type){
+  if(message.Contains(" interface=SDK."))emitted.Add(new Entry{Text=message,Type=type});
+ }
+ static void Check(bool condition,string reason){if(!condition)throw new Exception(reason);}
+ static void Changed(PlayModeStateChange state){
+  if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+  SessionState.SetBool(Key,false);Application.logMessageReceived+=Capture;
+  try {
+   UnitySdkHost.Shutdown();emitted.Clear();
+   UnitySdkHost.Initialize(new SdkConfig{Platform="LogProbe",LoginEnabled=false},null);
+   SDK.GetStorageSync("private-storage-key");SDK.Login(r=>{});UnitySdkHost.Shutdown();
+   Check(emitted.Any(x=>x.Type==LogType.Log),"Info not delivered to Debug.Log");
+   Check(emitted.Any(x=>x.Type==LogType.Warning),"Warning not delivered to Debug.LogWarning");
+   Check(emitted.Any(x=>x.Type==LogType.Error),"Error not delivered to Debug.LogError");
+   foreach(var entry in emitted){
+    string expected=entry.Type==LogType.Error?"[Error]":entry.Type==LogType.Warning?"[Warning]":"[Info]";
+    Check(entry.Text.Contains(expected)&&entry.Text.Contains(" callId=")&&entry.Text.Contains(" logId=")&&entry.Text.Contains(" params="),"Unity changed SDK envelope or severity");
+    Check(!entry.Text.Contains("private-"),"Private value leaked");
+   }
+   emitted.Clear();var upper=new List<string>();
+   UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false,LogCallback=(l,s)=>upper.Add(s)},null);UnitySdkHost.Shutdown();
+   Check(upper.Count>=2&&emitted.Count==0,"Upper callback delivery duplicated to engine");
+   upper.Clear();
+   UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false,LogCallback=(l,s)=>{upper.Add(s);throw new Exception("private-sink-error");}},null);UnitySdkHost.Shutdown();
+   Check(upper.Count>=2&&upper.SequenceEqual(emitted.Select(x=>x.Text)),"Unity fallback differs from SDK callback payload");
+   Application.logMessageReceived-=Capture;
+   Debug.Log("SDK_UNITY_LOG_SINK_CHECKS_PASS");EditorApplication.Exit(0);
+  } catch(Exception e){
+   Application.logMessageReceived-=Capture;Debug.LogError("SDK_UNITY_LOG_SINK_CHECKS_FAIL: "+e.Message);EditorApplication.Exit(1);
+  }
+ }
+}

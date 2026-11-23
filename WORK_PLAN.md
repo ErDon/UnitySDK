@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 按支付请求动态绑定会话
+
+新增 ISessionPaymentLauncher 与 PreparedPaymentLauncher 的客户端工厂重载。VerifiedPayment 转交当前 PaymentRequest，按其游戏会话创建预支付客户端，终态/释放回收，不捕获初始化时的旧会话；保留固定客户端构造兼容。文档补充先初始化、登录后付款的工厂组合示例。
+
+公共回归全部通过；新增会话缺失拒绝、两个账号独立客户端、旧回调抑制、关闭回收及 VerifiedPayment 请求传递测试。面板自动后端装配和真机验收仍待完成，66/78。
+
 ### TikTok 支付显式工厂装配
 
 TikTokProviderFactory 实现 IPayProviderFactory，新增可选 createPayment 委托。只有支付启用时构造，缺配置或 null 返回拒绝初始化，成功对象由 SDK 持有和释放。补充使用 UnityOrderClient、UnityPrepaymentClient、PreparedPaymentLauncher 和官方网关的装配示例及会话更换边界。

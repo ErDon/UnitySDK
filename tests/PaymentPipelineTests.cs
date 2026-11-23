@@ -12,8 +12,10 @@ class PaymentPipelineTests
         public void Get(string s,string id,Action<OrderResult> callback){Gets++;Queried=callback;}
         public void Dispose(){Disposals++;}
     }
-    sealed class Launcher : IPaymentLauncher {
+    sealed class Launcher : ISessionPaymentLauncher {
         public int Calls,Disposals;public Action<PaymentLaunchResult> Callback;
+        public PaymentRequest Request;
+        public void Launch(PaymentRequest request,GameOrder order,Action<PaymentLaunchResult> callback){Request=request;Launch(order,callback);}
         public void Launch(GameOrder order,Action<PaymentLaunchResult> callback){Calls++;Callback=callback;}
         public void Dispose(){Disposals++;}
     }
@@ -29,6 +31,7 @@ class PaymentPipelineTests
         PaymentResult busy=null;pay.Pay(request,r=>busy=r);Check(busy.Error.Code=="PAY.IN_PROGRESS","Concurrent launch rejected");
         orders.Created(Order(OrderState.Created));orders.Created(Order(OrderState.Created));Check(launcher.Calls==0,"Must queue to main thread");drain();
         Check(launcher.Calls==1&&orders.RequestId=="stable-id","One launch and stable id");
+        Check(ReferenceEquals(launcher.Request,request),"Verified payment forwards the same immutable request to session launcher");
         launcher.Callback(PaymentLaunchResult.Submitted("secret-receipt"));launcher.Callback(PaymentLaunchResult.Submitted("late"));drain();
         Check(orders.Confirms==1&&result==null,"Platform success waits for backend");
         orders.Confirmed(Order(OrderState.Paid));drain();Check(!result.Success&&result.Error.Code=="PAY.FULFILLMENT_PENDING","Paid is not delivered");

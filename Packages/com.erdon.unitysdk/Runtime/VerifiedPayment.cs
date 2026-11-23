@@ -45,6 +45,7 @@ namespace ErDon.UnitySDK
         public override string ToString() { return "PaymentLaunchResult([REDACTED])"; }
     }
     public interface IPaymentLauncher : IDisposable { void Launch(GameOrder order,Action<PaymentLaunchResult> callback); }
+    public interface ISessionPaymentLauncher : IPaymentLauncher { void Launch(PaymentRequest request,GameOrder order,Action<PaymentLaunchResult> callback); }
     // Engine/platform layer only. ID must come from a trusted server prepayment response.
     public interface IPlatformPaymentGateway : IDisposable { void Launch(string tradeOrderId, Action<PaymentLaunchResult> callback); }
     public interface IPay : IDisposable { void Pay(PaymentRequest request,Action<PaymentResult> callback); }
@@ -127,7 +128,11 @@ namespace ErDon.UnitySDK
                             verify(launch!=null&&launch.Error==null&&!launch.RequiresServerQuery);
                         });
                     };
-                    try{launcher.Launch(order,onLaunched);}catch{onLaunched(PaymentLaunchResult.Fail(new SdkError("PAY.LAUNCH_FAILED","Platform payment invocation failed")));}
+                    try{
+                        var sessionLauncher=launcher as ISessionPaymentLauncher;
+                        if(sessionLauncher!=null)sessionLauncher.Launch(request,order,onLaunched);
+                        else launcher.Launch(order,onLaunched);
+                    }catch{onLaunched(PaymentLaunchResult.Fail(new SdkError("PAY.LAUNCH_FAILED","Platform payment invocation failed")));}
                 });
             };
             try{orders.Create(request.Session,request.ProductId,request.RequestId,onCreated);}catch{onCreated(OrderResult.Fail("PAY.CREATE_FAILED","Order creation failed"));}

@@ -245,6 +245,29 @@ SDK.InitializeWithFactory(new SdkConfig {
 
 此示例是会话已存在时的显式装配，不是自动注册或面板一键完成登录再支付。更换账号或会话后需释放并重新装配，不能沿用旧会话绑定的 UnityPrepaymentClient。SDK 拥有成功创建的支付实现及其依赖；每次工厂调用必须创建全新实例。此处后端为真实游戏服务，不能直接把 TikTok 的平台 access_token 作为 gameSession。
 
+若需先初始化、登录后再付款，推荐使用 PreparedPaymentLauncher 的工厂重载，避免捕获初始化时的会话：
+
+```csharp
+var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
+    "game-id", "test", createSessionExchange: createSessionExchange,
+    createPayment: post => {
+        var orders = new UnityOrderClient(host, ordersEndpoint);
+        IPaymentLauncher launcher = null;
+        try {
+            launcher = new PreparedPaymentLauncher(
+                session => new UnityPrepaymentClient(host, ordersEndpoint, session),
+                new ErDon.UnitySDK.TikTok.TikTokPaymentGateway());
+            return new VerifiedPayment(orders, launcher, post);
+        } catch {
+            orders.Dispose();
+            if (launcher != null) launcher.Dispose();
+            throw;
+        }
+    });
+```
+
+工厂重载实现 ISessionPaymentLauncher。VerifiedPayment 将本次 PaymentRequest 传给它；每次实际发起预支付时使用 request.Session 创建全新客户端，流程终态或 Dispose 释放它。没有请求/会话、商品不匹配会拒绝，不会沿用上一次会话。单次流程内会话固定，换账号后的新 PaymentRequest 使用新的会话；上层仍须管理退出登录时取消旧流程及清除旧会话。直接调用此启动器应使用 Launch(request, order, callback)，旧的 Launch(order, callback) 在动态模式会返回 PAY.INVALID_REQUEST。固定客户端构造方式仍兼容。此改动尚不包括配置面板的后端自动装配。
+
 ```csharp
 using ErDon.UnitySDK;
 

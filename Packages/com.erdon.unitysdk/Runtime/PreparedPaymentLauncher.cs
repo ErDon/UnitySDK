@@ -16,24 +16,36 @@ namespace ErDon.UnitySDK
     // Session-bound server client. Both invocation and completion must run on the main thread.
     public interface IPrepaymentClient : IDisposable { void Prepare(string orderId, Action<PrepaymentResult> callback); }
 #if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
-    public sealed class PreparedPaymentLauncher : IPaymentLauncher
+    public sealed class PreparedPaymentLauncher : ISessionPaymentLauncher
     {
         readonly IPrepaymentClient preparation; readonly IPlatformPaymentGateway gateway;
+        readonly Func<string,IPrepaymentClient> createPreparation;
+        IPrepaymentClient activePreparation;
         bool disposed, busy;
         public PreparedPaymentLauncher(IPrepaymentClient preparation, IPlatformPaymentGateway gateway) {
             if(preparation==null||gateway==null)throw new ArgumentNullException();
             this.preparation=preparation;this.gateway=gateway;
         }
+        public PreparedPaymentLauncher(Func<string,IPrepaymentClient> createPreparation,IPlatformPaymentGateway gateway) {
+            if(createPreparation==null||gateway==null)throw new ArgumentNullException();
+            this.createPreparation=createPreparation;this.gateway=gateway;
+        }
         public void Launch(GameOrder order, Action<PaymentLaunchResult> callback) {
+            Launch(null,order,callback);
+        }
+        public void Launch(PaymentRequest request, GameOrder order, Action<PaymentLaunchResult> callback) {
             if(callback==null)throw new ArgumentNullException("callback");
             if(disposed){callback(Fail("SDK.DISPOSED","Prepared launcher was disposed"));return;}
+            if(createPreparation!=null&&(request==null||string.IsNullOrWhiteSpace(request.Session)||(order==null||request.ProductId!=order.ProductId))) {
+                callback(Fail("PAY.INVALID_REQUEST","Matching payment request and game session are required"));return;
+            }
             Guid id;
             if(order==null||!Guid.TryParseExact(order.OrderId,"D",out id)||order.State!=OrderState.Created){callback(Fail("PAY.INVALID_REQUEST","A created game order is required"));return;}
             if(busy){callback(Fail("PAY.IN_PROGRESS","Payment preparation or platform flow is pending"));return;}
             busy=true;int prepared=0,completed=0;
             Action<PaymentLaunchResult> finish=result=>{
                 if(disposed||Interlocked.Exchange(ref completed,1)!=0)return;
-                busy=false;callback(result??Fail("PAY.INVALID_RESPONSE","Platform returned no result"));
+                ReleasePreparation();busy=false;callback(result??Fail("PAY.INVALID_RESPONSE","Platform returned no result"));
             };
             Action<PrepaymentResult> ready=result=>{
                 if(disposed||Interlocked.Exchange(ref prepared,1)!=0)return;
@@ -44,11 +56,22 @@ namespace ErDon.UnitySDK
                 }
                 try{gateway.Launch(result.TradeOrderId,finish);}catch{finish(Fail("PAY.LAUNCH_FAILED","Platform gateway invocation failed"));}
             };
-            try{preparation.Prepare(order.OrderId,ready);}catch{ready(PrepaymentResult.Fail(new SdkError("PAY.PREPAYMENT_UNCERTAIN","Prepayment invocation failed; preserve order for reconciliation")));}
+            try{
+                var client=preparation;
+                if(createPreparation!=null) {
+                    client=createPreparation(request.Session);
+                    if(disposed){try{if(client!=null)client.Dispose();}catch{}return;}
+                    if(client==null){finish(Fail("PAY.PREPARATION_UNAVAILABLE","Prepayment factory returned no client"));return;}
+                    activePreparation=client;
+                }
+                client.Prepare(order.OrderId,ready);
+            }catch{ready(PrepaymentResult.Fail(new SdkError("PAY.PREPAYMENT_UNCERTAIN","Prepayment invocation failed; preserve order for reconciliation")));}
         }
+        void ReleasePreparation(){var client=activePreparation;activePreparation=null;if(client!=null)try{client.Dispose();}catch{}}
         static PaymentLaunchResult Fail(string code,string reason){return PaymentLaunchResult.Fail(new SdkError(code,reason));}
         static bool HasControl(string value){foreach(char item in value)if(char.IsControl(item))return true;return false;}
-        public void Dispose(){if(disposed)return;disposed=true;try{preparation.Dispose();}finally{if(!ReferenceEquals(preparation,gateway))gateway.Dispose();}}
+        public void Dispose(){if(disposed)return;disposed=true;ReleasePreparation();try{if(preparation!=null)preparation.Dispose();}finally{if(!ReferenceEquals(preparation,gateway))gateway.Dispose();}}
     }
 #endif
 }
+

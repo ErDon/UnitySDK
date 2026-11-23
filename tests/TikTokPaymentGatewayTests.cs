@@ -16,7 +16,7 @@ class TikTokPaymentGatewayTests
         gateway.Launch("second", r => result = r);
         Check(result.Error.Code == "PAY.IN_PROGRESS" && calls == 1, "Concurrent panel rejected");
         sent.success(null); sent.fail(null);
-        Check(callbacks == 1 && result.Error == null && result.Evidence == null, "First wins; no fabricated receipt");
+        Check(callbacks == 1 && result.Error == null && result.Evidence == null && result.RequiresServerQuery, "First wins; query server, no fabricated receipt");
         gateway.Launch("next", r => result = r);
         var error = (ErrorInfo)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(typeof(ErrorInfo));
         error.ErrorCode = 123; error.ErrMsg = "private server details"; sent.fail(error);

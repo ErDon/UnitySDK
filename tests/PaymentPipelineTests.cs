@@ -39,6 +39,11 @@ class PaymentPipelineTests
         Check(orders.Gets==1,"Cancellation reconciles server status");orders.Queried(Order(OrderState.Fulfilled));drain();Check(result.Success,"Server completed payment wins cancellation race");
         pay.Pay(request,r=>result=r);orders.Created(Order(OrderState.Created));drain();launcher.Callback(PaymentLaunchResult.Submitted("receipt"));drain();
         orders.Confirmed(Order(OrderState.Fulfilled,Guid.NewGuid().ToString("D")));drain();Check(result.Error.Code=="PAY.INVALID_RESPONSE","Switched order rejected");
+        int confirmsBefore=orders.Confirms,getsBefore=orders.Gets;
+        pay.Pay(request,r=>result=r);orders.Created(Order(OrderState.Created));drain();
+        launcher.Callback(PaymentLaunchResult.AwaitServerConfirmation());drain();
+        Check(orders.Confirms==confirmsBefore&&orders.Gets==getsBefore+1,"Webhook payment queries instead of confirming client evidence");
+        orders.Queried(Order(OrderState.Created));drain();Check(!result.Success&&result.Error.Code=="PAY.NOT_PAID","Gateway success alone cannot pay");
         pay.Pay(request,r=>callbacks++);orders.Created(Order(OrderState.Created));pay.Dispose();drain();
         Check(callbacks==1&&orders.Disposals==1&&launcher.Disposals==1,"Disposed pipeline ignores queued callbacks");
         Check(!request.ToString().Contains("secret")&&!PaymentLaunchResult.Submitted("secret").ToString().Contains("secret"),"Sensitive data not formatted");

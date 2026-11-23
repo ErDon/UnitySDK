@@ -79,19 +79,23 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 `IPlatformPaymentGateway.Launch(tradeOrderId, callback)` 是引擎/平台接入层接口，TikTok 实现为 `TikTokPaymentGateway`，编译受 ERDON_EXCLUDE_PAYMENTS 控制。官方 1.1.6 Runtime/Editor 均使用 `TT.Pay(TTPayParam)`，字段为 trade_order_id，继承的回调字段为 success/fail/complete。必须在官方初始化完成后的 Unity 主线程调用，并只传可信服务端返回的订单号。
 
-网关成功返回 PaymentLaunchResult.Submitted(null)：不伪造回执，不表示服务端 Paid 或 Fulfilled。失败保留平台数字码但不透传原始文本，返回 PAY.PLATFORM_REJECTED；调用异常为 PAY.LAUNCH_FAILED。并发面板返回 PAY.IN_PROGRESS，非法单号返回 PAY.INVALID_REQUEST。仅第一次 success/fail 生效；complete 本身不判成功。Dispose 抑制迟到回调，但不关闭收银台、不取消交易。
+网关成功返回 PaymentLaunchResult.AwaitServerConfirmation()：不伪造回执，不表示服务端 Paid 或 Fulfilled。失败保留平台数字码但不透传原始文本，返回 PAY.PLATFORM_REJECTED；调用异常为 PAY.LAUNCH_FAILED。并发面板返回 PAY.IN_PROGRESS，非法单号返回 PAY.INVALID_REQUEST。仅第一次 success/fail 生效；complete 本身不判成功。Dispose 抑制迟到回调，但不关闭收银台、不取消交易。
 
-网关没有独立超时；若平台始终无终态，保持在途直到释放，避免重复拉起。上层仍需本地等待期限和服务端查单。它还不是 IPaymentLauncher：需要补齐按 GameOrder 获取预支付号、调用网关及服务端结果查询的装配层，不能把 Submitted(null) 接成客户端确认付款。当前平台工厂仍未启用真实支付，生产阻断保持。
+网关没有独立超时；若平台始终无终态，保持在途直到释放，避免重复拉起。上层仍需本地等待期限和服务端查单。它通过下述 PreparedPaymentLauncher 接到 IPaymentLauncher；预支付 HTTP 实现和平台工厂装配仍待完成。当前平台工厂仍未启用真实支付，生产阻断保持。
 
 `tests/run-tiktok-tests.ps1` 使用官方两个 DLL 编译并运行 TikTokPaymentGatewayTests，验证参数映射、并发、重复回调、脱敏、异常与释放；无真实平台调用。
 
 ## 客户端编排步骤
 
+`PreparedPaymentLauncher` 实现 IPaymentLauncher，拥有 IPrepaymentClient 与 IPlatformPaymentGateway。前者绑定当前游戏会话，通过 Prepare(orderId, callback) 返回 PrepaymentResult；返回订单号必须与输入一致，平台单号必须合法，才允许调用网关。重复预支付回调和重复终态均忽略，在途新调用返回 PAY.IN_PROGRESS，释放后抑制回调并释放依赖。两个接口的调用和回调均须在 Unity 主线程，HTTP 接入层负责派发。
+
+它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排仅查询服务器状态，不调用 Confirm；查询为 Created 返回 PAY.NOT_PAID，Paid 返回 PAY.FULFILLMENT_PENDING，Fulfilled 才成功。当前只查询一次，不自动轮询或重新拉起收银台。IPrepaymentClient 的 HTTPS 实现与服务端受认证入口尚待接入，不能仅构造启动器就认为完整支付可用。
+
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。
 2. 订单为 Fulfilled：直接返回成功，不再打开收银台。
 3. 订单为 Paid：返回 PAY.FULFILLMENT_PENDING 和订单快照，不再打开收银台。
 4. 订单为 Created：调用 IPaymentLauncher.Launch。
-5. 平台回调提交后，将回执交 IOrderClient.Confirm；成功必须以服务端 Fulfilled 为准。
+5. 平台返回回执时交 IOrderClient.Confirm；AwaitServerConfirmation 类型改用 Get 查询，成功必须以服务端 Fulfilled 为准。
 6. 平台取消、失败或抛异常时，先 Get 查询服务端状态，处理客户端取消与服务端支付完成同时发生的情况。
 
 不直接发放道具，不自动轮询或自动重复付款。Paid/网络结果不确定时保留 requestId 与 orderId，通过查询或同一个 requestId 恢复；禁止把重试变成新购买。

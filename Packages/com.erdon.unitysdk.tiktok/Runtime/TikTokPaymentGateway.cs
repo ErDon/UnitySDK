@@ -34,7 +34,7 @@ namespace ErDon.UnitySDK.TikTok
             try {
                 launch(new TTPayParam {
                     trade_order_id = tradeOrderId,
-                    success = result => finish(PaymentLaunchResult.Submitted(null)),
+                    success = result => finish(PaymentLaunchResult.AwaitServerConfirmation()),
                     fail = error => finish(PaymentLaunchResult.Fail(new SdkError("PAY.PLATFORM_REJECTED", "TikTok payment flow failed; query server order status",
                         error == null ? null : error.ErrorCode.ToString(CultureInfo.InvariantCulture), null)))
                     // complete is not evidence of success. No receipt is fabricated.

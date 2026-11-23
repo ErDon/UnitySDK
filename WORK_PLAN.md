@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### Unity 预支付启动器与服务端查询语义
+
+新增 IPrepaymentClient/PrepaymentResult 与 PreparedPaymentLauncher，按游戏订单取得预支付号，校验对应关系后调用可替换平台网关；具备并发、重复回调、非法返回和释放保护。TikTok 成功结果改为 AwaitServerConfirmation，VerifiedPayment 对该类型走 Get 而非提交空回执 Confirm，Created 状态不判支付成功。
+
+公共 run-all-tests.ps1 全部通过，新增启动器回归及查询语义回归；TikTok 官方 Runtime/Editor 双套也全部通过。尚未实现预支付 HTTPS 客户端与受认证服务端入口、令牌托管和真实收银台验证；平台支付工厂未放行，总计 66/78。
+
 ### TikTok Unity 官方支付网关
 
 通过官方 1.1.6 程序集元数据核对 TT.Pay/TTPayParam 与小写 success/fail/complete 回调字段。新增可替换的 IPlatformPaymentGateway 和 TikTokPaymentGateway，传服务端平台单号；成功不伪造回执或授权发货，支持错误码、并发拒绝、首次回调及释放抑制，并受支付裁剪宏控制。

@@ -39,6 +39,8 @@ namespace ErDon.UnitySDK
         public string Evidence { get; private set; }
         public SdkError Error { get; private set; }
         public static PaymentLaunchResult Submitted(string evidence) { return new PaymentLaunchResult{Evidence=evidence}; }
+        public bool RequiresServerQuery { get; private set; }
+        public static PaymentLaunchResult AwaitServerConfirmation() { return new PaymentLaunchResult{RequiresServerQuery=true}; }
         public static PaymentLaunchResult Fail(SdkError error) { if(error==null)throw new ArgumentNullException("error");return new PaymentLaunchResult{Error=error}; }
         public override string ToString() { return "PaymentLaunchResult([REDACTED])"; }
     }
@@ -101,7 +103,7 @@ namespace ErDon.UnitySDK
                             };
                             try {
                                 // Even cancellation/failure may race with a completed payment: query before reporting it.
-                                if(launch==null||launch.Error!=null)orders.Get(request.Session,order.OrderId,onVerified);
+                                if(launch==null||launch.Error!=null||launch.RequiresServerQuery)orders.Get(request.Session,order.OrderId,onVerified);
                                 else orders.Confirm(request.Session,order.OrderId,launch.Evidence,onVerified);
                             }catch{onVerified(OrderResult.Fail("PAY.VERIFICATION_FAILED","Order verification failed"));}
                         });

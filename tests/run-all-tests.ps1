@@ -9,6 +9,10 @@ try {
     & .\.tests\NetworkContractTests.exe
     if($LASTEXITCODE -ne 0){throw 'Network contract tests failed'}
     $registryCore=@(Get-ChildItem 'Packages/com.erdon.unitysdk/Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
+    & $compiler /nologo /out:.tests\PreparedPaymentLauncherTests.exe $registryCore .\tests\PreparedPaymentLauncherTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Prepared payment launcher compile failed'}
+    & .\.tests\PreparedPaymentLauncherTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Prepared payment launcher tests failed'}
     & $compiler /nologo /reference:System.Web.Extensions.dll /out:.tests\LogContractTests.exe $registryCore .\tests\LogContractTests.cs
     if($LASTEXITCODE -ne 0){throw 'Log contract compile failed'}
     & .\.tests\LogContractTests.exe

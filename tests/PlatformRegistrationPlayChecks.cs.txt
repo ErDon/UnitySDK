@@ -1,0 +1,23 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class PlatformRegistrationPlayChecks {
+ const string Key="ErDon.Tests.PlatformRegistration";
+ static PlatformRegistrationPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+ public static void RunWeChat(){Run("WeChat");}
+ public static void RunDouyin(){Run("Douyin");}
+ static void Run(string platform){SessionState.SetString(Key,platform);EditorApplication.isPlaying=true;}
+ static void Changed(PlayModeStateChange state){
+  var platform=SessionState.GetString(Key,"");
+  if(state!=PlayModeStateChange.EnteredPlayMode||platform=="")return;
+  SessionState.SetString(Key,"");
+  try {
+   var config=new SdkRuntimeConfiguration{platform=platform,gameId="test",appId="test-app",login=false};
+   // Resolve real package registration without invoking vendor initialization or platform APIs.
+   using(var startup=SdkPlatformRegistry.CreateStartup(config,null,a=>a(),(l,s)=>{},r=>{})){}
+   Debug.Log("SDK_PLATFORM_REGISTRATION_PASS: "+platform);EditorApplication.Exit(0);
+  }catch(Exception e){Debug.LogError("SDK_PLATFORM_REGISTRATION_FAIL: "+e.Message);EditorApplication.Exit(1);}
+ }
+}

@@ -18,6 +18,7 @@ namespace ErDon.UnitySDK
                 while (instance.queue.TryDequeue(out ignored)) { }
             }
             SDK.Shutdown();
+            SdkPlatformRegistry.Reset();
         }
         public static void BeginStartup(SdkConfig config, IPlatformRuntime runtime, IPlatformSdkProviderFactory factory,
             Action<StartupResult> callback, int timeoutMilliseconds = 15000)
@@ -26,6 +27,17 @@ namespace ErDon.UnitySDK
             var host = GetOrCreate();
             if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
             var next = new SdkStartup(config, runtime, factory, a => host.queue.Enqueue(a), WriteLog, callback, timeoutMilliseconds);
+            host.ReplaceStartup(next);
+            next.Start();
+        }
+        public static void BeginConfiguredStartup(SdkRuntimeConfiguration configuration, Func<ISessionExchange> createSessionExchange,
+            Action<StartupResult> callback, Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000)
+        {
+            SDK.CheckHostLifecycleEntry();
+            var host = GetOrCreate();
+            if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
+            var next = SdkPlatformRegistry.CreateStartup(configuration, createSessionExchange,
+                a => host.queue.Enqueue(a), WriteLog, callback, logCallback, timeoutMilliseconds);
             host.ReplaceStartup(next);
             next.Start();
         }

@@ -16,7 +16,9 @@ public static class StartupPlayChecks {
  static StartupPlayChecks(){EditorApplication.playModeStateChanged+=state=>{
   if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
   deadline=EditorApplication.timeSinceStartup+20;EditorApplication.update+=Step;
-  UnitySdkHost.BeginStartup(Config(),new Runtime{Immediate=true},new Factory(),r=>{if(!r.Success)Fail("startup success");else phase=1;});
+  SdkPlatformRegistry.Register("Douyin",()=>new Runtime{Immediate=true},(g,e,x)=>new Factory());
+  UnitySdkHost.BeginConfiguredStartup(new SdkRuntimeConfiguration{platform="Douyin",gameId="test-game",appId="test-app"},
+   ()=>{throw new Exception("Fake factory does not use exchange");},r=>{if(!r.Success)Fail("configured startup success");else phase=1;},(l,s)=>{});
  };}
  public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
  static void Step(){

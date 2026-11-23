@@ -54,8 +54,32 @@ var config = data.ToSdkConfig();
 // 创建目标平台工厂，然后调用 UnitySdkHost.InitializeWithFactory(config, factory)。
 ```
 
-Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，广告/网络/上报仍被拒绝；真实平台支付在工厂装配时仍被拒绝。数据校验通过不代表官方依赖、启动或构建已验收。
+Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，网络/上报仍被拒绝；三平台广告已支持，真实平台支付尚无收银台适配。数据校验通过不代表官方依赖、启动或构建已验收。
 
-当前仍需游戏在官方初始化完成后装配，面板自动启动尚未完成；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
+可使用下述运行时配置入口自动等待平台初始化并装配，面板启动按钮尚未接入；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
 
 真实平台工厂必须实现 IPlatformSdkProviderFactory，Platform 固定标识其实现的平台；内置工厂已实现。InitializeWithFactory 在创建能力之前核对配置身份，缺失或不一致抛 CONFIG.PLATFORM_MISMATCH，当前 SDK 保持运行。自定义工厂示例中的平台声明必须与其实际 provider 相符，不能只复制配置字符串来掩盖错误实现。此检查不能证明第三方工厂内部调用了正确 SDK，也不替代包体裁剪。
+
+## 配置驱动的平台启动
+
+已安装且编译启用的平台适配包会在 Unity BeforeSceneLoad 自动注册构造器；核心不引用任何平台程序集。请在游戏 Awake/Start 或更晚调用，早于注册阶段会报 CONFIG.PLATFORM_NOT_REGISTERED。
+
+```csharp
+var data = UnityEngine.JsonUtility.FromJson<SdkRuntimeConfiguration>(configAsset.text);
+// 示例 JSON 应关闭 login；启用时用自己的后端交换器工厂替换 null。
+UnitySdkHost.BeginConfiguredStartup(data, null, result => {
+    if (!result.Success) {
+        UnityEngine.Debug.LogError(result.Error.Code + " traceId=" + result.TraceId);
+        return;
+    }
+    // 此时才能调用已勾选的能力。
+});
+```
+
+统一入口根据 platform 选择微信/抖音/TikTok 注册项，将 gameId 和 production/test 交给平台工厂，只创建勾选模块。appId 必须配置，但这里不会修改官方插件的 App ID；插件配置和后端应用绑定仍须与它一致。
+
+配置错误在启动前抛出 InvalidOperationException：CONFIG.PLATFORM_NOT_REGISTERED（包未安装、宏未启用或调用过早）、CONFIG.SESSION_EXCHANGE_REQUIRED（启用登录但没有后端工厂）、CONFIG.PAYMENT_UNIMPLEMENTED（真实平台支付未接入）。这类同步错误不调用启动结果回调；平台初始化后的异步失败由 StartupResult 返回。无效配置不会替换已有启动任务或已初始化 SDK。生产 Mock、未实现网络/上报继续拒绝。
+
+重复注册同平台抛 CONFIG.DUPLICATE_PLATFORM；每次 Unity Play 会话先清空注册项，再由平台包注册。自定义平台接入可调用 SdkPlatformRegistry.Register，但注册项应只保存构造器，返回新实例；生命周期、错误日志与模块隔离规则不变。现有 JSON 白名单仍只允许首批三平台和 Mock。
+
+已验证公共预检/所有权行为及微信、抖音的 Unity 自动注册。TikTok 注册代码与对应桥接已提供，干净插件工程验证仍待办。自动注册不代表构建裁剪或真机通过，真实平台构建阻断暂不解除。

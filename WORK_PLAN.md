@@ -76,3 +76,9 @@ Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白�
 新增独立 TikTok UPM 包及 TT.Login 凭证适配，按官方 1.1.6 Release 文档和本机 DLL 核对。分别引用 Runtime/Editor DLL 编译真实调用签名并执行契约测试，均输出 TIKTOK_CREDENTIAL_TESTS_PASS；公共回归通过。行为测试使用注入调度，不代表真实容器成功。
 
 发现本机 TikTok 插件 package name 仍为 com.bytedance.starksdk 且导入设置含旧项目宏，不把这两个标识当作跨游戏依赖。独立适配不引用 RS 项目，使用专用平台宏，要求安装官方干净插件。补充安装、初始化顺序、错误/超时、升级及验证边界文档，更新 README 避免继续声称纯设计阶段。
+
+### 公共服务端登录增量
+
+新增无第三方依赖的 Node 参考服务：受信绑定、平台验证器扩展、微信固定上游校验、密码学随机会话及摘要存储、过期/撤销、同应用 code 原子重放拦截、HTTP 边界与脱敏日志。默认启动仅允许显式本地开发模式，内存存储仅用于联调；提供共享存储契约。
+
+六项 Node 测试通过，包括真实 loopback HTTP 请求，平台上游使用模拟响应。首次 socket 测试受沙箱 EACCES 限制，授权后同一套测试全部通过。微信官方文档页当前不可读取，平台验收、共享持久化、Unity HTTPS 联调、跨端 trace 和错误细化仍未完成。

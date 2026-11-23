@@ -15,7 +15,7 @@ try {
         if (!(Test-Path -LiteralPath $inputFile -PathType Leaf)) { throw "Missing compilation input: $inputFile" }
     }
     $output = New-Item -ItemType Directory -Force '.tests/documentation-examples'
-    foreach ($name in @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline')) {
+    foreach ($name in @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline', 'api-reference')) {
         $markdown = Get-Content -Raw -Encoding UTF8 "docs/$name.md"
         $matches = [regex]::Matches($markdown, '(?s)```csharp\r?\n(.*?)\r?\n```')
         if (!$matches.Count) { throw "Missing C# examples: $name" }

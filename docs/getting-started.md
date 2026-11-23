@@ -41,6 +41,8 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 
 ## 按能力接入
 
+[上层接口索引与生命周期](api-reference.md) 汇总全部 SDK 聚合入口、宿主入口、取消方式和日志回调示例。
+
 - [登录与服务端会话](authentication.md)、[平台启动与配置](startup.md)
 - [存储](storage.md)、[分享](share.md)、[激励广告](rewarded-ads.md)
 - [网络请求](network.md)、[数据上报](analytics.md)
@@ -60,4 +62,4 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 ./tests/compile-capability-doc-examples.ps1 -CoreAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.dll' -HttpAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.Transport.Http.dll'
 ```
 
-默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份文档的全部 C# 代码块（当前 11 段），失败立即停止；不会运行这些调用或访问平台。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
+默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档及接口索引的全部 C# 代码块（当前 13 段），失败立即停止；不会运行这些调用或访问平台。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。

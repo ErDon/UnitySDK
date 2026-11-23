@@ -3,6 +3,7 @@
 
 当前阶段：实现中的 UPM 开发预览，尚未完成真实平台端到端验收。
 
+- [上层接口索引与生命周期](docs/api-reference.md)
 - [整体架构与设计图](docs/architecture.md)
 - [错误码与诊断规范](docs/errors.md)
 - [迭代与验收计划](docs/roadmap.md)
@@ -13,9 +14,9 @@
 
 ## 开发进度
 
-已实现登录、存储、分享、激励广告、网络、数据上报聚合，以及支付/订单公共链路、诊断日志、Editor Mock、配置装配和部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md)、[抖音](docs/douyin.md) 与 [TikTok](docs/tiktok.md) 已有平台适配、初始化桥接及程序集/注入行为测试；服务端已有会话和订单实现。真实凭证联调、真机功能、真实支付及最终产物裁剪尚待验收，不可用于生产接入。TikTok 干净官方插件工程集成仍未完成。Android/iOS 本轮只提供[扩展契约及边界验证](docs/native-extension.md)，不包含原生供应商。
+已实现登录、存储、分享、激励广告、网络、数据上报聚合，以及支付/订单公共链路、诊断日志、Editor Mock、配置装配和部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md)、[抖音](docs/douyin.md) 与 [TikTok](docs/tiktok.md) 已有平台适配、初始化桥接及程序集/注入行为测试；服务端已有会话和订单实现。真实凭证联调、真机功能、真实支付及最终产物裁剪尚待验收，不可用于生产接入。TikTok 干净官方 1.1.6 插件已完成独立工程集成、开发构建及官方小游戏导出；真机与最终产物隔离仍待验收。Android/iOS 本轮只提供[扩展契约及边界验证](docs/native-extension.md)，不包含原生供应商。
 
-配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。运行时按配置装配和平台启动已接通；完整构建依赖与产物验收尚未完成，Player 构建仍被阻断。请在独立测试工程接入，勿以 Mock/编译通过代替真实平台验收。
+配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。运行时按配置装配和平台启动已接通；完整构建依赖与产物验收尚未完成，正式 Player 构建仍被阻断，满足平台宏、适配器与混装检查的非生产 Development Build 可用于技术验证。请在独立测试工程接入，勿以 Mock/编译通过代替真实平台验收。
 
 [存储接口与预览](docs/storage.md)：支持统一同步读写/删除、配置开关及 Editor 内存 Mock；三平台适配已实现，真机持久化仍待验收。
 

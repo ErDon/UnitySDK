@@ -9,6 +9,16 @@ namespace ErDon.UnitySDK
         static UnitySdkHost instance;
         SdkStartup startup;
         bool replacingStartup;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetPlaySession()
+        {
+            if (instance != null) {
+                instance.ReplaceStartup(null);
+                Action ignored;
+                while (instance.queue.TryDequeue(out ignored)) { }
+            }
+            SDK.Shutdown();
+        }
         public static void BeginStartup(SdkConfig config, IPlatformRuntime runtime, IPlatformSdkProviderFactory factory,
             Action<StartupResult> callback, int timeoutMilliseconds = 15000)
         {
@@ -73,7 +83,7 @@ namespace ErDon.UnitySDK
             SDK.Tick();
             Action action;
             while (queue.TryDequeue(out action)) {
-                try { action(); } catch (Exception) { Debug.LogError("SDK callback threw an exception; details omitted to protect credentials."); }
+                try { action(); } catch (Exception) { SDK.WriteHostCallbackFailure(); }
             }
         }
         void OnDestroy() { if (instance == this) { ReplaceStartup(null); SDK.Shutdown(); instance = null; } }

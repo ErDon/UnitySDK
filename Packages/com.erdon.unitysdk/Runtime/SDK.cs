@@ -234,6 +234,10 @@ namespace ErDon.UnitySDK
             if (callingStorage) throw new InvalidOperationException("SDK operations cannot be reentered from a storage provider");
         }
         internal static void CheckHostLifecycleEntry() { EnsureNotLogging(); }
+        internal static void WriteHostCallbackFailure()
+        {
+            Log(SdkLogLevel.Error, "UnitySdkHost.Update", Guid.NewGuid().ToString("N"), "Callback", "{}", "CALLBACK.EXCEPTION");
+        }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
         internal static void WriteStartupLog(SdkConfig settings, Action<SdkLogLevel,string> engineLog,
             string call, string stage, string result, int timeoutMilliseconds)

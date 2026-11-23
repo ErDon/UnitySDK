@@ -15,7 +15,8 @@
 - [x] 登录/分享/支付的本地超时与取消、重复/迟到回调抑制、主线程派发异常恢复。
 - [x] 平台启动编排、等待就绪、超时/取消及 Unity 宿主自动驱动；隔离 Play Mode 检查通过。
 - [x] Editor Mock 登录示例及公共核心回归测试。
-- [ ] 域重载关闭等剩余生命周期场景及全部输出路径的一致性验收。
+- [x] 禁用域重载和场景重载后连续两轮 Play Mode 生命周期检查；宿主队列异常统一日志。
+- [ ] 全部输出路径的一致性与剩余生命周期边界最终复核。
 
 ## 第二阶段：配置面板、装配与裁剪（进行中）
 
@@ -434,3 +435,9 @@ ads-mock-editor.log 同时输出 SDK_EDITOR_CHECKS_PASS，无 C# 错误，退出
 按本地 1.1.6-Release 的实际签名实现广告生命周期，关闭回调单 bool、创建仅 AdUnitId，不复用抖音多视频参数。工厂按需创建，运行时 JSON 映射广告开关。与微信/抖音共用 SDK.ShowRewardedAd 上层契约。
 
 run-tiktok-tests.ps1 的 Runtime/Editor 两套官方接口编译和注入广告测试通过，公共回归通过。完成标记仅限适配与测试：本地插件含项目定制，干净官方包核验、隔离工程、真实客户端能力与广告展示仍待验收。
+
+### 禁用域重载的宿主生命周期
+
+Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所有权，避免无域重载时静态配置跨会话。宿主队列异常改走 SDK 格式化日志，上层回调优先，异常内容不透传。
+
+公共回归通过。隔离 Unity reload-play.log 输出 SDK_RELOAD_PLAY_PASS：同时关闭域重载/场景重载，连续两轮进入退出 Play Mode，验证编辑态遗留 provider 回收、旧配置清空、运行态 provider 单次释放、迟到回调抑制；注入宿主队列异常验证 interface/callId/logId/traceId/params/result 和敏感内容不泄漏。测试结束恢复 Editor 原重载选项。整体生命周期与所有输出路径最终复核仍单独待办。

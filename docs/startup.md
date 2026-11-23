@@ -40,3 +40,11 @@ factory 使用 DouyinProviderFactory；构造函数参数和 HTTP 会话桥接�
 - 宿主销毁时静默释放启动并 Shutdown。所有这些入口在 Unity 主线程调用，不允许从 SDK 日志回调重入。
 
 验证：tests/StartupPlayChecks.cs.txt 在隔离 Unity 2022.3 工程运行 Play Mode，覆盖自动启动后登录、自动超时、任务替换、取消、Shutdown 及迟到回调抑制。使用模拟 runtime/factory，不代表真机初始化或微信/TikTok 启动适配已经完成。
+
+## Editor 无域重载
+
+UnitySdkHost 在 SubsystemRegistration 阶段清理上一会话的 SDK 和等待启动任务。因此关闭 Reload Domain / Reload Scene 后，每次进入 Play Mode 仍需按当前配置重新初始化；编辑态创建的 provider 不会继续带入游戏。退出 Play Mode 通过宿主销毁释放已拥有的 provider，旧回调失效。
+
+宿主队列异常由 SDK 输出 `interface=UnitySdkHost.Update`、`stage=Callback`、`result=CALLBACK.EXCEPTION`，带时间、参数及独立诊断 ID；该 ID 标识宿主异常事件，不冒充未知的业务调用 ID。原始异常消息不会输出。仍使用已配置的上层日志回调，回调缺省或抛出时回退到 Unity。
+
+`tests/ReloadPlayChecks.cs.txt` 可放入隔离 Unity 工程 Assets/Editor，以 `-executeMethod ReloadPlayChecks.Run` 运行（不传 `-quit`，测试自行退出），成功标记 `SDK_RELOAD_PLAY_PASS`。测试会暂时关闭域/场景重载，正常结束恢复原选项；应只用于隔离测试工程。

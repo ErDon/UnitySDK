@@ -1,0 +1,73 @@
+using System;
+using System.Collections.Concurrent;
+using System.Reflection;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class ReloadPlayChecks {
+ const string Key="ErDon.Tests.ReloadPlay";
+ static int cycle, phase, stale;
+ static double deadline;
+ static bool oldEnabled;
+ static EnterPlayModeOptions oldOptions;
+ static Auth editAuth, playAuth;
+ static Action<LoginResult> late;
+ static string diagnostic;
+ sealed class Auth:IAuth {
+  public int Disposes; public Action<LoginResult> Done;
+  public void Login(Action<LoginResult> cb){Done=cb;}
+  public void Dispose(){Disposes++;}
+ }
+ static ReloadPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+ public static void Run(){
+  oldEnabled=EditorSettings.enterPlayModeOptionsEnabled;oldOptions=EditorSettings.enterPlayModeOptions;
+  EditorSettings.enterPlayModeOptionsEnabled=true;
+  EditorSettings.enterPlayModeOptions=EnterPlayModeOptions.DisableDomainReload|EnterPlayModeOptions.DisableSceneReload;
+  SessionState.SetBool(Key,true);cycle=0;stale=0;
+  EditorApplication.update+=Step;Begin();
+ }
+ static void Begin(){
+  phase=0;deadline=EditorApplication.timeSinceStartup+30;
+  editAuth=new Auth();SDK.Initialize(new SdkConfig(),editAuth,a=>a(),(l,s)=>{});
+  EditorApplication.isPlaying=true;
+ }
+ static void Changed(PlayModeStateChange state){
+  if(!SessionState.GetBool(Key,false))return;
+  try {
+   if(state==PlayModeStateChange.EnteredPlayMode){
+    if(editAuth.Disposes!=1)throw new Exception("edit session provider survived play entry");
+    bool cleared=false;SDK.Login(r=>cleared=r.Error!=null&&r.Error.Code=="SDK.NOT_INITIALIZED");
+    if(!cleared)throw new Exception("stale SDK config");
+    playAuth=new Auth();diagnostic=null;
+    UnitySdkHost.Initialize(new SdkConfig{LogCallback=(l,s)=>{if(s.Contains("interface=UnitySdkHost.Update"))diagnostic=s;}},playAuth);
+    SDK.Login(r=>stale++);late=playAuth.Done;
+    var host=UnityEngine.Object.FindObjectOfType<UnitySdkHost>();
+    var queue=(ConcurrentQueue<Action>)typeof(UnitySdkHost).GetField("queue",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(host);
+    queue.Enqueue(()=>{throw new Exception("PRIVATE_EXCEPTION_TEXT");});phase=1;
+   }
+   if(state==PlayModeStateChange.EnteredEditMode){
+    if(playAuth.Disposes!=1)throw new Exception("play provider not disposed once");
+    late(LoginResult.Ok("PRIVATE_SESSION"));SDK.Tick();
+    if(stale!=0)throw new Exception("late callback escaped shutdown");
+    if(++cycle==2){Finish(true,"SDK_RELOAD_PLAY_PASS");return;}
+    EditorApplication.delayCall+=Begin;
+   }
+  }catch(Exception e){Finish(false,e.Message);}
+ }
+ static void Step(){
+  if(!SessionState.GetBool(Key,false))return;
+  if(EditorApplication.timeSinceStartup>deadline){Finish(false,"deadline");return;}
+  if(phase!=1||diagnostic==null)return;
+  if(!diagnostic.Contains("callId=")||!diagnostic.Contains("logId=")||!diagnostic.Contains("traceId=")||!diagnostic.Contains("params={}")||!diagnostic.Contains("result=CALLBACK.EXCEPTION")||diagnostic.Contains("PRIVATE")){
+   Finish(false,"host diagnostic fields or privacy");return;
+  }
+  phase=2;EditorApplication.isPlaying=false;
+ }
+ static void Finish(bool ok,string message){
+  SessionState.SetBool(Key,false);EditorApplication.update-=Step;
+  EditorSettings.enterPlayModeOptionsEnabled=oldEnabled;EditorSettings.enterPlayModeOptions=oldOptions;
+  if(ok)Debug.Log(message);else Debug.LogError("SDK_RELOAD_PLAY_FAIL: "+message);
+  EditorApplication.Exit(ok?0:1);
+ }
+}

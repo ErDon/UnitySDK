@@ -39,6 +39,7 @@ namespace ErDon.UnitySDK
             if (status == 413 && code == "REQUEST.TOO_LARGE") return Error(code, "Session request exceeds server size limit", RetryPolicy.Never);
             if (status == 415 && code == "REQUEST.CONTENT_TYPE") return Error(code, "Session request content type is unsupported", RetryPolicy.Never);
             if (status == 502 && code == "AUTH.PLATFORM_UNAVAILABLE") return Error(code, "Server could not reach the platform; retry with a new login code", RetryPolicy.Delayed);
+            if (status == 502 && code == "AUTH.PLATFORM_CONFIGURATION") return Error(code, "Platform rejected server application configuration; contact the game operator", RetryPolicy.Never);
             if (status == 502 && code == "AUTH.PLATFORM_RESPONSE_INVALID") return Error(code, "Server received an invalid platform response", RetryPolicy.Unknown);
             if (status == 502 && code == "AUTH.INVALID_IDENTITY") return Error(code, "Server verifier returned no valid identity", RetryPolicy.Never);
             if (status == 503 && code == "SERVER.CAPACITY") return Error(code, "Session service is at capacity", RetryPolicy.Delayed);

@@ -33,7 +33,9 @@ async function verify(binding, temporaryCode) {
 }
 ```
 
-只有校验后非空 subject 才允许签发会话。TikTok、抖音验证器尚未实现，不使用微信协议代替。微信适配采用固定 `https://api.weixin.qq.com/sns/jscode2session`，请求 appid/secret/js_code/grant_type；暂未从无法读取的官方文档页完成最终复核，也未真实调用。已有本地契约测试不能作为平台验收证据。
+只有校验后非空 subject 才允许签发会话。已有独立微信和抖音验证器，TikTok 验证器尚未实现，不使用微信协议代替。微信适配采用固定 `https://api.weixin.qq.com/sns/jscode2session`，请求 appid/secret/js_code/grant_type；暂未从无法读取的官方文档页完成最终复核，也未真实调用。抖音适配及官方依据见 [douyin.md](../docs/douyin.md)。已有本地契约测试不能作为平台验收证据。
+
+本地启动器可分别用 WECHAT_APP_ID/WECHAT_APP_SECRET 或 DOUYIN_APP_ID/DOUYIN_APP_SECRET 配置一个或两个平台，公用 SDK_GAME_ID；至少配置一个完整应用绑定。创建服务后只按明确匹配的绑定路由到对应验证器。
 
 会话令牌是 32 字节密码学随机值，存储仅留 SHA-256 摘要。记录包含完整绑定、平台用户标识和过期时间；不把 openid/session_key 直接作为客户端 session。业务服务调用 `authenticate(token, expectedBinding)` 校验，然后自行映射游戏账号；expectedBinding 来自业务服务受信路由配置，不能直接使用玩家提交的值。`revoke(token)` 撤销该会话，不影响其他会话。会话默认一小时，代码重放记录默认十分钟，可按平台策略配置。
 

@@ -1,6 +1,6 @@
 # 抖音适配（开发中）
 
-独立 UPM 包 com.erdon.unitysdk.douyin 已实现 DouyinCredentialProvider。上层 SDK.Login 不变，下层强制请求已登录账号；isLogin=false 返回 AUTH.NOT_LOGGED_IN，空 code 返回 AUTH.INVALID_CREDENTIAL，匿名 code 不作为游戏账号凭据。成功取得 code 后仍必须经 VerifiedAuth 和抖音服务端验证器交换会话。后端抖音验证器尚未实现。
+独立 UPM 包 com.erdon.unitysdk.douyin 已实现 DouyinCredentialProvider。上层 SDK.Login 不变，下层强制请求已登录账号；isLogin=false 返回 AUTH.NOT_LOGGED_IN，空 code 返回 AUTH.INVALID_CREDENTIAL，匿名 code 不作为游戏账号凭据。成功取得 code 后仍必须经 VerifiedAuth 和抖音服务端验证器交换会话。后端已有 createDouyinVerifier，尚未真实平台联调。
 
 ## 官方接入来源
 
@@ -19,3 +19,13 @@
 ## 验证状态
 
 tests/run-all-tests.ps1 中的 DouyinCredentialTests 使用官方文档形状的测试替身，验证匿名拒绝、空 code、首次回调胜出、释放和脱敏。它不证明官方 DLL 编译、运行时初始化或真机登录。官方安装、精确依赖版本、干净工程编译、后端及真机验证仍待完成，真实平台构建保持阻断。
+
+## 服务端兑换
+
+server/src/douyin.mjs 根据[官方小游戏 code2Session 文档](https://developer.open-douyin.com/docs/resource/zh-CN/mini-game/develop/guide/game-engine/rd-to-SCgame/server/log-in/code-2-session)（2026-11-23 核对），固定向小游戏兑换接口发起 GET。请求携带受信服务端配置的应用身份及临时 code，不使用小程序 v2 或 TikTok OAuth 地址。客户端不能覆盖 URL 或密钥。
+
+本地参考启动器可设置 DOUYIN_APP_ID、DOUYIN_APP_SECRET 与 SDK_GAME_ID；缺失部分配置会拒绝启动。WECHAT_* 变量可同时配置，两者按受信绑定选取验证器。密钥不得放入 Unity 配置或代码仓库。
+
+验证器要求明确成功状态及非空账号身份/会话密钥；只有匿名身份或互相矛盾的成功/错误字段均拒绝。仅把验证后的账号标识交给 AuthService；平台 session_key 不下发客户端。应用/密钥/必要参数配置错误映射 AUTH.PLATFORM_CONFIGURATION，凭证拒绝映射 AUTH.PLATFORM_REJECTED，上游不可用映射 AUTH.PLATFORM_UNAVAILABLE；不输出任意平台错误正文。
+
+五项模拟响应测试和全部服务端回归通过，不代表真实 code 兑换成功。真实凭证、平台授权及 Unity HTTPS 链路仍待联调。

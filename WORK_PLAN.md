@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 网络面板 HTTP 状态与取消实际交互
+
+独立 UnityProject 中实际勾选网络，配置预览同步列出网络模块；进入 Play Mode 初始化后点击请求，HttpOk 显示 Mock HTTP 200，CallId=cb985faf99d143f887bd1213a653735d。改为 HttpUnauthorized 并重新初始化后显示 Mock HTTP 401，CallId=33870e274a374574ab3ffd50eb62463b，未把非 2xx 响应伪装成连接失败。
+
+再切换 Timeout、重新初始化，使用 61 秒等待上限发起请求并点击“取消最近一次网络请求”，面板显示 NETWORK.CANCELLED、Caller cancelled network request 及 CallId=fe7715aa813146fca57a94da130e1967。panel-visual.log 对应 01:52:08.745 Start、01:52:25.163 Complete；此前 200/401 也各有成对 Start/Complete 和独立 logId。退出 Play Mode 后业务按钮禁用，没有发送真实网络请求。此次还观察到请求等待期间结果区仍显示上一次状态，需补充等待提示，避免误认为按钮没有响应。面板整体视觉验收仍保留未勾选，统计 65/78。
+
 ### 三平台接入示例编译复核
 
 文档编译脚本新增可选 WeChatAssembly/DouyinAssembly/TikTokAssembly，平台示例分别引用同一独立工程的核心、HTTP 和目标适配程序集，不混装官方依赖。微信四段、抖音三段、TikTok 三段均通过；三次执行各自公共示例也通过，进程退出码均为 0。独立示例累计 31 段（公共 21 + 平台 10）。

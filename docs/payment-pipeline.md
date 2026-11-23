@@ -71,7 +71,17 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 凭证提供器 `credentials.get(binding, subject)` 是服务器内部依赖，返回 `{ binding: bindingKey(binding), subject, accessToken, expiresAt }`，过期时间为毫秒。服务核对应用/游戏/环境作用域、用户和有效期，不符或读取异常返回 PAY.CREDENTIAL_UNAVAILABLE。异步读取后再次认证会话，随后交给持久化编排；响应仅含 orderId、tradeOrderId。当前身份映射使用 TikTok 登录验证器的 open_id 作为 subject。
 
-这是授权服务，不是令牌库实现；仍需接入加密持久化和生命周期管理。商品档位须由服务端运营配置与平台要求核对。订单 handler 的可选预支付路由见下文，默认未开启。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
+该授权服务可注入下述 TikTokCredentialStore；登录兑换写入与刷新/撤销联动仍需接入。商品档位须由服务端运营配置与平台要求核对。订单 handler 的可选预支付路由见下文，默认未开启。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
+
+## 平台令牌加密存储
+
+`TikTokCredentialStore(path, { keys, currentKeyId, now?, capacity? })`（server/src/tiktok-credential-store.mjs）实现凭证提供器的 get，并提供 put/remove/close。keys 为密钥 ID 到 32 字节 Buffer 的 Map；调用方从部署密钥服务加载，不放进 Unity、JSON 配置或 Git。存储复制密钥 Buffer，关闭时清理自己的副本，不改调用方的 Buffer；不承诺 JavaScript 字符串在内存中安全擦除。
+
+put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 字节 nonce 加密；认证附加数据绑定版本、完整作用域、用户、有效期与密钥 ID。数据库保存密文、nonce、标签及必要关联元数据，应用/用户标识不加密。get 返回未过期的冻结凭据；缺失/过期返回 null，错误密钥、篡改、存储故障统一 PAY.CREDENTIAL_UNAVAILABLE。容量满拒绝新增，写入时清理过期记录。
+
+轮换时保留旧 keyId 的密钥并设置新的 currentKeyId；旧记录可读，之后 put 使用新密钥。没有自动批量重加密或自动刷新平台 token。删除密钥前必须处理其仍在使用的记录。SQLite 是单机持久化方案，数据库备份与密钥生命周期由部署管理，不能把数据库加密等同于整个服务已完成安全验收。
+
+可将 store 作为 TikTokPrepaymentService 的 credentials。当前 OAuth 验证器尚未写入它，默认服务器未配置密钥或加载此存储。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭。
 
 ## HTTP 通知入口装配
 

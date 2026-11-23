@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### TikTok 平台令牌加密存储
+
+新增 SQLite TikTokCredentialStore，部署注入密钥环，AES-256-GCM 随机 nonce 加密访问令牌，AAD 绑定版本、完整作用域、用户、有效期和 keyId。支持过期、删除、容量、关闭以及保留旧密钥读取/新密钥写入，不把密钥写库或返回客户端。
+
+四项测试通过：关闭重开恢复、数据库无测试令牌明文、篡改字段/错误密钥拒绝、轮换、容量和有效期。OAuth 写入、刷新/撤销联动及默认部署装配仍待完成，未声明生产安全或真机验收完成，总计 66/78。
+
 ### Unity 预支付宿主生命周期实测
 
 扩展 HttpHostPlayChecks，将 UnityPrepaymentClient 纳入实际 Play Mode 检查。在确认空闲的独立 BuildChecksProject 中重新编译并运行：宿主 GameObject 失活、组件禁用、对象销毁均立即且仅回调一次 NETWORK.HOST_UNAVAILABLE；Dispose 后即使订单号无效也优先返回 SDK.DISPOSED。

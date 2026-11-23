@@ -43,6 +43,8 @@ namespace ErDon.UnitySDK
         public override string ToString() { return "PaymentLaunchResult([REDACTED])"; }
     }
     public interface IPaymentLauncher : IDisposable { void Launch(GameOrder order,Action<PaymentLaunchResult> callback); }
+    // Engine/platform layer only. ID must come from a trusted server prepayment response.
+    public interface IPlatformPaymentGateway : IDisposable { void Launch(string tradeOrderId, Action<PaymentLaunchResult> callback); }
     public interface IPay : IDisposable { void Pay(PaymentRequest request,Action<PaymentResult> callback); }
 
     // Owns order client and launcher. Platform launch success never authorizes entitlement delivery.

@@ -28,6 +28,10 @@ try {
         if($LASTEXITCODE -ne 0){throw "TikTok storage tests failed: $binary"}
         $coreSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk\Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
         $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.tiktok\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
+        & $compiler /nologo "/reference:$dll" "/reference:$litJson" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokPaymentGatewayTests.exe $coreSources $platformSources .\tests\TikTokPaymentGatewayTests.cs
+        if($LASTEXITCODE -ne 0){throw "TikTok payment gateway compile failed: $binary"}
+        & $UnityMono .\.tests\tiktok\TikTokPaymentGatewayTests.exe
+        if($LASTEXITCODE -ne 0){throw "TikTok payment gateway tests failed: $binary"}
         & $compiler /nologo "/reference:$dll" "/reference:$litJson" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokFactoryTests.exe $coreSources $platformSources .\tests\TikTokFactoryTests.cs
         if($LASTEXITCODE -ne 0){throw "TikTok factory compile failed: $binary"}
         & $UnityMono .\.tests\tiktok\TikTokFactoryTests.exe

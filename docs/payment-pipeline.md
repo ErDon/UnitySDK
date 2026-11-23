@@ -75,6 +75,16 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 测试：在 server 目录运行 `node --test`；tiktok-webhook-http.test.mjs 使用真实本机 HTTP 和 SQLite 检查提交后确认、重复、篡改、路由、编码、限额与日志隔离。
 
+## TikTok Unity 底层支付网关
+
+`IPlatformPaymentGateway.Launch(tradeOrderId, callback)` 是引擎/平台接入层接口，TikTok 实现为 `TikTokPaymentGateway`，编译受 ERDON_EXCLUDE_PAYMENTS 控制。官方 1.1.6 Runtime/Editor 均使用 `TT.Pay(TTPayParam)`，字段为 trade_order_id，继承的回调字段为 success/fail/complete。必须在官方初始化完成后的 Unity 主线程调用，并只传可信服务端返回的订单号。
+
+网关成功返回 PaymentLaunchResult.Submitted(null)：不伪造回执，不表示服务端 Paid 或 Fulfilled。失败保留平台数字码但不透传原始文本，返回 PAY.PLATFORM_REJECTED；调用异常为 PAY.LAUNCH_FAILED。并发面板返回 PAY.IN_PROGRESS，非法单号返回 PAY.INVALID_REQUEST。仅第一次 success/fail 生效；complete 本身不判成功。Dispose 抑制迟到回调，但不关闭收银台、不取消交易。
+
+网关没有独立超时；若平台始终无终态，保持在途直到释放，避免重复拉起。上层仍需本地等待期限和服务端查单。它还不是 IPaymentLauncher：需要补齐按 GameOrder 获取预支付号、调用网关及服务端结果查询的装配层，不能把 Submitted(null) 接成客户端确认付款。当前平台工厂仍未启用真实支付，生产阻断保持。
+
+`tests/run-tiktok-tests.ps1` 使用官方两个 DLL 编译并运行 TikTokPaymentGatewayTests，验证参数映射、并发、重复回调、脱敏、异常与释放；无真实平台调用。
+
 ## 客户端编排步骤
 
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。

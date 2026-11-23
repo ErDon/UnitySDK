@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 using System.Threading;
 
 namespace ErDon.UnitySDK
@@ -240,7 +241,7 @@ namespace ErDon.UnitySDK
             Action<LoginResult> done = result => {
                 if (epoch != generation) return;
                 if (Interlocked.Exchange(ref completed, 1) != 0) return;
-                post(() => {
+                PostCompletion(post, epoch, call, "SDK.Login", () => {
                     if (epoch != generation) return;
                     busy = false; cancelLogin = null;
                     checkTimeout = null;
@@ -291,7 +292,7 @@ namespace ErDon.UnitySDK
             var timer = Stopwatch.StartNew();
             Action<ShareResult> done = result => {
                 if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
-                post(() => {
+                PostCompletion(post, epoch, call, "SDK.Share", () => {
                     if (epoch != generation) return;
                     sharing = false; cancelShare = null; checkShareTimeout = null;
                     FinishShare(callback, result ?? ShareResult.Fail("SHARE.INVALID_RESULT", "Share provider returned no result"), call);
@@ -333,7 +334,7 @@ namespace ErDon.UnitySDK
             var timer = Stopwatch.StartNew();
             Action<PaymentResult> done = result => {
                 if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
-                post(() => {
+                PostCompletion(post, epoch, call, "SDK.Pay", () => {
                     if (epoch != generation) return;
                     paying = false; cancelPay = null; checkPayTimeout = null;
                     FinishPay(callback, result ?? PaymentResult.Fail("PAY.INVALID_RESULT", "Pay provider returned no result"), call);
@@ -359,9 +360,30 @@ namespace ErDon.UnitySDK
             var cancel = cancelPay;
             if (cancel != null) cancel();
         }
+        static readonly ConcurrentQueue<Action> dispatchRecovery = new ConcurrentQueue<Action>();
+        static void PostCompletion(Action<Action> post, int epoch, string call, string api, Action complete)
+        {
+            int delivered = 0;
+            Action once = () => {
+                if (epoch != generation || Interlocked.Exchange(ref delivered, 1) != 0) return;
+                complete();
+            };
+            try { post(once); }
+            catch {
+                // Never invoke game callbacks on a provider's worker thread when dispatch fails.
+                dispatchRecovery.Enqueue(() => {
+                    if (epoch != generation) return;
+                    Log(SdkLogLevel.Error, api, call, "Dispatch", "{}", "SDK.DISPATCH_FAILED");
+                    once(); // Also safe if the dispatcher queued/invoked the action before throwing.
+                });
+            }
+        }
         public static void Tick()
         {
             EnsureNotLogging();
+            int recoveryCount = dispatchRecovery.Count;
+            Action recovery;
+            while (recoveryCount-- > 0 && dispatchRecovery.TryDequeue(out recovery)) recovery();
             var check = checkTimeout;
             if (check != null) check();
             var shareCheck = checkShareTimeout;

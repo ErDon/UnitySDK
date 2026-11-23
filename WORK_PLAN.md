@@ -246,3 +246,10 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 按 TTSDK 6.9.7 实际 JSON + 成功字典/失败文本/取消回调接口实现 DouyinShare，显式引用 TTLitJson。上层仍为 SDK.Share；添加安全错误映射、首回调胜出、释放抑制与可选字段省略。未解析自由文本错误码，不把成功当送达证据。
 
 官方 DLL/JSON 源码编译与注入行为测试通过；Unity 独立工程 douyin-share-verify.log 输出 DOUYIN_SHARE_UNITY_COMPILE_PASS，退出码 0。官方 JSON 源码仅有 CS3021 注解警告。已更新接口文档；官方网页正文未能读取，不宣称真机字段限制和分享结果已验证。
+
+### 公共层调度异常恢复
+
+修复登录/分享/支付在派发完成回调时调度器抛异常导致 completed 已设置、busy 永远无法清除的问题。新增线程安全恢复队列，在 SDK.Tick 主线程交付原结果；执行门控兼容先入队再抛错，代次校验阻止旧实例回调。日志 SDK.DISPATCH_FAILED 关联原 callId，不泄露异常文本，不重试平台动作。
+
+新增 DispatchTests，覆盖后台线程抛错、入队后抛错、三能力完成、后续请求恢复、去重、Shutdown 和日志脱敏；全部公共回归通过。该保证限于聚合完成派发，不声称修复任意自定义 provider 内部的线程调度。
+`n独立 Unity dispatch-recovery.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

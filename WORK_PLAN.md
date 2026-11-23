@@ -51,7 +51,7 @@
 - [ ] 面板交互与导出操作的视觉验收。
 - [x] 微信本地 0.1.23 隔离 WebGL Development Build，配置跨进程恢复及现有 BuildReport 审计通过；不含小游戏转换/真机。
 - [x] 微信官方固定提交 915d4bf 的开发构建与小游戏转换，输出文件及 JSON 检查通过；不含最终隔离和真机。
-- [x] 抖音 TTSDK 6.9.7 隔离 WebGL Development Build，零错误及链接后适配器/自动注册方法保留验证；不含官方小游戏导出或真机。
+- [x] 抖音 TTSDK 6.9.7 隔离开发构建与官方小游戏导出、配置 JSON 检查及链接后自动注册保留验证；不含最终隔离和真机。
 - [ ] 实际目标平台导出及最终 JS/Wasm/原生/资源包裁剪证明；仅开放非生产 Development Build 技术验证，正式构建仍阻断。
 
 ## 第三阶段：微信登录与服务端（适配实现完成，联调待办）
@@ -643,3 +643,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 抖音开发构建与链接后注册验证（2026-11-23）
 
 隔离 DouyinBuildProject 首轮在 Emscripten Python 捕获子进程输出时发生 GBK UnicodeDecodeError。只为构建进程设置 PYTHONUTF8=1、PYTHONIOENCODING=utf-8 后重新构建，douyin-development-build-utf8.log 包含 SDK_DEVELOPMENT_WEBGL_BUILD_PASS 和退出码 0，BuildReport 为 Succeeded errors=0。check-linked-platform.ps1 对本次 ManagedStripped 检查通过，ErDon.UnitySDK.Douyin 及自动注册方法保留；未发现其他 ErDon 平台适配器。此检查范围不包含所有官方 JS/Wasm/资源，也不证明官方小游戏导出或真机运行。
+
+### 抖音官方小游戏导出（2026-11-23）
+
+通过 TTSDK 6.9.7 公开 DouyinBuilder.BuildWebGL(StarkBuilderSettings) 导出新包体，固定 WebGL + Development、占位 App ID、独立新目录，不上传。douyin-conversion.log 显示 Build Finished Success、SDK_DOUYIN_CONVERSION_FILES_PASS、退出码 0。输出位于 DouyinBuildProject/Builds/DouyinConversion-20261123-135336/tt-minigame，game.json 与 project.config.json 可解析，Wasm 非空；本轮 ManagedStripped 注册检查通过。尚未证明开发者工具启动、真机接口及全部最终产物的平台隔离。

@@ -1,0 +1,39 @@
+using System;
+using System.IO;
+using ErDon.UnitySDK.Editor;
+using TTSDK.Tool;
+using UnityEditor;
+using UnityEngine;
+// Isolated test project only. Uses TTSDK 6.9.7's public exporter; never uploads.
+public static class DouyinDevelopmentConversion {
+ public static void Run() {
+  var sdk=SdkProjectSettings.instance;
+  if(sdk.platform!=DistributionPlatform.Douyin || sdk.production || sdk.Validate(true).Count!=0)
+   throw new Exception("Configure a non-production Douyin test project first");
+  if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("WebGL target required");
+  const string scene="Assets/DevelopmentBuildProbe.unity";
+  if(!File.Exists(scene))throw new Exception("Run MiniGameDevelopmentBuild.Build first");
+  EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(scene,true)};
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+  var output=Path.GetFullPath(Path.Combine(root,"Builds","DouyinConversion-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")));
+  if(!output.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||Directory.Exists(output))
+   throw new Exception("Output must be a new directory inside the isolated project");
+  var settings=StarkBuilderSettings.LoadSettings();
+  settings.OutputDir=output;settings.appId="build-only-placeholder";
+  settings.isOldBuildFormat=false;settings.wasmSubFramework=WasmSubFramework.WebGL;
+  settings.buildOptions=BuildOptions.Development;settings.isDevBuild=true;
+  settings.needCompress=false;settings.clearStreamingAssets=false;settings.isWebGL2=true;
+  settings.Save();
+  var result=DouyinBuilder.BuildWebGL(settings);
+  if(!result.Success)throw new Exception("Douyin export failed: "+result.ErrorMessage,result.Exception);
+  if(result.BuildReport==null || result.BuildReport.summary.result!=UnityEditor.Build.Reporting.BuildResult.Succeeded
+   || (result.BuildReport.summary.options & BuildOptions.Development)==0)
+   throw new Exception("Successful Development BuildReport required");
+  var artifacts=Path.GetFullPath(result.ArtifactsInstallLocation);
+  if(!artifacts.StartsWith(output+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)&&artifacts!=output)
+   throw new Exception("Unexpected artifact location: "+artifacts);
+  foreach(var name in new[]{"game.js","game.json","project.config.json"})
+   if(!File.Exists(Path.Combine(artifacts,name)))throw new Exception("Missing artifact: "+name);
+  Debug.Log("SDK_DOUYIN_CONVERSION_FILES_PASS output="+artifacts);
+ }
+}

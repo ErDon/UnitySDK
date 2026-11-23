@@ -63,3 +63,9 @@ $env:PYTHONIOENCODING = "utf-8"
 ```
 
 本次重试得到 Succeeded errors=0、SDK_DEVELOPMENT_WEBGL_BUILD_PASS 和退出码 0；对本次 ManagedStripped 的 Douyin 注册检查也通过。环境变量只影响当前终端及其子进程。该结果为 Unity WebGL 开发构建验证，官方小游戏导出与真机仍待验收。
+
+### 抖音官方导出探针
+
+将 `tests/DouyinDevelopmentConversion.cs.txt` 复制到隔离工程的 `Assets/Editor/DouyinDevelopmentConversion.cs`。先完成 ConfigureDouyin 及普通开发构建，再以同样的 UTF-8 环境运行 `-buildTarget WebGL -executeMethod DouyinDevelopmentConversion.Run`。探针面向已验证的 TTSDK 6.9.7 公开导出 API，使用新包体格式及 Development，输出到新建的 `Builds/DouyinConversion-UTC时间戳/tt-minigame`。不调用发布、上传或登录接口；占位 App ID 必须在实际联调前替换为自己的应用配置。
+
+本机官方导出已成功，game.js、game.json、project.config.json 和 Wasm 已生成，两个 JSON 可解析，链接后的 Douyin 注册检查通过。此结果仍不能代表开发者工具/真机运行通过，也不能替代完整平台产物隔离审计。

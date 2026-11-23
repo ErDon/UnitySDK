@@ -13,6 +13,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Prepared payment launcher compile failed'}
     & .\.tests\PreparedPaymentLauncherTests.exe
     if($LASTEXITCODE -ne 0){throw 'Prepared payment launcher tests failed'}
+    & $compiler /nologo /out:.tests\PrepaymentResponseTests.exe $registryCore .\Packages\com.erdon.unitysdk.transport.http\Runtime\OrderResponsePolicy.cs .\Packages\com.erdon.unitysdk.transport.http\Runtime\PrepaymentResponsePolicy.cs .\tests\PrepaymentResponseTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Prepayment response compile failed'}
+    & .\.tests\PrepaymentResponseTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Prepayment response tests failed'}
     & $compiler /nologo /reference:System.Web.Extensions.dll /out:.tests\LogContractTests.exe $registryCore .\tests\LogContractTests.cs
     if($LASTEXITCODE -ne 0){throw 'Log contract compile failed'}
     & .\.tests\LogContractTests.exe

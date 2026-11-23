@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### Unity 预支付 HTTPS 客户端与响应策略
+
+实现会话绑定的 UnityPrepaymentClient：固定 prepare 路径、HTTPS 校验、Bearer 头、禁止重定向、15 秒超时及 64 KiB 流式限额；释放抑制回调。响应策略校验订单/平台单号，限制错误映射和服务器调用号，连接失败不自动重发预支付。
+
+公共回归通过。随后分程序集编译发现内部 ServerCallId setter 不可访问，改为核心 PrepaymentResult.WithServerCallId；真实 Unity Core/Networking/JSON 引用下核心与 HTTP 独立编译通过，策略测试再次通过。尚无 Unity HTTPS 运行实测/真机收银台验证，进度 66/78。
+
 ### 可选预支付 HTTP 路由
 
 订单 handler 可注入同订单实例的预支付服务，开放 POST /v1/orders/{id}/prepare，未注入时保持 404。路由仅使用路径订单号和 Bearer 游戏会话，正文不参与价格、平台身份或令牌选择；返回预支付单号及调用号，日志不带凭据。

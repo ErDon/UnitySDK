@@ -99,6 +99,12 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 客户端编排步骤
 
+`UnityPrepaymentClient(host, ordersEndpoint, gameSession)` 实现 IPrepaymentClient，位于 HTTP 包，绑定一个游戏会话。它向 `{ordersEndpoint}/{orderId}/prepare` 发 `{}`，只允许无凭据/查询/片段的 HTTPS 地址，Bearer 会话仅放请求头；15 秒超时、禁止重定向、响应流上限 64 KiB。换账号/会话时创建新实例，Dispose 中断在途请求并抑制回调；宿主必须保持激活且调用在主线程。
+
+响应策略验证返回的游戏订单号与请求一致，平台单号非空且长度/控制字符合法；预支付不确定、冲突、凭证不可用和令牌拒绝按允许的状态码/错误码组合识别，未知正文不透传。服务器调用号经 GUID 校验后保存。连接失败保留 PAY.PREPAYMENT_UNCERTAIN，不自动重发下单；响应过大也不能推断平台未创建订单。
+
+客户端已完成公共策略测试与真实 Unity 引用的独立程序集编译；尚未进行 Unity HTTPS/主线程生命周期实测和平台真机验证。
+
 `PreparedPaymentLauncher` 实现 IPaymentLauncher，拥有 IPrepaymentClient 与 IPlatformPaymentGateway。前者绑定当前游戏会话，通过 Prepare(orderId, callback) 返回 PrepaymentResult；返回订单号必须与输入一致，平台单号必须合法，才允许调用网关。重复预支付回调和重复终态均忽略，在途新调用返回 PAY.IN_PROGRESS，释放后抑制回调并释放依赖。两个接口的调用和回调均须在 Unity 主线程，HTTP 接入层负责派发。
 
 它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排仅查询服务器状态，不调用 Confirm；查询为 Created 返回 PAY.NOT_PAID，Paid 返回 PAY.FULFILLMENT_PENDING，Fulfilled 才成功。当前只查询一次，不自动轮询或重新拉起收银台。IPrepaymentClient 的 HTTPS 实现与服务端受认证入口尚待接入，不能仅构造启动器就认为完整支付可用。

@@ -7,6 +7,8 @@ namespace ErDon.UnitySDK
         public string OrderId { get; private set; }
         public string TradeOrderId { get; private set; }
         public SdkError Error { get; private set; }
+        public string ServerCallId { get; private set; }
+        public PrepaymentResult WithServerCallId(string value){Guid id;ServerCallId=Guid.TryParseExact(value,"D",out id)?id.ToString("D"):null;if(Error!=null)Error.ServerCallId=ServerCallId;return this;}
         public static PrepaymentResult Ready(string orderId, string tradeOrderId) { return new PrepaymentResult { OrderId=orderId, TradeOrderId=tradeOrderId }; }
         public static PrepaymentResult Fail(SdkError error) { if(error==null)throw new ArgumentNullException("error");return new PrepaymentResult { Error=error }; }
         public override string ToString() { return "PrepaymentResult([REDACTED])"; }

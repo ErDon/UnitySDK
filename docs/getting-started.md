@@ -8,7 +8,7 @@ Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Pa
 
 ## 游戏调用
 
-需要完整可导入的真实平台启动脚本时，安装 `com.erdon.unitysdk.transport.http`，在 Package Manager 的 Samples 导入 **Configured Platform Startup**。它读取面板导出的 JSON，按勾选创建会话兑换和网络能力，等待初始化后由游戏按钮触发登录。操作与生命周期说明见 [示例 README](../Packages/com.erdon.unitysdk.transport.http/Samples~/ConfiguredStartup/README.md)。该示例编译已验证，真实平台运行与服务端联调仍需完成。
+需要完整可导入的真实平台启动脚本时，安装 `com.erdon.unitysdk.transport.http`，在 Package Manager 的 Samples 导入 **Configured Platform Startup**。它读取面板导出的 JSON，按勾选创建会话兑换和网络能力，等待初始化后由游戏按钮触发登录。操作与生命周期说明见 [示例 README](../Packages/com.erdon.unitysdk.transport.http/Samples~/ConfiguredStartup/README.md)。该示例已通过编译和独立 Unity Play Mode 的组件生命周期检查（平台注册替身）；真实平台运行与服务端联调仍需完成。
 
 真实平台优先使用 [配置启动流程](startup.md)，平台包已提供注册和按需工厂。手动场景也可由 UnitySdkHost.Initialize(config, provider) 传入 IAuth。游戏调用 SDK.Login(callback)，结果含 Success、Session、Error、CallId、TraceId。禁止打印 Session。
 

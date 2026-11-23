@@ -8,7 +8,7 @@
 
 `TikTokAnalytics` 实现 `IAsyncAnalytics.ReportEvent(event, callback)`，返回 `IAnalyticsOperation`。首个 success/fail/complete 信号决定结果；单独 complete 返回 ANALYTICS.INVALID_RESULT。Cancel 只取消本地观察并返回 ANALYTICS.CANCELLED，不撤销已发送事件；Dispose 抑制未完成操作的回调。底层没有平台返回时保持等待；SDK 聚合层默认 15 秒超时，并取消底层的本地观察。调用、取消、Tick 和释放需在 Unity 主线程执行。统一入口使用下述回调重载。
 
-参数逐项构造官方 JsonData，空参数用 JsonType.Object，避免被编码为 null 或字符串。测试同时引用本地 TTSDK DLL 和其 LitJson/TTLitJson.dll，覆盖成功/失败/重复/迟到回调、complete 单独触发、同步抛异常、本地取消、释放、空参数及字段映射。运行 `tests/run-tiktok-tests.ps1`。本地插件存在定制修改；此验证不代表干净官方插件集成或真机验收。
+参数逐项构造官方 JsonData，空参数用 JsonType.Object，避免被编码为 null 或字符串。测试同时引用本地 TTSDK DLL 和其 LitJson/TTLitJson.dll，覆盖成功/失败/重复/迟到回调、complete 单独触发、同步抛异常、本地取消、释放、空参数及字段映射。运行 `tests/run-tiktok-tests.ps1`。原本地插件含定制修改；另已针对干净官方 1.1.6 原件完成 Runtime/Editor 双 DLL 回归及独立工程集成，详见 [兼容矩阵](../compatibility/README.md)。这些编译与注入检查不代表真机上报或后台入库验收。
 
 ## 参数与结果
 
@@ -17,17 +17,23 @@
 SDK 自身限制：事件名和参数名为 1–64 个 ASCII 字母、数字或下划线；每个事件最多 32 个参数，字符串值最多 1024 个 UTF-16 字符。这些是公共契约限制，不代表平台配额或后台配置要求。平台适配仍需验证目标平台的额外要求。
 
 ```csharp
-var analyticsEvent = new AnalyticsEvent("level_end",
-    new Dictionary<string, object> {
-        { "level", 4 },
-        { "duration", 12.5 },
+// 先初始化 SDK，并启用数据上报；后台将 mode 字段定义为文本。
+var analyticsEvent = new ErDon.UnitySDK.AnalyticsEvent("level_end",
+    new System.Collections.Generic.Dictionary<string, object> {
         { "mode", "solo" }
     });
-// 先初始化 SDK，并提供启用的数据上报实现。
-var result = SDK.ReportEvent(analyticsEvent);
-if (!result.Dispatched)
-    UnityEngine.Debug.Log(result.Error.Code + ": " + result.Error.Reason);
+ErDon.UnitySDK.IAnalyticsOperation operation = ErDon.UnitySDK.SDK.ReportEvent(
+    analyticsEvent, result => {
+        if (result.Dispatched)
+            UnityEngine.Debug.Log("上报调用完成，CallId=" + result.CallId);
+        else
+            UnityEngine.Debug.LogWarning(result.Error.Code + ": " + result.Error.Reason
+                + "，CallId=" + result.CallId);
+    }, timeoutMilliseconds: 15000);
+// 不再等待时调用 operation.Cancel()；这不会撤回已发送事件。
 ```
+
+此示例使用字符串参数，兼容已接入的微信字符串接口基线；数字参数仅在目标适配支持时使用，详见下方“微信字符串接口基线”。
 
 本地微信官方包 0.1.23 的 `Runtime/WX.cs` 中，`WX.ReportEvent<T>(string eventId, T data)` 返回 void，未提供上报接收确认回调；注释标明最低基础库 2.14.4。对应文档入口为 [wx.reportEvent](https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.reportEvent.html)（本轮在线读取未成功，以本地签名为依据）。
 
@@ -52,11 +58,11 @@ if (!result.Dispatched)
 
 ## 已验证范围
 
-`tests/AnalyticsContractTests.cs` 覆盖事件字典隔离、空参数、无效名称、数量和长度边界、非有限数字和不支持的类型、派发结果语义。`tests/AnalyticsFacadeTests.cs` 覆盖模块开关、配置快照、按需创建、所有权/回收、重入保护、结果隔离、日志脱敏与调用关联。通过公共回归入口 `tests/run-all-tests.ps1` 执行。尚无平台调用或真实数据入库验证。
+`tests/AnalyticsContractTests.cs` 覆盖事件字典隔离、空参数、无效名称、数量和长度边界、非有限数字和不支持的类型、派发结果语义。`tests/AnalyticsFacadeTests.cs` 覆盖模块开关、配置快照、按需创建、所有权/回收、重入保护、结果隔离、日志脱敏与调用关联。通过公共回归入口 `tests/run-all-tests.ps1` 执行。另有下述真实官方程序集编译及注入行为检查；尚无真机上报或真实数据入库验证。
 
 ## 微信接入
 
-使用官方 0.1.23 Unity 插件并先完成微信运行时初始化。配置 platform=WeChat、analytics=true，通过已有注册启动入口创建 WeChatProviderFactory；若手动初始化，使用相同工厂并设置 AnalyticsEnabled=true。事件名和字段需与微信后台事件配置对应，不自动添加游戏/环境字段；不同游戏通过各自微信 App ID 和工程配置隔离，业务确需环境维度时自行配置并传入。
+先按 [微信接入文档](wechat.md) 安装所选官方插件基线并完成微信运行时初始化。下述泛型路径针对本地 0.1.23；固定官方提交 915d4bf 使用本页末尾的字符串接口路径。配置 platform=WeChat、analytics=true，通过已有注册启动入口创建 WeChatProviderFactory；若手动初始化，使用相同工厂并设置 AnalyticsEnabled=true。事件名和字段需与微信后台事件配置对应，不自动添加游戏/环境字段；不同游戏通过各自微信 App ID 和工程配置隔离，业务确需环境维度时自行配置并传入。
 
 WeChatAnalytics 使用 `WX.ReportEvent<Dictionary<string,object>>`。本地 WX.dll 到 wx-runtime-editor.dll 的调用链检查表明该方法调用 LitJson.JsonMapper.ToJson，然后传递 JSON 字符串。没有平台成功或失败回调，无法判断静默丢弃、后台配置缺失或网络未送达。可观察到的同步异常转为 ANALYTICS.PROVIDER_FAILED，不返回异常原文；释放后的调用返回 SDK.DISPOSED。
 
@@ -86,7 +92,7 @@ IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
 
 有效调用的回调经初始化时的主线程派发器投递；派发器抛异常时由后续 Tick 恢复。初始化/模块/参数预检失败会在当前调用线程直接返回回调，因此调用本身也必须位于主线程。重复或迟到平台结果被抑制，Shutdown 丢弃排队结果并取消未完成观察。回调异常进入 SDK 格式化日志。平台实现返回 null 结果/句柄分别映射 ANALYTICS.INVALID_RESULT/ANALYTICS.INVALID_OPERATION。
 
-`tests/AnalyticsAsyncTests.cs` 验证并发独立结果、取消、超时、快照、同步平台兼容、派发恢复和关闭后的回调抑制。TikTok 双 DLL 测试另验证工厂和运行时配置。Unity Mock Play Mode 已验证，TikTok 干净插件和真机上报仍待验证。
+`tests/AnalyticsAsyncTests.cs` 验证并发独立结果、取消、超时、快照、同步平台兼容、派发恢复和关闭后的回调抑制。TikTok 双 DLL 测试另验证工厂和运行时配置。Unity Mock Play Mode、TikTok 干净官方插件双 DLL 回归与独立工程集成已验证；真机上报和后台入库仍待验证。
 
 ## Editor Mock 面板
 

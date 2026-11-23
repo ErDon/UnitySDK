@@ -2,7 +2,7 @@
 
 上层使用 SDK.SetStorageSync / GetStorageSync / RemoveStorageSync；底层 IStorage 实现按平台替换。这三个方法同步返回 StorageResult，必须在主线程调用。已提供 Editor 内存 Mock、[微信适配](wechat.md) 、[TikTok 适配](tiktok.md) 和 [抖音适配](douyin.md)，平台实现尚未经过真机验收。
 
-配置面板勾选“存储（Editor Mock）”，进入 Play Mode 后点击“按配置初始化 Mock”，即可填写 Key/Value 并写入、读取、删除。勾选改变后重新初始化生效；SDK 保存配置快照，不受后续字段修改影响。每次初始化/退出会清空 Mock 数据，不等同于存档持久化。Mock 位于 Editor 程序集，不进入 Player。
+配置面板选择 Mock 平台并勾选“存储”，进入 Play Mode 后点击“按配置初始化 Mock”，即可填写 Key/Value 并写入、读取、删除。勾选改变后重新初始化生效；SDK 保存配置快照，不受后续字段修改影响。每次初始化/退出会清空 Mock 数据，不等同于存档持久化。Mock 位于 Editor 程序集，不进入 Player。
 
 ## 接口示例
 

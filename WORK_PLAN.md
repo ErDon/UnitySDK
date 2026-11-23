@@ -127,6 +127,12 @@
 
 ## 2026-11-24 执行记录
 
+### 跨平台上报示例与接入文档复核
+
+发现 analytics.md 首个示例使用同步接口和数字参数，直接照抄到 TikTok 会得到 ASYNC_REQUIRED，在微信字符串接口基线也会被拒绝。改为带完整类型名的回调示例、字符串参数和 CallId 错误处理，并明确后台字段需定义为文本、取消不撤回事件。同步修正分享、存储、上报和快速入门中已过时的面板标签及官方插件/示例验证状态。
+
+从 Markdown 原样提取首个 C# 代码块，使用 Unity 2022.3.14f1c1 的编译器、netstandard 2.1 引用、实际核心程序集和 UnityEngine.CoreModule，以 warnaserror 编译通过，标记 ANALYTICS_DOCUMENTATION_COMPILE_PASS。首次独立编译因缺少 netstandard 引用失败，补齐对应 Unity 引用后通过；这不是新一次平台执行或后台入库验证。整体接口文档与独立游戏验收尚未完成，统计仍为 65/78。
+
 ### 能力编译裁剪验收与进度同步
 
 微信、抖音独立工程配置七模块全关，保留各平台和官方兼容宏后执行实际 WebGL Development Build。WeChatBuildProject-seven-off-build.log 与 DouyinBuildProject-seven-off-build.log 均出现 SDK_DEVELOPMENT_WEBGL_BUILD_PASS、正常退出，结果文件均为 Succeeded errors=0。再次对两份 ManagedStripped 执行 check-linked-platform，七项排除与目标注册保留检查均通过。

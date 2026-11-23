@@ -5,6 +5,7 @@ using UnityEngine;
 namespace ErDon.UnitySDK.Editor
 {
     public enum MockLoginOutcome { Success, Cancelled, Denied, Timeout, RateLimited }
+    public enum MockPaymentOutcome { Fulfilled, Pending, Cancelled, Timeout }
     // Editor assembly is never compiled into Player builds.
     public sealed class EditorMockAuth : IAuth
     {
@@ -24,24 +25,39 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class EditorSdkBootstrap
     {
-        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory
+        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory, IPayProviderFactory
         {
             readonly MockLoginOutcome outcome;
-            public MockFactory(MockLoginOutcome outcome) { this.outcome = outcome; }
+            readonly MockPaymentOutcome payment;
+            public MockFactory(MockLoginOutcome outcome, MockPaymentOutcome payment) { this.outcome = outcome; this.payment = payment; }
             public IAuth CreateAuth(Action<Action> post) { return new EditorMockAuth(outcome); }
             public IStorage CreateStorage() { return new EditorMockStorage(); }
             public IShare CreateShare() { return new EditorMockShare(); }
+            public IPay CreatePay(Action<Action> post) { return new EditorMockPay(payment); }
         }
-        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null)
+        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null, MockPaymentOutcome payment = MockPaymentOutcome.Fulfilled)
         {
             var settings = SdkProjectSettings.instance;
             var issues = settings.Validate();
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
             UnitySdkHost.InitializeWithFactory(new SdkConfig {
-                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, LogCallback = logger
-            }, new MockFactory(outcome));
+                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, PayEnabled = settings.payments, LogCallback = logger
+            }, new MockFactory(outcome, payment));
         }
+    }
+    public sealed class EditorMockPay : IPay
+    {
+        readonly MockPaymentOutcome outcome;
+        public EditorMockPay(MockPaymentOutcome outcome) { this.outcome = outcome; }
+        public void Pay(PaymentRequest request, Action<PaymentResult> callback)
+        {
+            if(outcome == MockPaymentOutcome.Timeout)return;
+            if(outcome == MockPaymentOutcome.Cancelled){callback(PaymentResult.Fail("PAY.USER_CANCELLED","Mock cancellation"));return;}
+            callback(PaymentResult.FromOrder(OrderResult.Ok(new GameOrder(Guid.NewGuid().ToString("D"),request.ProductId,99,"USD",
+                outcome==MockPaymentOutcome.Fulfilled?OrderState.Fulfilled:OrderState.Paid))));
+        }
+        public void Dispose() { }
     }
     public sealed class EditorMockShare : IShare
     {

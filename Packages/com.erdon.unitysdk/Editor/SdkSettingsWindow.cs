@@ -30,8 +30,8 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("目标平台适配包尚未实现；当前不能生成真实平台接入。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (rewardedAds || payments || network || analytics)
-                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储和分享示例。");
+            if (rewardedAds || network || analytics)
+                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享和支付示例。");
             return issues;
         }
     }
@@ -39,6 +39,7 @@ namespace ErDon.UnitySDK.Editor
     {
         Vector2 scroll;
         MockLoginOutcome outcome;
+        MockPaymentOutcome paymentOutcome;
         string lastResult = "尚未调用";
         string storageKey = "preview.key", storageValue = "preview-value";
         [MenuItem("Tools/ErDon SDK/配置与预览")]
@@ -57,7 +58,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("能力模块", EditorStyles.boldLabel);
             settings.login = EditorGUILayout.Toggle("登录", settings.login);
             settings.rewardedAds = EditorGUILayout.Toggle("激励广告（待实现）", settings.rewardedAds);
-            settings.payments = EditorGUILayout.Toggle("支付（待实现）", settings.payments);
+            settings.payments = EditorGUILayout.Toggle("支付（Editor Mock）", settings.payments);
             settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（待实现）", settings.network);
@@ -79,10 +80,11 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Mock 调试（仅 Play Mode）", EditorStyles.boldLabel);
             outcome = (MockLoginOutcome)EditorGUILayout.EnumPopup("模拟结果", outcome);
+            paymentOutcome = (MockPaymentOutcome)EditorGUILayout.EnumPopup("支付模拟结果", paymentOutcome);
             EditorGUILayout.HelpBox("每次初始化读取当前配置；修改模块开关后重新初始化。超时模拟使用 1 秒；其他调用使用默认超时。", MessageType.Info);
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
                 if (GUILayout.Button("按配置初始化 Mock")) {
-                    try { EditorSdkBootstrap.Initialize(outcome); lastResult = "Mock 已初始化"; }
+                    try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome); lastResult = "Mock 已初始化"; }
                     catch (Exception ex) { lastResult = ex.Message; }
                 }
                 if (GUILayout.Button("调用 SDK.Share（仅模拟发起）")) {
@@ -91,6 +93,13 @@ namespace ErDon.UnitySDK.Editor
                         Repaint();
                     });
                 }
+                if (GUILayout.Button("调用 SDK.Pay（不产生真实订单）")) {
+                    SDK.Pay(new PaymentRequest("mock-session", "mock-product", "mock-purchase"), result => {
+                        lastResult = (result.Success ? "Mock 已发货（非真实支付）" : result.Error.Code) + " callId=" + result.CallId;
+                        Repaint();
+                    }, paymentOutcome == MockPaymentOutcome.Timeout ? 1000 : 60000);
+                }
+                if (GUILayout.Button("取消本地支付等待")) SDK.CancelPay();
                 if (GUILayout.Button("调用 SDK.Login")) {
                     SDK.Login(result => {
                         lastResult = (result.Success ? "Mock 成功（非真实会话）" : result.Error.Code) + " callId=" + result.CallId;

@@ -218,3 +218,11 @@ Runtime/Editor 两套官方 DLL 均通过分享入口编译与注入测试，原
 公共回归和支付编排测试通过，覆盖恢复、重复回调、取消竞争、换单和所有权。尚未接 SDK.Pay 聚合、超时/取消、配置面板及真实平台 launcher；详见 docs/payment-pipeline.md。
 
 独立 Unity payment-pipeline.log 输出 SDK_EDITOR_CHECKS_PASS 并以 0 退出，验证编译和 Editor 检查。
+
+### SDK.Pay 聚合与支付配置预览
+
+新增 SDK.Pay/CancelPay、PayEnabled 和可选 IPayProviderFactory；配置未启用时不创建 provider，支持统一生命周期/失败回收。支付等待默认 60 秒，可本地取消，迟到结果不重复派发；不声称撤销平台交易。日志由 SDK 格式化并整体脱敏，结果包含 CallId/TraceId 和服务端关联号。
+
+Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，仍仅为 Mock。公共回归与新增 PayTests 通过，覆盖禁用、并发、超时/取消、旧结果、释放和日志。真实平台支付参数、收银台和验签闭环仍未完成。
+
+独立 Unity Play Mode 的 pay-facade-play.log 输出 SDK_PLAY_CHECKS_PASS，实际验证已发货、待发货和禁用支付配置。

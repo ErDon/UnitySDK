@@ -93,12 +93,14 @@ namespace ErDon.UnitySDK
     {
         IShare CreateShare();
     }
+    public interface IPayProviderFactory { IPay CreatePay(Action<Action> mainThreadDispatch); }
     public sealed class SdkConfig
     {
         public string Platform = "Unconfigured";
         public bool LoginEnabled = true;
         public bool StorageEnabled;
         public bool ShareEnabled;
+        public bool PayEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
     public interface ISdkProviderFactory
@@ -113,6 +115,9 @@ namespace ErDon.UnitySDK
         static IAuth auth;
         static IStorage storage;
         static IShare share;
+        static IPay pay;
+        static bool paying;
+        static Action cancelPay, checkPayTimeout;
         static bool sharing;
         static Action cancelShare, checkShareTimeout;
         static SdkConfig config;
@@ -131,59 +136,67 @@ namespace ErDon.UnitySDK
             EnsureNotLogging();
             if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
-                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, LogCallback = settings.LogCallback };
+                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, LogCallback = settings.LogCallback };
             IAuth createdAuth = null;
             IStorage createdStorage = null;
             IShare createdShare = null;
+            IPay createdPay = null;
             changingLifecycle = true;
             try {
                 if (snapshot.LoginEnabled) {
                     createdAuth = factory.CreateAuth(mainThreadDispatch);
                     if (createdAuth == null) throw new InvalidOperationException("Enabled login has no provider");
-                    if (ReferenceEquals(createdAuth, auth) || ReferenceEquals(createdAuth, storage) || ReferenceEquals(createdAuth, share))
+                    if (IsOwned(createdAuth))
                         throw new InvalidOperationException("Factory must return a fresh provider");
                 }
                 if (snapshot.StorageEnabled) {
                     createdStorage = factory.CreateStorage();
                     if (createdStorage == null) throw new InvalidOperationException("Enabled storage has no provider");
-                    if (ReferenceEquals(createdStorage, auth) || ReferenceEquals(createdStorage, storage) || ReferenceEquals(createdStorage, share))
+                    if (IsOwned(createdStorage))
                         throw new InvalidOperationException("Factory must return a fresh provider");
                 }
                 if (snapshot.ShareEnabled) {
                     var shareFactory = factory as IShareProviderFactory;
                     if (shareFactory == null || (createdShare = shareFactory.CreateShare()) == null)
                         throw new InvalidOperationException("Enabled share has no provider");
-                    if (ReferenceEquals(createdShare, auth) || ReferenceEquals(createdShare, storage) || ReferenceEquals(createdShare, share))
+                    if (IsOwned(createdShare))
                         throw new InvalidOperationException("Factory must return a fresh provider");
+                }
+                if (snapshot.PayEnabled) {
+                    var payFactory = factory as IPayProviderFactory;
+                    if (payFactory == null || (createdPay = payFactory.CreatePay(mainThreadDispatch)) == null)
+                        throw new InvalidOperationException("Enabled payment has no provider");
+                    if (IsOwned(createdPay)) throw new InvalidOperationException("Factory must return a fresh provider");
                 }
             } catch {
                 // Only roll back this attempt. Never dispose a provider belonging to the active SDK.
                 DisposeUnowned(createdAuth);
                 if (!ReferenceEquals(createdStorage, createdAuth)) DisposeUnowned(createdStorage);
                 if (!ReferenceEquals(createdShare, createdAuth) && !ReferenceEquals(createdShare, createdStorage)) DisposeUnowned(createdShare);
+                if (!ReferenceEquals(createdPay, createdAuth) && !ReferenceEquals(createdPay, createdStorage) && !ReferenceEquals(createdPay, createdShare)) DisposeUnowned(createdPay);
                 throw;
             } finally { changingLifecycle = false; }
-            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare);
+            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare, createdPay);
         }
+        static bool IsOwned(IDisposable provider)
+        { return provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share) || ReferenceEquals(provider, pay)); }
         static void DisposeUnowned(IDisposable provider)
         {
-            if (provider == null || ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share)) return;
+            if (provider == null || IsOwned(provider)) return;
             try { provider.Dispose(); } catch { /* Preserve the original factory failure. */ }
         }
         public static void Initialize(SdkConfig settings, IAuth provider,
-            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null)
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            if ((provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share))) ||
-                (storageProvider != null && (ReferenceEquals(storageProvider, storage) || ReferenceEquals(storageProvider, auth) || ReferenceEquals(storageProvider, share))) ||
-                (shareProvider != null && (ReferenceEquals(shareProvider, share) || ReferenceEquals(shareProvider, auth) || ReferenceEquals(shareProvider, storage))))
+            if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
             changingLifecycle = true;
             try {
                 ResetCore();
-                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, LogCallback = settings.LogCallback };
-                auth = provider; storage = storageProvider; share = shareProvider; dispatch = mainThreadDispatch; fallback = engineLog;
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, LogCallback = settings.LogCallback };
+                auth = provider; storage = storageProvider; share = shareProvider; pay = payProvider; dispatch = mainThreadDispatch; fallback = engineLog;
                 Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             } finally { changingLifecycle = false; }
         }
@@ -303,6 +316,49 @@ namespace ErDon.UnitySDK
             var cancel = cancelShare;
             if (cancel != null) cancel();
         }
+        public static void Pay(PaymentRequest request, Action<PaymentResult> callback, int timeoutMilliseconds = 60000)
+        {
+            EnsureNotLogging();
+            if (callback == null) throw new ArgumentNullException("callback");
+            if (timeoutMilliseconds <= 0) throw new ArgumentOutOfRangeException("timeoutMilliseconds");
+            var call = Guid.NewGuid().ToString("N");
+            Log(SdkLogLevel.Info, "SDK.Pay", call, "Start", "{\"content\":\"[REDACTED]\"}", "Pending");
+            string invalid = config == null ? "SDK.NOT_INITIALIZED" : !config.PayEnabled ? "MODULE.DISABLED" :
+                pay == null ? "CAPABILITY.NOT_SUPPORTED" : request == null || string.IsNullOrWhiteSpace(request.Session) || string.IsNullOrWhiteSpace(request.ProductId) || string.IsNullOrWhiteSpace(request.RequestId) ? "PAY.INVALID_REQUEST" :
+                paying ? "PAY.IN_PROGRESS" : null;
+            if (invalid != null) { FinishPay(callback, PaymentResult.Fail(invalid, invalid), call); return; }
+            paying = true;
+            int epoch = generation, completed = 0;
+            var post = dispatch;
+            var timer = Stopwatch.StartNew();
+            Action<PaymentResult> done = result => {
+                if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
+                post(() => {
+                    if (epoch != generation) return;
+                    paying = false; cancelPay = null; checkPayTimeout = null;
+                    FinishPay(callback, result ?? PaymentResult.Fail("PAY.INVALID_RESULT", "Pay provider returned no result"), call);
+                });
+            };
+            cancelPay = () => done(PaymentResult.Fail("PAY.CANCELLED", "Caller cancelled local pay wait"));
+            checkPayTimeout = () => { if (timer.ElapsedMilliseconds >= timeoutMilliseconds) done(PaymentResult.Fail("PAY.TIMEOUT", "Pay dispatch timed out")); };
+            try { pay.Pay(request, done); }
+            catch { done(PaymentResult.Fail("PAY.PROVIDER_FAILED", "Pay provider failed")); }
+        }
+        static void FinishPay(Action<PaymentResult> callback, PaymentResult result, string call)
+        {
+            result.CallId = call;
+            if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = "SDK.Pay"; result.Error.Stage = "Payment"; }
+            Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Pay", call, "Complete", "{}",
+                (result.Success ? "Fulfilled" : result.Error.Code) + " serverCallId=" + (result.ServerCallId ?? "none"));
+            try { callback(result); }
+            catch { Log(SdkLogLevel.Error, "SDK.Pay", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
+        }
+        public static void CancelPay()
+        {
+            EnsureNotLogging();
+            var cancel = cancelPay;
+            if (cancel != null) cancel();
+        }
         public static void Tick()
         {
             EnsureNotLogging();
@@ -310,6 +366,8 @@ namespace ErDon.UnitySDK
             if (check != null) check();
             var shareCheck = checkShareTimeout;
             if (shareCheck != null) shareCheck();
+            var payCheck = checkPayTimeout;
+            if (payCheck != null) payCheck();
         }
         public static void CancelLogin()
         {
@@ -355,8 +413,9 @@ namespace ErDon.UnitySDK
         {
             generation++; busy = false; cancelLogin = null;
             sharing = false; cancelShare = null; checkShareTimeout = null;
+            paying = false; cancelPay = null; checkPayTimeout = null;
             checkTimeout = null;
-            var old = auth; var oldStorage = storage; var oldShare = share; auth = null; storage = null; share = null; dispatch = null;
+            var old = auth; var oldStorage = storage; var oldShare = share; var oldPay = pay; auth = null; storage = null; share = null; pay = null; dispatch = null;
             string call = Guid.NewGuid().ToString("N");
             bool failed = false;
             if (old != null) {
@@ -373,6 +432,10 @@ namespace ErDon.UnitySDK
             if (oldShare != null && !ReferenceEquals(oldShare, old) && !ReferenceEquals(oldShare, oldStorage)) {
                 try { oldShare.Dispose(); }
                 catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposeShare", "{}", "SDK.DISPOSE_FAILED"); }
+            }
+            if (oldPay != null && !ReferenceEquals(oldPay, old) && !ReferenceEquals(oldPay, oldStorage) && !ReferenceEquals(oldPay, oldShare)) {
+                try { oldPay.Dispose(); }
+                catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposePayment", "{}", "SDK.DISPOSE_FAILED"); }
             }
             if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
             config = null;

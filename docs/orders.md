@@ -83,7 +83,7 @@ options.log 接收服务端已格式化 JSON，包含 time/interface/callId/logI
 
 ## Unity 订单通信层
 
-核心提供 IOrderClient、OrderResult、GameOrder、OrderState；可选 HTTP 包提供 UnityOrderClient。它是支付编排的下层接口，尚未接入统一 SDK.Pay，也不直接启动平台收银台或发货。
+核心提供 IOrderClient、OrderResult、GameOrder、OrderState；可选 HTTP 包提供 UnityOrderClient。它是支付编排的下层接口，已由 VerifiedPayment 接入 SDK.Pay，真实平台支付参数仍待接入，也不直接启动平台收银台或发货。
 
 ```csharp
 // this 是存活、启用的 MonoBehaviour；在主线程创建和调用。
@@ -111,4 +111,4 @@ purchaseRequestId 应在一次购买开始时生成并保存，网络不确定�
 
 结果策略核对订单 UUID、期望订单/商品、非空商品、正整数金额（不超过 JS 安全整数）、币种形状及三个已知状态。未知状态、矛盾响应、换单响应均为 PAY.INVALID_RESPONSE。服务端错误仅映射已登记 HTTP/错误码组合，其他返回 PAY.SERVER_REJECTED；429 提供 RetryAfterSeconds（仅接受正整数），401 会话错误提示重新登录。ServerCallId 只保留标准 UUID。
 
-协议单元测试覆盖状态、换单、金额与错误字段；Unity 编译验证不等于 HTTPS 实机联调。真实平台支付和 SDK.Pay 聚合仍是后续工作。
+协议单元测试覆盖状态、换单、金额与错误字段；Unity 编译验证不等于 HTTPS 实机联调。SDK.Pay 聚合已接入，真实平台支付仍是后续工作。

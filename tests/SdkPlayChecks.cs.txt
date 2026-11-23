@@ -52,6 +52,18 @@ public static class SdkPlayChecks
                 SDK.Share(new ShareRequest("disabled share"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("share disabled failed");else phase=11;});
             }
             if(phase==11){
+                phase=12;SdkProjectSettings.instance.payments=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.Pay(new PaymentRequest("mock-session","coins","play-request"),r=>{if(!r.Success)Fail("payment fulfilled failed");else phase=13;});
+            }
+            if(phase==13){
+                phase=14;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,payment:MockPaymentOutcome.Pending);
+                SDK.Pay(new PaymentRequest("mock-session","coins","play-request"),r=>{if(r.Success||r.Error.Code!="PAY.FULFILLMENT_PENDING")Fail("payment pending failed");else phase=15;});
+            }
+            if(phase==15){
+                phase=16;SdkProjectSettings.instance.payments=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.Pay(new PaymentRequest("mock-session","coins","play-request"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("payment disabled failed");else phase=17;});
+            }
+            if(phase==17){
                 finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);
             }
         }catch(Exception e){Fail(e.Message);}

@@ -1,6 +1,6 @@
 # 支付编排（开发中）
 
-VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。当前尚未接 SDK.Pay 聚合、配置面板或真实平台收银台。
+VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。已接 SDK.Pay 聚合及 Editor Mock 配置预览，真实平台收银台尚未接入。
 
 ## 状态与步骤
 
@@ -36,7 +36,7 @@ IPaymentLauncher.Launch 接收服务端订单快照。真实 launcher 必须通�
 
 VerifiedPayment 拥有两个依赖，Dispose 分别释放；相同对象实现两个接口只释放一次。在途已入队回调在 Dispose 后忽略。每阶段只接受第一次回调，防止重复平台消息重复确认；已有流程未完成时返回 PAY.IN_PROGRESS。调用入口要求主线程，平台结果通过提供的 post 派发。
 
-尚无编排级超时/取消入口；HTTP 传输有自身超时，平台若不回调需由未来聚合层控制等待。不能把 Dispose 视为取消已经进行的支付。上层聚合日志/调用编号尚未接入，下层不输出 session、回执或任意异常文本。
+VerifiedPayment 自身不取消平台交易；聚合层 SDK.Pay 提供默认 60 秒超时和 SDK.CancelPay 本地取消等待，HTTP 传输另有自身超时。不能把 Dispose 视为取消已经进行的支付。上层 SDK.Pay 提供 CallId/TraceId、操作与阶段及格式化日志，记录服务端 ServerCallId；请求内容整体脱敏，不输出 session、回执或任意异常文本。
 
 常见流程错误：PAY.INVALID_REQUEST、PAY.IN_PROGRESS、PAY.CREATE_FAILED、PAY.LAUNCH_FAILED、PAY.VERIFICATION_FAILED、PAY.INVALID_RESPONSE、PAY.NOT_PAID、PAY.FULFILLMENT_PENDING。Created 与确认结果必须保持相同订单/商品/金额/币种，未知状态或换单拒绝。服务端已完成发货优先于平台取消提示，查询失败不会伪造取消成功。
 
@@ -45,3 +45,24 @@ PaymentResult.Success 只有服务端订单状态为 Fulfilled 时成立。Order
 ## 验证范围
 
 PaymentPipelineTests 覆盖重复回调、主线程队列、并发支付拒绝、平台成功后仍等待服务端、Paid/Fulfilled 恢复不再拉起收银台、取消竞争、订单被替换及释放失效。订单与 launcher 均使用测试实现，不等同于真实支付验收。
+
+
+## 游戏上层调用
+
+通过 SdkConfig.PayEnabled 开启支付；工厂实现 IPayProviderFactory.CreatePay(post)，返回全新 VerifiedPayment。关闭模块时不创建支付 provider。也可在 UnitySdkHost.Initialize 的 payProvider 参数传入实现；工厂方式更适合按配置装配。
+
+```csharp
+SDK.Pay(new PaymentRequest(gameSession, "coins", savedPurchaseRequestId), result => {
+    if (result.Success) {
+        // 服务端已完成发货，只同步权益。
+    } else {
+        UnityEngine.Debug.LogWarning(result.Error.Code + " callId=" + result.CallId);
+        // TIMEOUT/CANCELLED 不能解释为未扣费。保留购买编号，查单后处理。
+    }
+}, timeoutMilliseconds: 60000);
+// SDK.CancelPay(); // 只结束本地等待，不关闭平台收银台、不退款。
+```
+
+SDK.Pay 对未初始化、模块关闭、缺少 provider、非法请求及并发调用返回明确错误；回调异常被隔离。超时由 SDK.Tick/Unity Update 驱动，迟到结果不再次触发上层回调。超时/取消后，底层 VerifiedPayment 可能仍在核验，继续支付可能返回 PAY.IN_PROGRESS；不得用新 requestId 绕过等待或重复扣款。重建 SDK 也不撤销服务端订单，恢复必须使用原编号。
+
+Tools → ErDon SDK → 配置与预览：勾选支付，选择支付模拟结果，再初始化 Mock。可预览 Fulfilled、Pending、Cancelled、Timeout；按钮不创建真实订单。修改开关或模拟结果后需重新初始化。生产 Mock 构建继续阻断，真实支付平台亦未放行。

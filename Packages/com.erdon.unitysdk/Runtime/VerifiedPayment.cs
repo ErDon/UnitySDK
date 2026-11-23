@@ -12,6 +12,8 @@ namespace ErDon.UnitySDK
     }
     public sealed class PaymentResult
     {
+        public string CallId { get; internal set; }
+        public string TraceId { get { return CallId; } }
         public bool Success { get { return Error==null && Order!=null && Order.State==OrderState.Fulfilled; } }
         public GameOrder Order { get; private set; }
         public SdkError Error { get; private set; }

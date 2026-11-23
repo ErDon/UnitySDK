@@ -1,5 +1,6 @@
 using System;
 using ErDon.UnitySDK;
+using ErDon.UnitySDK.Editor;
 using UnityEditor;
 using UnityEngine;
 [InitializeOnLoad]
@@ -17,8 +18,13 @@ public static class StartupPlayChecks {
   if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
   deadline=EditorApplication.timeSinceStartup+20;EditorApplication.update+=Step;
   SdkPlatformRegistry.Register("Douyin",()=>new Runtime{Immediate=true},(g,e,x)=>new Factory());
-  UnitySdkHost.BeginConfiguredStartup(new SdkRuntimeConfiguration{platform="Douyin",gameId="test-game",appId="test-app"},
-   ()=>{throw new Exception("Fake factory does not use exchange");},r=>{if(!r.Success)Fail("configured startup success");else phase=1;},(l,s)=>{});
+  var settings=SdkProjectSettings.instance;
+  settings.platform=DistributionPlatform.Douyin;settings.gameId="test-game";settings.appId="test-app";
+  settings.production=false;settings.login=true;settings.storage=false;settings.share=false;settings.payments=false;settings.rewardedAds=false;settings.network=false;settings.analytics=false;
+  bool rejected=false;try{EditorPlatformBootstrap.Begin(r=>{});}catch(InvalidOperationException e){rejected=e.Message=="CONFIG.SESSION_EXCHANGE_REQUIRED";}
+  if(!rejected){Fail("missing backend preflight");return;}
+  EditorPlatformBootstrap.SessionExchangeFactory=()=>{throw new Exception("Fake factory does not use exchange");};
+  EditorPlatformBootstrap.Begin(r=>{if(!r.Success)Fail("editor configured startup success");else phase=1;},(l,s)=>{});
  };}
  public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
  static void Step(){

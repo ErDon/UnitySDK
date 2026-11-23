@@ -123,6 +123,7 @@ namespace ErDon.UnitySDK
     // Internal composition keeps provider selection out of game-facing calls.
     public static class SDK
     {
+        public static string ActivePlatform { get { return config == null ? null : config.Platform; } }
         static IAuth auth;
         static IStorage storage;
         static IShare share;

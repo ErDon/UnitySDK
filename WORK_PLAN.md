@@ -26,7 +26,8 @@
 - [x] 平台独立程序集、宏校验、依赖清单与生产 Mock 阻断。
 - [x] Player 程序集/预编译引用和 BuildReport 资源检查；已知官方目录混装检测。
 - [x] 运行时配置选择平台、自动注册与按需装配入口；公共预检测试及微信/抖音自动注册检查。
-- [ ] 面板启动按钮接入、TikTok 注册工程验证与完整构建依赖装配。
+- [x] 面板平台启动/取消/关闭按钮及后端工厂注入；Play Mode 逻辑回归。
+- [ ] TikTok 注册工程验证与完整构建依赖装配。
 - [ ] 面板交互与导出操作的视觉验收。
 - [ ] 实际目标平台导出及最终 JS/Wasm/原生/资源包裁剪证明；当前真实构建仍阻断。
 
@@ -463,3 +464,10 @@ Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所�
 
 公共回归通过，验证预检零运行时创建、快照隔离、环境传递、禁用登录不传交换工厂、平台错配回收和注册重置。隔离微信/抖音 Play Mode 分别输出 SDK_PLATFORM_REGISTRATION_PASS，只解析真实包构造器、不触发平台 API。面板按钮和真实构建仍待完成，TikTok 干净工程仍待验证。
 宿主配置入口回归 configured-startup-retry.log 输出 SDK_STARTUP_PLAY_PASS；首轮因旧 ReloadPlayChecks 批处理停在退出阶段占用工程，核对进程命令行后仅结束该测试进程并重跑。新文件首次刷新有暂态类型错误，微信重开编译 wechat-registration-confirm.log 无 C# 错误。
+
+### 面板平台启动控制
+
+增加 EditorPlatformBootstrap，面板可按当前配置启动平台、取消等待或关闭 SDK；后端登录交换工厂由游戏注入，退出 Play 清空，不保存实例。真实平台缺后端返回明确配置码。构建校验文案更新为依赖/产物仍待验收，阻断保持。
+
+新增 SDK.ActivePlatform 只读诊断，Mock 业务按钮仅在实际运行 Mock 时开放，防止切换面板配置后调用旧的真实 provider。公共回归与 editor-platform-startup.log 的 SDK_STARTUP_PLAY_PASS 通过，覆盖面板调用路径及缺后端预检；使用注入平台 runtime/factory，不代替真机。界面视觉交互验收仍待办。
+最终 editor-platform-confirm.log 无 C# 编译错误，输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

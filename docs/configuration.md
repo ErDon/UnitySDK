@@ -56,7 +56,7 @@ var config = data.ToSdkConfig();
 
 Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，网络/上报仍被拒绝；三平台广告已支持，真实平台支付尚无收银台适配。数据校验通过不代表官方依赖、启动或构建已验收。
 
-可使用下述运行时配置入口自动等待平台初始化并装配，面板启动按钮尚未接入；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
+可使用下述运行时配置入口自动等待平台初始化并装配，面板已接入平台启动按钮；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
 
 真实平台工厂必须实现 IPlatformSdkProviderFactory，Platform 固定标识其实现的平台；内置工厂已实现。InitializeWithFactory 在创建能力之前核对配置身份，缺失或不一致抛 CONFIG.PLATFORM_MISMATCH，当前 SDK 保持运行。自定义工厂示例中的平台声明必须与其实际 provider 相符，不能只复制配置字符串来掩盖错误实现。此检查不能证明第三方工厂内部调用了正确 SDK，也不替代包体裁剪。
 
@@ -83,3 +83,13 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 重复注册同平台抛 CONFIG.DUPLICATE_PLATFORM；每次 Unity Play 会话先清空注册项，再由平台包注册。自定义平台接入可调用 SdkPlatformRegistry.Register，但注册项应只保存构造器，返回新实例；生命周期、错误日志与模块隔离规则不变。现有 JSON 白名单仍只允许首批三平台和 Mock。
 
 已验证公共预检/所有权行为及微信、抖音的 Unity 自动注册。TikTok 注册代码与对应桥接已提供，干净插件工程验证仍待办。自动注册不代表构建裁剪或真机通过，真实平台构建阻断暂不解除。
+
+## 面板启动平台 SDK
+
+进入 Play Mode 后，在“真实平台启动”区域点击“按配置启动平台 SDK”。它读取面板当前配置，调用统一配置入口；成功后显示装配完成及 CallId，失败显示错误码。可取消本地启动等待，或关闭 SDK。未初始化完成时不要调用游戏业务。
+
+开启登录时，游戏需在 Editor Play Mode 的 Awake/Start 中设置 `ErDon.UnitySDK.Editor.EditorPlatformBootstrap.SessionExchangeFactory`，值为每次返回新 ISessionExchange 的构造函数。此代码必须放在 `#if UNITY_EDITOR` 内或 Editor 程序集中，Editor 包不会进入 Player；退出 Play Mode 会清除该工厂引用。只想检查平台启动时可取消勾选登录；面板不创建假登录会话。
+
+真实平台的支付、网络和上报仍未实现时会被预检拒绝。官方 SDK 在 Editor 的能力可能受限，失败或超时不能当作真机结果；面板启动不会自动开启广告或收银台。构建检查仍阻断未验收的真实平台产物。
+
+Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面板下拉框不会改变当前运行平台，必须重新初始化；当前平台标识为只读诊断值，Shutdown 后返回 null。此保护避免切回 Mock 配置后把测试参数发给仍在运行的真实 provider。

@@ -25,9 +25,19 @@ if (!checked.valid) {
 
 成功仅返回冻结的 notification：clientKey、isSandbox、orderId、tradeOrderId、userOpenId、createdAtSeconds，不透传正文额外字段。官方样例的 user_openid 可以为空，因此用户归属仍必须通过服务端可信的预支付关联记录校验，不能只信通知里的订单号。
 
-后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由、订单关联持久化和真实发货接入，不能将这两个函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由和通知到真实发货接入，不能将这两个函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
 
 本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额，以及签名正确但应用/环境/事件不符、非法载荷和解析顺序。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
+
+## TikTok 预支付关联存储（服务端基础）
+
+`TikTokPrepayments`（server/src/tiktok-prepayments.mjs）接收已有 SqliteOrderStore，使用同一数据库的独立版本表保存关联。`register({ binding, isSandbox, orderId, tradeOrderId, openId, tokenAmount })` 必须由服务端预支付流程调用：平台单号来自可信预支付响应，openId 来自服务端登录身份，Beans 数量来自服务端商品配置。它不是面向客户端的 API，也不会自行调用 TikTok 下单。
+
+注册会检查游戏订单存在且属于完整 binding；用户 subject 从游戏订单读取。平台单号在同一 appId 下唯一，不能换绑游戏订单、用户、环境或价格。完全相同的重试返回旧关联；已付款订单禁止增加新关联。Created 订单可保存多个平台尝试记录，但这不授权并发扣款或自动重试。Beans 数量单独存储，不把它当作 GameOrder.AmountMinor 的法币分值。
+
+`get({ binding, isSandbox, tradeOrderId })` 返回冻结快照，缺失或跨应用/游戏/环境返回 null；记录容量沿用订单存储的 capacity，满后拒绝新增且保留已有重试。实例不拥有数据库，统一由 orderStore.close() 关闭。数据库独立版本不支持时拒绝初始化；不会自动迁移未知格式。
+
+错误包括 PAY.ORDER_NOT_FOUND、PAY.PREPAYMENT_CONFLICT、PAY.ORDER_ALREADY_PAID、SERVER.CAPACITY、SERVER.STORAGE_UNAVAILABLE。测试 `test/tiktok-prepayments.test.mjs` 验证恢复和隔离。尚需接可信预支付 API、验签通知消费与订单状态原子更新，不能据“关联存在”发货。
 
 ## 状态与步骤
 

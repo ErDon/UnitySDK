@@ -1,0 +1,14 @@
+{
+  "name": "ErDon.UnitySDK.Douyin",
+  "references": [
+    "ErDon.UnitySDK"
+  ],
+  "includePlatforms": [
+    "Editor",
+    "WebGL"
+  ],
+  "defineConstraints": [
+    "ERDON_PLATFORM_DOUYIN"
+  ],
+  "autoReferenced": true
+}

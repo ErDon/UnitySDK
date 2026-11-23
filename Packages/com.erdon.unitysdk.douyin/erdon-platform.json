@@ -1,0 +1,16 @@
+{
+  "Platform": "Douyin",
+  "Package": "com.erdon.unitysdk.douyin",
+  "Version": "0.1.0",
+  "Assemblies": [
+    "ErDon.UnitySDK.Douyin",
+    "ttsdk",
+    "ttsdk-editor",
+    "TTWebGL",
+    "TTLitJson"
+  ],
+  "AssetRoots": [
+    "Packages/com.erdon.unitysdk.douyin",
+    "Packages/com.bytedance.starksdk"
+  ]
+}

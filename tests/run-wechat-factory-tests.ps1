@@ -22,4 +22,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'WeChat ads compile failed'}
     & $UnityMono .\.tests\wechat-factory\WeChatAdsTests.exe
     if($LASTEXITCODE -ne 0){throw 'WeChat ads tests failed'}
+    & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-factory\WeChatRuntimeTests.exe $coreSources $platformSources .\tests\WeChatRuntimeTests.cs
+    if($LASTEXITCODE -ne 0){throw 'WeChat runtime compile failed'}
+    & $UnityMono .\.tests\wechat-factory\WeChatRuntimeTests.exe
+    if($LASTEXITCODE -ne 0){throw 'WeChat runtime tests failed'}
 } finally {Pop-Location}

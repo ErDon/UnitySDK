@@ -111,3 +111,26 @@ SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游
 将测试的 CompiledWxAssembly 改为这个隔离工程生成的 Library/ScriptAssemblies/Wx.dll 后，工厂和分享测试均通过，原 CS1684 类型不匹配警告消失。旧游戏的 Wx.dll 不应继续作为 0.1.23 的验证依赖。工厂/分享脚本使用 Unity Mono 运行，支持通过 -UnityMono 指定安装位置。
 
 上述验证说明本地这份包可以重新编译，不能证明本地文件从未修改。已生成 334 个文件的哈希快照，官方来源完整性、目标导出与真机仍需单独验证。此前的警告记录属于旧程序集组合，不代表此次复验结果。
+
+## 官方初始化桥接（0.1.23）
+
+`WeChatRuntime` 实现 IPlatformRuntime，调用 WX.InitSDK；仅回调码 200 表示就绪，0 以及其他返回码均映射 INIT.PLATFORM_FAILED，PlatformCode 保留原始数字。依据是本地包 `Runtime/wechat-default/unity-sdk/index.js` 的 WXInitializeSDK：moduleHelper.init 后发送 Inited=200；WXSDKManagerHandler.Inited 将整数直接交给 Action<int>。升级 SDK 时需重新核对这条契约。
+
+```csharp
+// 示例只开存储；开启登录时需给工厂提供后端 ISessionExchange 工厂。
+UnitySdkHost.BeginStartup(
+    new SdkConfig { Platform = "WeChat", LoginEnabled = false, StorageEnabled = true },
+    new WeChatRuntime(),
+    new WeChatProviderFactory("your-game-id", "test"),
+    result => {
+        if (!result.Success) {
+            UnityEngine.Debug.LogError(result.Error.Code + " platformCode=" + result.Error.PlatformCode);
+            return;
+        }
+        SDK.SetStorageSync("example", "ready");
+    });
+```
+
+初始化期间再次调用同一桥接返回 INIT.IN_PROGRESS；已就绪重复初始化不再调用官方入口。失败后可以显式重试；释放后拒绝调用，忽略迟到结果。桥接本身不计时，BeginStartup 默认等待 15 秒并由宿主驱动；不要从多个桥接或其他插件同时调用 WX.InitSDK，因为本地官方实现保存单个初始化回调。
+
+Dispose 只结束桥接生命周期，不卸载微信官方 SDK。该实现已用官方程序集编译与注入返回码验证，不代表真机初始化、账号授权或后端联调完成。官方包来源完整性仍需独立核验。

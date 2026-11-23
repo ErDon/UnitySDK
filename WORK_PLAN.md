@@ -34,7 +34,7 @@
 - [x] 微信登录凭证适配、存储/分享实现及按需能力工厂。
 - [x] 本地 0.1.23 包在隔离 Unity 工程重新编译与适配加载；排除旧 Wx.dll 版本混用问题。
 - [x] 服务端微信凭证兑换实现、游戏/应用绑定、一次性凭证防重放及会话管理测试。
-- [ ] 微信官方初始化返回码核对与初始化桥接。
+- [x] 微信本地 0.1.23 初始化成功码 200 核对与初始化桥接；官方程序集和注入返回码验证。
 - [ ] 官方包来源完整性核验、真实凭证兑换、Unity HTTPS 联调和真机登录。
 
 ## 第四阶段：广告、分享、存储、网络与上报（部分完成）
@@ -441,3 +441,10 @@ run-tiktok-tests.ps1 的 Runtime/Editor 两套官方接口编译和注入广告�
 Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所有权，避免无域重载时静态配置跨会话。宿主队列异常改走 SDK 格式化日志，上层回调优先，异常内容不透传。
 
 公共回归通过。隔离 Unity reload-play.log 输出 SDK_RELOAD_PLAY_PASS：同时关闭域重载/场景重载，连续两轮进入退出 Play Mode，验证编辑态遗留 provider 回收、旧配置清空、运行态 provider 单次释放、迟到回调抑制；注入宿主队列异常验证 interface/callId/logId/traceId/params/result 和敏感内容不泄漏。测试结束恢复 Editor 原重载选项。整体生命周期与所有输出路径最终复核仍单独待办。
+
+### 微信初始化桥接
+
+核对本地包 JS 初始化入口发送 Inited=200，以及 Runtime DLL 的整数原样转发，新增 WeChatRuntime。仅 200 就绪，其他码为 INIT.PLATFORM_FAILED；不套用抖音的 0/1/2 语义。支持重复初始化保护、已就绪幂等、失败重试、释放后迟到回调抑制。文档提供 BeginStartup 存储示例及单初始化所有者约束。
+
+官方程序集测试通过，覆盖 200 成功、0 不成功、未知码保留、重复/迟到回调与异常脱敏；真实设备初始化和官方包来源核验仍待办。
+隔离 Unity wechat-runtime.log 无 C# 编译错误，输出 WECHAT_RUNTIME_UNITY_COMPILE_PASS，退出码 0。

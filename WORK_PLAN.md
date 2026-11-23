@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### TikTok 支付显式工厂装配
+
+TikTokProviderFactory 实现 IPayProviderFactory，新增可选 createPayment 委托。只有支付启用时构造，缺配置或 null 返回拒绝初始化，成功对象由 SDK 持有和释放。补充使用 UnityOrderClient、UnityPrepaymentClient、PreparedPaymentLauncher 和官方网关的装配示例及会话更换边界。
+
+官方 1.1.6 Runtime/Editor 双套平台测试通过，新增支付关闭零构造、开启一次构造、聚合调用、释放以及缺配置拒绝验证。自动注册/面板登录后动态会话装配仍未完成，未宣称真实支付可用，66/78。
+
 ### 客户端有限订单轮询与取消联动
 
 VerifiedPayment 在收银台返回后对 Created/Paid 订单默认最多核验 12 次、间隔 2 秒，保持单请求在途，只在 Fulfilled 成功。新增 IPaymentWait，由 SDK.Tick 驱动，取消/超时停止后续查询并隔离旧操作响应；Dispose 清除等待，不声称取消平台交易。

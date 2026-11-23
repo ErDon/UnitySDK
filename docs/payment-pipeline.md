@@ -216,6 +216,35 @@ PaymentPipelineTests 覆盖重复回调、主线程队列、并发支付拒绝�
 
 通过 SdkConfig.PayEnabled 开启支付；工厂实现 IPayProviderFactory.CreatePay(post)，返回全新 VerifiedPayment。关闭模块时不创建支付 provider。也可在 UnitySdkHost.Initialize 的 payProvider 参数传入实现；工厂方式更适合按配置装配。
 
+TikTokProviderFactory 已实现 IPayProviderFactory，可通过可选 createPayment 参数提供支付构造函数。构造函数只在 PayEnabled=true 时执行；未传入或返回 null 会拒绝初始化，不会退回 Mock。以下示例在官方平台初始化完成、游戏会话已取得后执行，host 为存活的 MonoBehaviour，ordersEndpoint 为 HTTPS 的 `/v1/orders` 地址：
+
+```csharp
+var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
+    "game-id", "test", createPayment: post => {
+        var orders = new UnityOrderClient(host, ordersEndpoint);
+        IPrepaymentClient preparation = null;
+        IPaymentLauncher launcher = null;
+        try {
+            preparation = new UnityPrepaymentClient(host, ordersEndpoint, gameSession);
+            launcher = new PreparedPaymentLauncher(preparation,
+                new ErDon.UnitySDK.TikTok.TikTokPaymentGateway());
+            return new VerifiedPayment(orders, launcher, post);
+        } catch {
+            orders.Dispose();
+            if (launcher != null) launcher.Dispose();
+            else if (preparation != null) preparation.Dispose();
+            throw;
+        }
+    });
+SDK.InitializeWithFactory(new SdkConfig {
+    Platform = "TikTok", LoginEnabled = false, PayEnabled = true
+}, factory, mainThreadPost, engineLog);
+// 每帧主线程 SDK.Tick()；也可通过既有 Unity 宿主启动流程提供此工厂。
+// SDK.Pay 的 PaymentRequest.Session 必须使用与 preparation 相同的 gameSession。
+```
+
+此示例是会话已存在时的显式装配，不是自动注册或面板一键完成登录再支付。更换账号或会话后需释放并重新装配，不能沿用旧会话绑定的 UnityPrepaymentClient。SDK 拥有成功创建的支付实现及其依赖；每次工厂调用必须创建全新实例。此处后端为真实游戏服务，不能直接把 TikTok 的平台 access_token 作为 gameSession。
+
 ```csharp
 using ErDon.UnitySDK;
 

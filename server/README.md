@@ -100,3 +100,7 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 本地启动配置 TIKTOK_APP_ID（值是 Client Key）、TIKTOK_APP_SECRET（Client Secret）和 SDK_GAME_ID，平台名 TikTok。这些值来自服务端环境，客户端不得提供密钥。429/上游故障返回 PLATFORM_UNAVAILABLE；OAuth 错误返回 PLATFORM_REJECTED，当前不向客户端传递任意上游描述，也尚未细分全部 OAuth 错误。
 
 22 项后端测试使用模拟平台响应；未以真实 TikTok code 验收。配置受信绑定不等于平台应用已获准使用对应能力。
+
+## 订单组件
+
+新增 OrderService 与 MemoryOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。尚未接支付 HTTP 路由或真实平台验签，内存订单仅用于开发。

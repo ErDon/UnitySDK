@@ -182,3 +182,11 @@ WECHAT_SHARE_TESTS_PASS；现有工程 Wx.dll 与本机 0.1.23 DTO 编译组合�
 对照官方 Sharing 文档和本地 DLL 实现 TikTokShare，保留失败数字码、隐藏任意错误原文；成功/失败回调首个胜出，Complete 不代表成功。通用语义仍为 Dispatched，非送达证明。
 
 Runtime/Editor 两套官方 DLL 均通过分享入口编译与注入测试，原登录/存储与公共回归通过。分享回调依赖 netstandard 2.1，修正测试运行环境为可配置 Unity Mono；不再将旧 Framework 加载失败当作平台接口失败。专属模板/路径参数、真实宿主与设备分享仍待验证。
+
+### 订单与发货服务组件
+
+新增 OrderService/MemoryOrderStore，服务端商品定价、已验证会话绑定、作用域幂等下单、支付归属/金额匹配、交易号唯一占用及 Created/Paid/Fulfilled 状态。发货明确使用稳定 deliveryKey，响应丢失不提前标已发货；接收端必须事务去重。未提供默认成功支付验证器。
+
+新增订单测试覆盖篡价/跨账号环境、会话撤销、并发确认、交易复用、响应丢失和容量。当前仅内存订单，没有真实平台支付验证器/HTTP 路由/持久化订单，不宣称完成支付闭环。详见 docs/orders.md。
+
+本轮完整后端测试 29 项全部通过，包括 7 项订单测试；测试没有调用真实支付平台。

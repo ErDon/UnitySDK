@@ -36,8 +36,8 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("真实平台自动初始化与构建装配尚未完成；当前不允许真实平台构建。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (rewardedAds || network || analytics)
-                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享和支付示例。");
+            if (network || analytics)
+                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享、广告和支付示例。");
             return issues;
         }
     }
@@ -46,6 +46,7 @@ namespace ErDon.UnitySDK.Editor
         Vector2 scroll;
         MockLoginOutcome outcome;
         MockPaymentOutcome paymentOutcome;
+        MockRewardedAdOutcome adOutcome;
         string lastResult = "尚未调用";
         string storageKey = "preview.key", storageValue = "preview-value";
         [MenuItem("Tools/ErDon SDK/配置与预览")]
@@ -63,7 +64,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("能力模块", EditorStyles.boldLabel);
             settings.login = EditorGUILayout.Toggle("登录", settings.login);
-            settings.rewardedAds = EditorGUILayout.Toggle("激励广告（待实现）", settings.rewardedAds);
+            settings.rewardedAds = EditorGUILayout.Toggle("激励广告（Editor Mock）", settings.rewardedAds);
             settings.payments = EditorGUILayout.Toggle("支付（Editor Mock）", settings.payments);
             settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
@@ -95,12 +96,20 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("Mock 调试（仅 Play Mode）", EditorStyles.boldLabel);
             outcome = (MockLoginOutcome)EditorGUILayout.EnumPopup("模拟结果", outcome);
             paymentOutcome = (MockPaymentOutcome)EditorGUILayout.EnumPopup("支付模拟结果", paymentOutcome);
+            adOutcome = (MockRewardedAdOutcome)EditorGUILayout.EnumPopup("广告模拟结果", adOutcome);
             EditorGUILayout.HelpBox("每次初始化读取当前配置；修改模块开关后重新初始化。超时模拟使用 1 秒；其他调用使用默认超时。", MessageType.Info);
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
                 if (GUILayout.Button("按配置初始化 Mock")) {
-                    try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome); lastResult = "Mock 已初始化"; }
+                    try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome, ads: adOutcome); lastResult = "Mock 已初始化"; }
                     catch (Exception ex) { lastResult = ex.Message; }
                 }
+                if (GUILayout.Button("调用 SDK.ShowRewardedAd（不展示真实广告）")) {
+                    SDK.ShowRewardedAd(new RewardedAdRequest("mock-ad-unit"), result => {
+                        lastResult = (result.Success ? (result.Completed ? "Mock 完整观看（非发奖凭证）" : "Mock 提前关闭") : result.Error.Code) + " callId=" + result.CallId;
+                        Repaint();
+                    }, adOutcome == MockRewardedAdOutcome.Timeout ? 1000 : 120000);
+                }
+                if (GUILayout.Button("取消本地广告等待")) SDK.CancelRewardedAd();
                 if (GUILayout.Button("调用 SDK.Share（仅模拟发起）")) {
                     SDK.Share(new ShareRequest("Mock share"), result => {
                         lastResult = (result.Success ? "Mock 已发起，非真实分享" : result.Error.Code) + " callId=" + result.CallId;

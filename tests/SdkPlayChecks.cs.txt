@@ -64,6 +64,29 @@ public static class SdkPlayChecks
                 SDK.Pay(new PaymentRequest("mock-session","coins","play-request"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("payment disabled failed");else phase=17;});
             }
             if(phase==17){
+                phase=18;SdkProjectSettings.instance.rewardedAds=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(!r.Success||!r.Completed)Fail("ad completed failed");else phase=19;});
+            }
+            if(phase==19){
+                phase=20;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,ads:MockRewardedAdOutcome.ClosedEarly);
+                SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(!r.Success||r.Completed)Fail("ad early close failed");else phase=21;});
+            }
+            if(phase==21){
+                phase=22;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,ads:MockRewardedAdOutcome.LoadFailed);
+                SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(r.Error==null||r.Error.Code!="ADS.LOAD_FAILED")Fail("ad failure failed");else phase=23;});
+            }
+            if(phase==23){
+                phase=24;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success,ads:MockRewardedAdOutcome.Timeout);
+                SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(r.Error==null||r.Error.Code!="ADS.TIMEOUT")Fail("ad timeout failed");else phase=25;},50);
+            }
+            if(phase==25){
+                phase=26;SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(r.Error==null||r.Error.Code!="ADS.CANCELLED")Fail("ad cancel failed");else phase=27;});SDK.CancelRewardedAd();
+            }
+            if(phase==27){
+                phase=28;SdkProjectSettings.instance.rewardedAds=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                SDK.ShowRewardedAd(new RewardedAdRequest("mock-unit"),r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("ad disabled failed");else phase=29;});
+            }
+            if(phase==29){
                 finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);
             }
         }catch(Exception e){Fail(e.Message);}

@@ -14,6 +14,11 @@ class RuntimeConfigurationTests {
   bool rejected=false;try{data.ToSdkConfig();}catch(InvalidOperationException){rejected=true;}Check(rejected,"unimplemented not silently dropped");
   data.network=false;data.platform="AndroidChannel";Check(data.Validate().Contains("CONFIG.PLATFORM_UNSUPPORTED"),"native channel remains extension only");
   data.platform="Douyin";data.appId=" ";Check(data.Validate().Contains("CONFIG.APP_ID_REQUIRED"),"app required");
+  data.appId="app";data.rewardedAds=true;
+  Check(data.ToSdkConfig().RewardedAdsEnabled,"Douyin ad mapping");
+  data.platform="Mock";data.production=false;Check(data.ToSdkConfig().RewardedAdsEnabled,"Mock ad mapping");
+  data.platform="WeChat";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"unimplemented WeChat ads rejected");
+  data.platform="TikTok";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"unimplemented TikTok ads rejected");
   Console.WriteLine("PASS: portable configuration mapping, snapshot independence and unsupported configuration rejection");
  }
 }

@@ -5,6 +5,7 @@ using UnityEngine;
 namespace ErDon.UnitySDK.Editor
 {
     public enum MockLoginOutcome { Success, Cancelled, Denied, Timeout, RateLimited }
+    public enum MockRewardedAdOutcome { Completed, ClosedEarly, LoadFailed, Timeout }
     public enum MockPaymentOutcome { Fulfilled, Pending, Cancelled, Timeout }
     // Editor assembly is never compiled into Player builds.
     public sealed class EditorMockAuth : IAuth
@@ -25,26 +26,41 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class EditorSdkBootstrap
     {
-        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory, IPayProviderFactory
+        sealed class MockFactory : ISdkProviderFactory, IShareProviderFactory, IPayProviderFactory, IRewardedAdsProviderFactory
         {
             readonly MockLoginOutcome outcome;
             readonly MockPaymentOutcome payment;
-            public MockFactory(MockLoginOutcome outcome, MockPaymentOutcome payment) { this.outcome = outcome; this.payment = payment; }
+            readonly MockRewardedAdOutcome ads;
+            public MockFactory(MockLoginOutcome outcome, MockPaymentOutcome payment, MockRewardedAdOutcome ads) { this.outcome = outcome; this.payment = payment; this.ads = ads; }
             public IAuth CreateAuth(Action<Action> post) { return new EditorMockAuth(outcome); }
             public IStorage CreateStorage() { return new EditorMockStorage(); }
+            public IRewardedAds CreateRewardedAds() { return new EditorMockRewardedAds(ads); }
             public IShare CreateShare() { return new EditorMockShare(); }
             public IPay CreatePay(Action<Action> post) { return new EditorMockPay(payment); }
         }
-        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null, MockPaymentOutcome payment = MockPaymentOutcome.Fulfilled)
+        public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null, MockPaymentOutcome payment = MockPaymentOutcome.Fulfilled, MockRewardedAdOutcome ads = MockRewardedAdOutcome.Completed)
         {
             var settings = SdkProjectSettings.instance;
             var issues = settings.Validate();
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
             UnitySdkHost.InitializeWithFactory(new SdkConfig {
-                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, PayEnabled = settings.payments, LogCallback = logger
-            }, new MockFactory(outcome, payment));
+                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, ShareEnabled = settings.share, PayEnabled = settings.payments, RewardedAdsEnabled = settings.rewardedAds, LogCallback = logger
+            }, new MockFactory(outcome, payment, ads));
         }
+    }
+    public sealed class EditorMockRewardedAds : IRewardedAds
+    {
+        readonly MockRewardedAdOutcome outcome;
+        public EditorMockRewardedAds(MockRewardedAdOutcome outcome) { this.outcome = outcome; }
+        public void Show(RewardedAdRequest request, Action<RewardedAdResult> callback)
+        {
+            if (outcome == MockRewardedAdOutcome.Timeout) return;
+            callback(outcome == MockRewardedAdOutcome.LoadFailed
+                ? RewardedAdResult.Fail("ADS.LOAD_FAILED", "Mock ad load failure")
+                : RewardedAdResult.Closed(outcome == MockRewardedAdOutcome.Completed));
+        }
+        public void Dispose() { }
     }
     public sealed class EditorMockPay : IPay
     {

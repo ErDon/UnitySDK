@@ -1,6 +1,6 @@
-# 激励广告（底层适配开发中）
+# 激励广告（聚合接口与 Editor 预览）
 
-新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板预览和运行时 JSON 的广告开关仍待接入，因此面板校验暂时继续阻断广告配置。
+新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/抖音映射广告开关。微信/TikTok 的广告配置继续明确拒绝；真实平台自动装配和构建仍未开放。
 
 抖音 6.9.7 使用 TT.CreateRewardedVideoAd(CreateRewardedVideoAdParam)，关闭 Multiton，再订阅 OnLoad/OnError/OnClose 后 Load。加载完成调用一次 Show；关闭时根据官方 complete 布尔值返回 Completed。Error 只有数字码进入 PlatformCode，自由文本不回传。随包 ttsdk.xml 明确 IsComplete 表示播放完成；不把所有 OnClose 都视为完整观看。
 
@@ -38,3 +38,14 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 DouyinProviderFactory 已支持；微信/TikTok 工厂暂未支持广告，开启会明确拒绝初始化。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
 
 结果含 CallId/TraceId，错误 Stage=RewardedAd、Operation=SDK.ShowRewardedAd。日志不输出广告位内容，完整观看和提前关闭分别记录 Completed/ClosedEarly。与支付/分享的并发状态独立；旧回调和重复终态不会覆盖新调用。此处仍不提供服务端奖励验证或重复领奖保护。
+
+## 配置面板预览
+
+1. 打开 `Tools > ErDon SDK > 配置与预览`，平台选择 Mock，填写 Game ID，勾选激励广告。
+2. 进入 Play Mode，选择广告模拟结果，然后点击“按配置初始化 Mock”。每次修改模拟结果或模块开关都需要重新初始化。
+3. 点击 `SDK.ShowRewardedAd` 按钮。Completed 表示模拟完整观看，ClosedEarly 表示提前关闭，LoadFailed 返回 ADS.LOAD_FAILED，Timeout 不回调，面板使用 1 秒本地超时。
+4. 可点击“取消本地广告等待”验证 ADS.CANCELLED。取消勾选并重新初始化后调用返回 MODULE.DISABLED。
+
+预览不加载广告、不产生收入、不发放真实奖励。导出的 JSON 保留 rewardedAds；ToSdkConfig 只为已实现的平台能力放行，不能作为真实平台初始化或构建完成的证明。
+
+聚合层还会返回 ADS.TIMEOUT、ADS.CANCELLED、ADS.INVALID_RESULT（适配器返回空结果）、ADS.PROVIDER_FAILED（适配器抛出异常），以及 SDK.NOT_INITIALIZED / MODULE.DISABLED / CAPABILITY.NOT_SUPPORTED。ADS.LOAD_FAILED 目前用于 Editor Mock 失败演练，真实抖音错误保留 ADS.PLATFORM_FAILED 与平台数字码。

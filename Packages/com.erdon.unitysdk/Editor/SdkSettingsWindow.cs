@@ -133,19 +133,23 @@ namespace ErDon.UnitySDK.Editor
                 }
                 using (new EditorGUI.DisabledScope(SDK.ActivePlatform != "Mock")) {
                 if (GUILayout.Button("调用 SDK.Request（不会联网）")) {
+                    lastResult = "正在等待 SDK.Request 模拟结果；可取消最近一次网络请求。";
                     lastNetworkOperation = SDK.Request(new NetworkRequest("https://mock.invalid/preview", timeoutSeconds: previewTimeoutSeconds), result => {
                         lastResult = (result.Success ? "Mock HTTP " + result.StatusCode : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
                     });
                 }
-                if (GUILayout.Button("ReportEvent（不发送数据）"))
+                if (GUILayout.Button("ReportEvent（不发送数据）")) {
+                    lastResult = "正在等待 SDK.ReportEvent 模拟结果；可取消最近一次上报。";
                     lastAnalyticsOperation = SDK.ReportEvent(new AnalyticsEvent("preview_event"), result => {
                         lastResult = (result.Dispatched ? "模拟上报调用完成（不代表入库）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
                     }, previewTimeoutSeconds * 1000);
+                }
                 if (GUILayout.Button("取消最近一次上报") && lastAnalyticsOperation != null) lastAnalyticsOperation.Cancel();
                 if (GUILayout.Button("取消最近一次网络请求") && lastNetworkOperation != null) lastNetworkOperation.Cancel();
                 if (GUILayout.Button("调用 SDK.ShowRewardedAd（不展示真实广告）")) {
+                    lastResult = "正在等待 SDK.ShowRewardedAd 模拟结果；可取消本地广告等待。";
                     SDK.ShowRewardedAd(new RewardedAdRequest("mock-ad-unit"), result => {
                         lastResult = (result.Success ? (result.Completed ? "Mock 完整观看（非发奖凭证）" : "Mock 提前关闭") : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
@@ -153,12 +157,14 @@ namespace ErDon.UnitySDK.Editor
                 }
                 if (GUILayout.Button("取消本地广告等待")) SDK.CancelRewardedAd();
                 if (GUILayout.Button("调用 SDK.Share（仅模拟发起）")) {
+                    lastResult = "正在等待 SDK.Share 模拟结果。";
                     SDK.Share(new ShareRequest("Mock share"), result => {
                         lastResult = (result.Success ? "Mock 已发起，非真实分享" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
                     });
                 }
                 if (GUILayout.Button("调用 SDK.Pay（不产生真实订单）")) {
+                    lastResult = "正在等待 SDK.Pay 模拟结果；可取消本地支付等待。";
                     SDK.Pay(new PaymentRequest("mock-session", "mock-product", "mock-purchase"), result => {
                         lastResult = (result.Success ? "Mock 已发货（非真实支付）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
@@ -166,6 +172,7 @@ namespace ErDon.UnitySDK.Editor
                 }
                 if (GUILayout.Button("取消本地支付等待")) SDK.CancelPay();
                 if (GUILayout.Button("调用 SDK.Login")) {
+                    lastResult = "正在等待 SDK.Login 模拟结果；可取消当前登录。";
                     SDK.Login(result => {
                         lastResult = (result.Success ? "Mock 成功（非真实会话）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();

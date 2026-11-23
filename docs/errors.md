@@ -105,3 +105,11 @@ UnitySdkHost 自动 Tick；自定义宿主必须持续在主线程 Tick。SDK �
 聚合层交付的 LoginResult、ShareResult、PaymentResult、StorageResult、RewardedAdResult、NetworkResult、AnalyticsResult 及其中 SdkError 是本次调用的独立快照。底层可以复用结果对象，但 SDK 不会把 CallId/Operation/Stage 写回底层对象；后续请求不会改写游戏已保存结果的关联 ID。异步结果在首次接受回调时先复制，再排队到主线程，排队期间对原错误的 WithRetry 修改不影响本次快照。
 
 这不是对任意并发写入 provider 对象的同步保证；provider 应在调用完成回调时提供一致的数据，不要在回调执行期间并发修改它。游戏仍可对自己持有的错误调用 WithRetry，此操作只影响该结果，不改变其他调用。
+
+## 日志输出契约的回归范围
+
+SDK 生成完整日志行，上层回调只接收内容。时间使用带偏移的 ISO 8601，interface 标识接口，callId/traceId 关联同一次调用，logId 每条不同，params 是 JSON 对象，stage/result 表示阶段及结果。参数按能力输出长度、数量或脱敏占位，不能为调试方便记录会话、分享正文、支付凭据或任意异常原文。
+
+未传上层日志回调时交给引擎输出；上层回调抛异常时，同一条已格式化内容交给默认输出，不重新生成 logId 或时间。Unity 默认输出依级别调用 Debug.Log/LogWarning/LogError。此契约覆盖本 SDK 输出，不拦截官方 SDK、自定义 provider 或游戏自己调用的 Debug.Log。
+
+`tests/LogContractTests.cs` 已并入 run-all-tests.ps1，通过实际聚合调用检查所有能力接口日志、初始化/关闭、Startup 失败、用户回调异常、参数 JSON、字段/ID 关联、敏感值与换行处理，以及上层回调和默认输出的路由与逐字一致性。它验证纯 C# 输出契约，不替代 Unity Console 的视觉验收或第三方 SDK 日志检查。

@@ -9,6 +9,10 @@ try {
     & .\.tests\NetworkContractTests.exe
     if($LASTEXITCODE -ne 0){throw 'Network contract tests failed'}
     $registryCore=@(Get-ChildItem 'Packages/com.erdon.unitysdk/Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
+    & $compiler /nologo /reference:System.Web.Extensions.dll /out:.tests\LogContractTests.exe $registryCore .\tests\LogContractTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Log contract compile failed'}
+    & .\.tests\LogContractTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Log contract tests failed'}
     & $compiler /nologo /out:.tests\AnalyticsContractTests.exe $registryCore .\tests\AnalyticsContractTests.cs
     if($LASTEXITCODE -ne 0){throw 'Analytics contract compile failed'}
     & .\.tests\AnalyticsContractTests.exe

@@ -305,3 +305,10 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 新增 IPlatformSdkProviderFactory，三个内置工厂声明固定平台身份。InitializeWithFactory 在生命周期保护区内、创建任何能力之前校验真实平台配置与工厂，缺失或不一致抛 CONFIG.PLATFORM_MISMATCH；失败不破坏正在运行的旧 SDK。自定义工厂文档已更新。
 
 公共回归覆盖错误平台零创建、旧实例保护、缺少身份拒绝和匹配接受。抖音官方 DLL 测试、TikTok Runtime/Editor 两套测试、微信隔离重编译 Wx.dll 工厂测试均通过。身份声明不是第三方实现认证或包体裁剪证明。
+
+### 抖音官方初始化桥接
+
+从 6.9.7 随包 XML 核对 TT.InitSDK 成功码 0、SDK 不支持 1、Unity 不支持 2，反射确认回调 (int, ContainerEnv)。新增引擎无关 IPlatformRuntime 与 DouyinRuntime，映射统一错误、保留未知数字码、管理就绪/等待/释放状态，不以返回回调本身作为成功。
+
+官方 DLL 入口编译及初始化行为测试通过。统一启动超时/日志/主线程编排、其他平台初始化以及真机仍待实现；本次不开放正式构建。没有用抖音返回码推断其他平台。
+独立 Unity douyin-runtime.log 输出 DOUYIN_RUNTIME_UNITY_COMPILE_PASS，退出码 0。

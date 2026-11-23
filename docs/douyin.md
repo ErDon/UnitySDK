@@ -92,3 +92,29 @@ void OnDouyinRuntimeReady()
 工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 DouyinCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
 
 SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
+
+## 官方运行时初始化桥接
+
+新增 IPlatformRuntime 和 DouyinRuntime，独立于登录能力。证据来自 TTSDK 6.9.7 随包 ttsdk.xml 的 TT.InitSDK 说明及真实 DLL：回调为 (int code, ContainerEnv environment)，0 无错误，1 SDK 版本不支持，2 Unity 引擎版本不支持。此定义不自动套用于 TikTok 或微信。
+
+```csharp
+// 保存在持久启动对象字段中；同一启动流程只使用一个实例。
+private ErDon.UnitySDK.Douyin.DouyinRuntime runtime;
+void BeginDouyinStartup()
+{
+    runtime = new ErDon.UnitySDK.Douyin.DouyinRuntime();
+    runtime.Initialize(error => {
+        if (error != null) {
+            // 将 error.Code/Reason/PlatformCode 交给启动界面，禁止继续初始化业务能力。
+            return;
+        }
+        OnDouyinRuntimeReady(); // 上文的工厂装配函数
+    });
+}
+```
+
+成功前 IsReady=false；成功后同一实例再次 Initialize 直接返回已就绪，不再次调用官方接口。并发调用返回 INIT.IN_PROGRESS；失败后仅允许调用方显式决定是否重新尝试，没有自动重试。1/2 映射 INIT.SDK_VERSION_UNSUPPORTED / INIT.ENGINE_VERSION_UNSUPPORTED，其他非零码映射 INIT.PLATFORM_FAILED 并保留数字 PlatformCode，调用异常映射 INIT.PROVIDER_EXCEPTION。
+
+Dispose 只释放桥接自身并抑制迟到回调，不声称销毁或回滚官方 SDK。调用方必须在主线程使用并安排回调到主线程。此底层桥接尚未接入统一启动超时、日志 CallId 或面板自动启动；不能用它替代完整启动编排。官方不回调时会保持等待，不能据此开启业务。真机环境和 ContainerEnv 对不同宿主的意义仍待验收。
+
+run-douyin-tests.ps1 验证实际方法入口编译与注入状态码，覆盖成功/版本失败/未知码、首次回调、并发拒绝、重复成功、释放后迟到回调和异常脱敏；不是实际宿主初始化测试。

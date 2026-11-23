@@ -18,6 +18,12 @@ try {
     if($LASTEXITCODE -ne 0){throw 'WeChat factory compile failed'}
     & $UnityMono .\.tests\wechat-factory\WeChatFactoryTests.exe
     if($LASTEXITCODE -ne 0){throw 'WeChat factory tests failed'}
+    $litJson=Join-Path $OfficialPackagePath 'Runtime\Plugins\LitJson.dll'
+    Copy-Item -LiteralPath $litJson -Destination '.tests\wechat-factory'
+    & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" "/reference:$litJson" /out:.tests\wechat-factory\WeChatAnalyticsTests.exe $coreSources $platformSources .\tests\WeChatAnalyticsTests.cs
+    if($LASTEXITCODE -ne 0){throw 'WeChat analytics compile failed'}
+    & $UnityMono .\.tests\wechat-factory\WeChatAnalyticsTests.exe
+    if($LASTEXITCODE -ne 0){throw 'WeChat analytics tests failed'}
     & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-factory\WeChatAdsTests.exe $coreSources $platformSources .\tests\WeChatAdsTests.cs
     if($LASTEXITCODE -ne 0){throw 'WeChat ads compile failed'}
     & $UnityMono .\.tests\wechat-factory\WeChatAdsTests.exe

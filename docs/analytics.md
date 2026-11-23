@@ -1,6 +1,6 @@
-# 数据上报（公共聚合已实现，平台适配待接入）
+# 数据上报（公共聚合与微信适配已实现）
 
-当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。尚未提供三平台适配或配置面板预览；运行时 JSON 中的 analytics 开关仍被拒绝，不应在生产中启用。
+当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信工厂已提供适配，微信运行时 JSON 可设置 analytics=true；面板标记当前仅支持微信。抖音、TikTok 和 Mock 上报尚未接通，对应配置仍拒绝启用。真实构建仍须完成整体产物验收。
 
 ## 参数与结果
 
@@ -45,3 +45,11 @@ if (!result.Dispatched)
 ## 已验证范围
 
 `tests/AnalyticsContractTests.cs` 覆盖事件字典隔离、空参数、无效名称、数量和长度边界、非有限数字和不支持的类型、派发结果语义。`tests/AnalyticsFacadeTests.cs` 覆盖模块开关、配置快照、按需创建、所有权/回收、重入保护、结果隔离、日志脱敏与调用关联。通过公共回归入口 `tests/run-all-tests.ps1` 执行。尚无平台调用或真实数据入库验证。
+
+## 微信接入
+
+使用官方 0.1.23 Unity 插件并先完成微信运行时初始化。配置 platform=WeChat、analytics=true，通过已有注册启动入口创建 WeChatProviderFactory；若手动初始化，使用相同工厂并设置 AnalyticsEnabled=true。事件名和字段需与微信后台事件配置对应，不自动添加游戏/环境字段；不同游戏通过各自微信 App ID 和工程配置隔离，业务确需环境维度时自行配置并传入。
+
+WeChatAnalytics 使用 `WX.ReportEvent<Dictionary<string,object>>`。本地 WX.dll 到 wx-runtime-editor.dll 的调用链检查表明该方法调用 LitJson.JsonMapper.ToJson，然后传递 JSON 字符串。没有平台成功或失败回调，无法判断静默丢弃、后台配置缺失或网络未送达。可观察到的同步异常转为 ANALYTICS.PROVIDER_FAILED，不返回异常原文；释放后的调用返回 SDK.DISPOSED。
+
+`tests/run-wechat-factory-tests.ps1` 新增 WeChatAnalyticsTests：引用实际 Wx.dll、wx-runtime-editor.dll 和官方 LitJson.dll，验证编译、序列化标量、参数映射、快照、异常、释放和按需工厂。未调用真实微信容器；目标小游戏内运行、字段入库与升级回归仍待真机验证。

@@ -23,6 +23,8 @@ class RuntimeConfigurationTests {
   data.platform="WeChat";Check(data.ToSdkConfig().NetworkEnabled,"WeChat network mapping");
   data.platform="Douyin";Check(data.ToSdkConfig().NetworkEnabled,"Douyin network mapping");
   data.platform="TikTok";Check(data.ToSdkConfig().NetworkEnabled,"TikTok network mapping");
+  data.platform="WeChat";data.analytics=true;Check(data.ToSdkConfig().AnalyticsEnabled,"WeChat analytics mapping");
+  data.platform="Mock";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"Mock analytics not yet available");
   Console.WriteLine("PASS: portable configuration mapping, snapshot independence and unsupported configuration rejection");
  }
 }

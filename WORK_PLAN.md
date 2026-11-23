@@ -319,3 +319,9 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 
 StartupTests 和公共回归通过，覆盖零提前创建、后台派发、成功能力可用、失败保护旧 SDK、错误关联、排队成功取消及超时。UnitySdkHost 便捷入口与 Play Mode 启动流程尚待接入，文档明确当前需独立 Tick。
 独立 Unity startup-core.log 无 C# 错误，输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### Unity 宿主自动驱动启动
+
+UnitySdkHost 新增 BeginStartup / CancelStartup / Shutdown，Update 驱动启动 Tick。新任务替换静默释放旧尝试，直接装配会清理等待任务，销毁时释放启动与业务 SDK。日志回调重入检查沿用 SDK 防护，构造无效新任务不会替换旧任务。
+
+独立 Unity startup-host-play.log 输出 SDK_STARTUP_PLAY_PASS，实际 Play Mode 验证自动就绪后登录、超时、替换、取消、关闭和迟到回调。使用测试 runtime/factory，不代替真机或其他平台初始化验证。更新启动文档和关闭入口边界。

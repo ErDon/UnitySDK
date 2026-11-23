@@ -1,0 +1,37 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class StartupPlayChecks {
+ const string Key="ErDon.Tests.StartupPlay";static int phase;static double deadline;static bool finished;static int stale;
+ sealed class Runtime:IPlatformRuntime {
+  public bool Immediate;public Action<SdkError> Done;public int Disposes;public string Platform{get{return "Douyin";}}public bool IsReady{get;set;}
+  public void Initialize(Action<SdkError> cb){Done=cb;if(Immediate){IsReady=true;cb(null);}}
+  public void Dispose(){Disposes++;}
+ }
+ sealed class Auth:IAuth {public void Login(Action<LoginResult> cb){cb(LoginResult.Ok("session"));}public void Dispose(){}}
+ sealed class Factory:IPlatformSdkProviderFactory {public string Platform{get{return "Douyin";}}public IAuth CreateAuth(Action<Action> post){return new Auth();}public IStorage CreateStorage(){throw new Exception();}}
+ static SdkConfig Config(){return new SdkConfig{Platform="Douyin",LogCallback=(l,s)=>{}};}
+ static StartupPlayChecks(){EditorApplication.playModeStateChanged+=state=>{
+  if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+  deadline=EditorApplication.timeSinceStartup+20;EditorApplication.update+=Step;
+  UnitySdkHost.BeginStartup(Config(),new Runtime{Immediate=true},new Factory(),r=>{if(!r.Success)Fail("startup success");else phase=1;});
+ };}
+ public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
+ static void Step(){
+  if(finished)return;if(EditorApplication.timeSinceStartup>deadline){Fail("deadline");return;}
+  try {
+   if(phase==1){phase=10;SDK.Login(r=>{if(!r.Success)Fail("login after ready");else phase=2;});}
+   if(phase==2){phase=20;UnitySdkHost.BeginStartup(Config(),new Runtime(),new Factory(),r=>{if(r.Error==null||r.Error.Code!="INIT.TIMEOUT")Fail("automatic timeout");else phase=3;},20);}
+   if(phase==3){phase=30;var old=new Runtime();UnitySdkHost.BeginStartup(Config(),old,new Factory(),r=>stale++);
+    UnitySdkHost.BeginStartup(Config(),new Runtime{Immediate=true},new Factory(),r=>{if(!r.Success)Fail("replacement");else phase=4;});
+    old.IsReady=true;old.Done(null);if(old.Disposes!=1)Fail("old runtime ownership");}
+   if(phase==4){phase=40;UnitySdkHost.BeginStartup(Config(),new Runtime(),new Factory(),r=>{if(r.Error==null||r.Error.Code!="INIT.CANCELLED")Fail("cancel");else phase=5;});UnitySdkHost.CancelStartup();}
+   if(phase==5){phase=6;var old=new Runtime();UnitySdkHost.BeginStartup(Config(),old,new Factory(),r=>stale++);UnitySdkHost.Shutdown();old.IsReady=true;old.Done(null);return;}
+   if(phase==6){if(stale!=0){Fail("stale callbacks");return;}SDK.Login(r=>{if(r.Error==null||r.Error.Code!="SDK.NOT_INITIALIZED")Fail("shutdown");});
+    if(finished)return;finished=true;SessionState.SetBool(Key,false);Debug.Log("SDK_STARTUP_PLAY_PASS");EditorApplication.Exit(0);}
+  }catch(Exception e){Fail(e.Message);}
+ }
+ static void Fail(string message){finished=true;SessionState.SetBool(Key,false);Debug.LogError("SDK_STARTUP_PLAY_FAIL: "+message);EditorApplication.Exit(1);}
+}

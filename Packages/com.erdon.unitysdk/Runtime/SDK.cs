@@ -220,6 +220,7 @@ namespace ErDon.UnitySDK
             if (changingLifecycle) throw new InvalidOperationException("SDK operations cannot be invoked while initializing or disposing providers");
             if (callingStorage) throw new InvalidOperationException("SDK operations cannot be reentered from a storage provider");
         }
+        internal static void CheckHostLifecycleEntry() { EnsureNotLogging(); }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
         internal static void WriteStartupLog(SdkConfig settings, Action<SdkLogLevel,string> engineLog,
             string call, string stage, string result, int timeoutMilliseconds)

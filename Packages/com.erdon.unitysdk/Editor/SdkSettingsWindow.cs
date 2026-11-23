@@ -98,10 +98,26 @@ namespace ErDon.UnitySDK.Editor
                 EditorUtility.DisplayDialog("SDK 配置检查", issues.Count == 0 ? "配置检查通过；仅适用于当前 Editor 示例范围。" : string.Join("\n", issues), "确定");
             }
             if (GUILayout.Button("导出运行时配置 JSON（不会初始化平台）")) {
-                var path = EditorUtility.SaveFilePanel("导出 SDK 配置", "", "erdon-sdk-config", "json");
-                if (!string.IsNullOrEmpty(path)) {
-                    System.IO.File.WriteAllText(path, JsonUtility.ToJson(settings.CreateRuntimeConfiguration(), true));
-                    lastResult = "配置已导出；需要在平台初始化成功后加载，构建校验仍然生效。";
+                var configuration = settings.CreateRuntimeConfiguration();
+                var issues = configuration.Validate();
+                if (issues.Count != 0) {
+                    lastResult = "配置未导出：" + string.Join("、", issues.ToArray());
+                    EditorUtility.DisplayDialog("无法导出 SDK 配置", lastResult, "确定");
+                } else {
+                    var path = EditorUtility.SaveFilePanel("导出 SDK 配置", "", "erdon-sdk-config", "json");
+                    if (string.IsNullOrEmpty(path)) lastResult = "已取消导出；未写入文件。";
+                    else {
+                        try {
+                            System.IO.File.WriteAllText(path, JsonUtility.ToJson(configuration, true));
+                            lastResult = "配置已导出；需要在平台初始化成功后加载，构建校验仍然生效。";
+                        } catch (Exception ex) {
+                            if (!(ex is System.IO.IOException) && !(ex is UnauthorizedAccessException)
+                                && !(ex is System.Security.SecurityException) && !(ex is ArgumentException)
+                                && !(ex is NotSupportedException)) throw;
+                            lastResult = "配置导出失败：无法写入所选文件，请检查目录、文件占用和写入权限。";
+                            EditorUtility.DisplayDialog("SDK 配置导出失败", lastResult, "确定");
+                        }
+                    }
                 }
             }
             EditorGUILayout.Space();

@@ -79,7 +79,11 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 `createTikTokTradeClient().query({ accessToken, tradeOrderId })` 使用服务端保管的用户访问令牌，调用固定 HTTPS POST `/v2/minis/trade_order/query/`，返回冻结的 `{ tradeOrderId, status }`。只接受与请求相同的平台单号及 PENDING / SUCCESS 状态；未知状态、格式错误或超过 16 KiB 的响应返回 PAY.QUERY_RESPONSE_INVALID，网络或 HTTP 失败返回 PAY.QUERY_UNAVAILABLE，HTTP 401 返回 PAY.PLATFORM_TOKEN_REJECTED。禁止重定向，不自动重试，不回传上游消息或令牌。
 
-依据 [Payment APIs](https://developers.tiktok.com/docs/en/minis-payment-apis) 和 [In-App Purchases](https://developers.tiktok.com/docs/en/in-app-purchases)（2026-11-24 核对），此能力用于辅助核验，SUCCESS 不替代签名通知，也不直接执行 markPaid 或发货。当前是服务器内部传输接口，尚未装配受认证的查单业务入口或后台定时核验；调用者不可直接信任客户端传来的平台单号，需先验证游戏订单归属并读取已保存的平台关联。
+依据 [Payment APIs](https://developers.tiktok.com/docs/en/minis-payment-apis) 和 [In-App Purchases](https://developers.tiktok.com/docs/en/in-app-purchases)（2026-11-24 核对），此能力用于辅助核验，SUCCESS 不替代签名通知，也不直接执行 markPaid 或发货。
+
+组合应用提供 `POST /v1/orders/{gameOrderId}/query`，使用 Bearer 游戏会话，JSON 正文传 `{}`。服务先检查订单归属，再读取 Ready 预支付记录及匹配的应用/环境/沙箱/用户关联，使用服务器保存的访问令牌查询；正文中的平台单号和令牌均不采用。返回 `{ query: { orderId, platformStatus, state }, callId }`，其中 platformStatus 是平台辅助状态，state 是当前本地订单状态，只有 Fulfilled 表示服务端确认发货完成。无预支付关联返回 PAY.PREPAYMENT_NOT_FOUND / 404；凭据缺失/过期返回 PAY.CREDENTIAL_UNAVAILABLE / 503。凭据读取后、上游响应后均重新验证会话。未装配预支付服务的订单 handler 不开放该路由。
+
+此接口没有后台定时核验或 Unity 诊断客户端，平台查询也不能恢复尚未取得 trade_order_id 的不确定预支付请求；不会为恢复操作重新创建平台订单。
 
 ### TikTok 服务端组合入口
 
@@ -109,7 +113,7 @@ process.once('SIGTERM', () => server.close(() => app.close()));
 
 目录需预先创建。入口提供 POST /v1/session、订单路由（含 prepare）和 POST /v1/webhooks/tiktok/payment；不会创建公开发货路由，不接受客户端成功回执作为支付依据。服务器工作进程可读取 `app.pendingDelivery()`，再调用 `app.orders.fulfill(orderId, deliver)`；deliver 必须在业务数据库中将 deliveryKey 去重和权益增加放在同一事务内。
 
-此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 close。未包含公网部署、定时发货任务、平台查单或令牌刷新；原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
+此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 close。未包含公网部署、定时发货任务或令牌刷新；原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
 
 `TikTokCredentialStore(path, { keys, currentKeyId, now?, capacity? })`（server/src/tiktok-credential-store.mjs）实现凭证提供器的 get，并提供 put/remove/close。keys 为密钥 ID 到 32 字节 Buffer 的 Map；调用方从部署密钥服务加载，不放进 Unity、JSON 配置或 Git。存储复制密钥 Buffer，关闭时清理自己的副本，不改调用方的 Buffer；不承诺 JavaScript 字符串在内存中安全擦除。
 

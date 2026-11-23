@@ -16,15 +16,46 @@ async function fixture(t, tokenLookup) {
   const store = new SqliteOrderStore(':memory:'); t.after(() => store.close());
   const orders = new OrderService({ binding, auth, store, catalog: [{ productId: 'coins', amountMinor: 99, currency: 'USD' }], verifyPayment: async () => ({ paid: false }) });
   const order = await orders.create(alice, { productId: 'coins', requestId: 'one' });
-  const requests = []; let lookups = 0;
-  const flow = new TikTokPrepaymentFlow(new TikTokPrepayments(store), { create: async input => { requests.push(input); return { tradeOrderId: 'trade' }; } });
+  const requests = [], queries = []; let lookups = 0;
+  const flow = new TikTokPrepaymentFlow(new TikTokPrepayments(store), {
+    create: async input => { requests.push(input); return { tradeOrderId: 'trade' }; },
+    query: async input => { queries.push(input); return { tradeOrderId: 'trade', status: 'SUCCESS' }; }
+  });
   const catalog = [{ productId: 'coins', productName: 'Coins', tokenAmount: 100, quantity: 1, quantityUnit: 'item', imageUrl: 'https://example.com/coins.png' }];
   const credentials = { get: async (scope, subject) => {
     lookups++; return tokenLookup ? tokenLookup(scope, subject, auth, alice) : { binding: bindingKey(scope), subject, accessToken: 'server-token', expiresAt: Date.now() + 60000 };
   } };
   const service = new TikTokPrepaymentService({ orders, flow, catalog, credentials, isSandbox: true });
-  return { service, orders, auth, alice, bob, order, requests, catalog, lookups: () => lookups };
+  return { service, orders, auth, alice, bob, order, requests, queries, catalog, lookups: () => lookups };
 }
+
+test('query authenticates before credentials, requires saved association and never marks paid', async t => {
+  const f = await fixture(t), id=f.order.orderId;
+  await assert.rejects(f.service.query(f.bob,id),{code:'PAY.ORDER_NOT_FOUND'});
+  await assert.rejects(f.service.query(f.alice,id),{code:'PAY.PREPAYMENT_NOT_FOUND'});
+  assert.equal(f.lookups(),0);
+  await f.service.prepare(f.alice,id);
+  assert.deepEqual(await f.service.query(f.alice,id),{orderId:id,platformStatus:'SUCCESS',state:'Created'});
+  assert.deepEqual(f.queries,[{accessToken:'server-token',tradeOrderId:'trade'}]);
+  assert.equal((await f.orders.get(f.alice,id)).state,'Created');
+  f.service.isSandbox=false;
+  await assert.rejects(f.service.query(f.alice,id),{code:'PAY.PREPAYMENT_NOT_FOUND'});
+  assert.equal(f.queries.length,1);
+});
+
+test('query rechecks session after credential lookup and platform response', async t => {
+  const f=await fixture(t), id=f.order.orderId;
+  await f.service.prepare(f.alice,id);
+  f.service.credentials.get=async()=>{
+    await f.auth.revoke(f.alice);
+    return {binding:bindingKey(binding),subject:'alice',accessToken:'token',expiresAt:Date.now()+60000};
+  };
+  await assert.rejects(f.service.query(f.alice,id),{code:'AUTH.SESSION_INVALID'});
+  assert.equal(f.queries.length,0);
+  const g=await fixture(t);await g.service.prepare(g.alice,g.order.orderId);
+  g.service.flow.client.query=async()=>{await g.auth.revoke(g.alice);return {tradeOrderId:'trade',status:'SUCCESS'};};
+  await assert.rejects(g.service.query(g.alice,g.order.orderId),{code:'AUTH.SESSION_INVALID'});
+});
 test('authorized preparation uses frozen server catalog and returns no credential or identity', async t => {
   const f = await fixture(t); f.catalog[0].tokenAmount = 1;
   const result = await f.service.prepare(f.alice, f.order.orderId);

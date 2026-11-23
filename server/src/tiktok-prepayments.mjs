@@ -81,6 +81,17 @@ export class TikTokPrepayments {
       return row && row.binding === bindingKey(binding) && row.sandbox === Number(isSandbox) ? this.snapshot(row) : null;
     });
   }
+  async getReadyForOrder({ binding, isSandbox, orderId }) {
+    this.validate(binding, isSandbox);
+    if (!text(orderId)) throw new TypeError('Invalid game order ID');
+    return this.store.transaction(() => {
+      const attempt = this.store.db.prepare("SELECT trade_order_id FROM erdon_tiktok_attempts WHERE order_id=? AND state='Ready'").get(orderId);
+      if (!attempt) return null;
+      const row = this.store.db.prepare(`SELECT ${columns} FROM erdon_tiktok_prepayments WHERE app_id=? AND trade_order_id=?`).get(binding.appId, attempt.trade_order_id);
+      return row && row.orderId === orderId && row.binding === bindingKey(binding) && row.sandbox === Number(isSandbox)
+        ? this.snapshot(row) : null;
+    });
+  }
   async acceptWebhook({ binding, isSandbox, rawBody, signature, clientSecret, nowSeconds, toleranceSeconds }) {
     this.validate(binding, isSandbox);
     const checked = readTikTokPaymentWebhook({ clientKey: binding.appId, isSandbox,

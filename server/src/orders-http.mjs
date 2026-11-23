@@ -34,16 +34,21 @@ export function createOrderHandler(service, { log = console.info, bodyLimit = 81
         throw new OrderError('PAY.RATE_LIMITED', 429);
       }
       // Reject query-string tokens, alternate paths, and client-accessible fulfillment routes.
-      const route = /^\/v1\/orders(?:\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/(?:confirm|prepare))?)?$/.exec(request.url ?? '');
+      const route = /^\/v1\/orders(?:\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(\/(?:confirm|prepare|query))?)?$/.exec(request.url ?? '');
       if (!route || (!route[1] && request.method !== 'POST') ||
           (route[1] && request.method !== (route[2] ? 'POST' : 'GET'))) throw new OrderError('REQUEST.NOT_FOUND', 404);
       if (route[2] === '/prepare' && !prepayments) throw new OrderError('REQUEST.NOT_FOUND', 404);
+      if (route[2] === '/query' && typeof prepayments?.query !== 'function') throw new OrderError('REQUEST.NOT_FOUND', 404);
       const authorization = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization ?? '');
       if (!authorization) throw new AuthError('AUTH.SESSION_INVALID');
       const session = authorization[1];let order;
       if (!route[1]) {
         operation = 'Order.Create';const input = await readJson();
         order = await service.create(session, { productId: input.productId, requestId: input.requestId });
+      } else if (route[2] === '/query') {
+        operation = 'Order.Query';
+        await readJson();
+        send(200, { query: await prepayments.query(session, route[1]) }); return;
       } else if (route[2] === '/prepare') {
         operation = 'Order.Prepare';
         await readJson(); // Body fields cannot supply prices, identity or platform tokens.

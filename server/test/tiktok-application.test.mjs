@@ -19,6 +19,11 @@ test('composed application authenticates, prepares, accepts signed payment and r
       quantity:1, quantityUnit:'item', imageUrl:'https://example.com/coins.png' }],
     fetchImpl:async(url, options)=>{
       if (url.endsWith('/oauth/token/')) return Response.json({ open_id:'player', access_token:'private-token', token_type:'Bearer', expires_in:3600 });
+      if (url.endsWith('/trade_order/query/')) {
+        assert.equal(options.headers.Authorization,'Bearer private-token');
+        assert.deepEqual(JSON.parse(options.body),{trade_order_id:'trade'});
+        return Response.json({data:{trade_order_id:'trade',trade_order_status:'SUCCESS'},error:{code:'ok'}});
+      }
       assert.ok(url.endsWith('/trade_order/create/'));
       assert.equal(options.headers.Authorization,'Bearer private-token'); creates++;
       return Response.json({ data:{trade_order_id:'trade'}, error:{code:'ok'} });
@@ -51,6 +56,10 @@ test('composed application authenticates, prepares, accepts signed payment and r
   await stop();await start();
   assert.equal((await request(`/v1/orders/${id}/prepare`,{},session)).status,200);
   assert.equal(creates,1);
+  const queried=await request(`/v1/orders/${id}/query`,{tradeOrderId:'forged',accessToken:'forged'},session);
+  assert.equal(queried.status,200);
+  assert.deepEqual(queried.data.query,{orderId:id,platformStatus:'SUCCESS',state:'Created'});
+  assert.equal((await request(`/v1/orders/${id}/query`,{})).status,401);
   const raw=JSON.stringify({client_key:'app',event:'minis.trade_order.redeem.success',create_time:timestamp,user_openid:'player',
     content:JSON.stringify({order_id:id,trade_order_id:'trade',is_sandbox:true})});
   const signature=`t=${timestamp},s=${createHmac('sha256',binding.secret).update(`${timestamp}.`).update(raw).digest('hex')}`;

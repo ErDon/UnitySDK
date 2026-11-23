@@ -173,3 +173,5 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 抖音/TikTok 的网络装配同样依赖显式注入 createNetwork；省略不会自动退回 Mock，也不会偷偷引入 HTTP 包。平台工厂和 HTTP 包通过核心 INetwork 契约组合。当前复用 UnityWebRequest 传输路径，未适配 TTRequest 的独立参数类型。需要平台域名白名单及运行环境支持，配置放行并不代表已通过小游戏真机网络测试。
 
 构建能力选择保留项目其他宏，只维护 ERDON_EXCLUDE_LOGIN/STORAGE/SHARE/ADS/ANALYTICS/NETWORK/PAYMENTS。修改勾选不会立即触发重编译，需要再次应用；如果勾选已排除的能力却未应用，构建报 CONFIG.MODULE_NOT_COMPILED。手工构建脚本也可调用 SdkProjectSettings.instance.ApplyCapabilityDefines()，然后等编译结束再构建。对运行时 JSON 和直接 SDK.Initialize/InitializeWithFactory 均有未编译能力检查，失败发生在能力创建和替换现有 SDK 之前。
+
+直接 SdkStartup 构造及 UnitySdkHost.BeginStartup/Initialize/InitializeWithFactory 同样在取得新运行时所有权或取消旧启动前检查编译能力。请求未编译能力时立即抛 CONFIG.MODULE_NOT_COMPILED，不等待官方初始化后再转换成 INIT.COMPOSITION_FAILED。构造被拒绝的 runtime 仍由调用方拥有，SDK 不负责释放它。Editor 的预览编译不受 Player 排除符号限制。

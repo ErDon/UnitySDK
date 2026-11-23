@@ -684,3 +684,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 登录开启、网络关闭的共享依赖检查（2026-11-23）
 
 新增 ConfigureLoginOnly，构建探针在登录开启时提供 UnitySessionExchange 工厂，但不调用登录或 HTTP 请求。tiktok-login-only-build.log 成功退出 0，场景 login=1、network/payments=0。链接检查确认 TikTokCredentialProvider、VerifiedAuth、UnitySessionExchange 定义保留，其余六类能力实现/引用排除；平台注册仍在。RequiredTypes 工具对已裁剪登录的微信产物正确拒绝保留断言。仅证明此构建组合及通信依赖，未发生真实登录联调。
+
+### 启动生命周期的编译能力前置校验（2026-11-23）
+
+日志/生命周期复核发现直接 SdkStartup 构造未检查编译能力，会在平台初始化后才得到笼统组合失败；Unity 直接初始化路径也先清除旧启动。新增构造及宿主入口前置校验，未编译能力在接管运行时或清除旧启动之前拒绝。七种关闭能力专项覆盖运行时零初始化/零释放，公共 run-all-tests 全部通过；独立 BuildChecksProject 输出 SDK_EDITOR_CHECKS_PASS 并退出 0。最终日志/生命周期总复核仍未完成，原清单项保持未勾选。

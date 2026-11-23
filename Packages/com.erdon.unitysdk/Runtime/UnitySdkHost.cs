@@ -24,6 +24,7 @@ namespace ErDon.UnitySDK
             Action<StartupResult> callback, int timeoutMilliseconds = 15000)
         {
             SDK.CheckHostLifecycleEntry();
+            SdkCompiledModules.Validate(config);
             var host = GetOrCreate();
             if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
             var next = new SdkStartup(config, runtime, factory, a => host.queue.Enqueue(a), WriteLog, callback, timeoutMilliseconds);
@@ -62,6 +63,7 @@ namespace ErDon.UnitySDK
         public static void InitializeWithFactory(SdkConfig config, ISdkProviderFactory factory)
         {
             SDK.CheckHostLifecycleEntry();
+            SdkCompiledModules.Validate(config);
             var host = GetOrCreate();
             host.ReplaceStartup(null);
             SDK.InitializeWithFactory(config, factory, a => host.queue.Enqueue(a), WriteLog);
@@ -69,6 +71,7 @@ namespace ErDon.UnitySDK
         public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null, INetwork networkProvider = null, IAnalytics analyticsProvider = null)
         {
             SDK.CheckHostLifecycleEntry();
+            SdkCompiledModules.Validate(config);
             var host = GetOrCreate();
             host.ReplaceStartup(null);
             SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider, shareProvider, payProvider, adsProvider, networkProvider, analyticsProvider);

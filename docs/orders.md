@@ -1,6 +1,6 @@
 # 服务端订单与发货（开发中）
 
-server/src/orders.mjs 提供 OrderService 与 MemoryOrderStore。当前是可执行的服务组件，不是可上线支付服务；尚无支付 HTTP 路由、平台下单/验签/查单实现、生产持久化验收、退款或对账。不会从客户端 paid=true 直接发货。
+server/src/orders.mjs 提供 OrderService 与 MemoryOrderStore。当前是可执行的服务组件，不是可上线支付服务；已有可装配订单 HTTP 处理器，但尚无平台下单/验签/查单实现、生产持久化验收、退款或对账。不会从客户端 paid=true 直接发货。
 
 ## 装配
 
@@ -60,3 +60,22 @@ WAL + FULL 同步提交；数据库表有状态与交易号一致性约束。sch
 当前支持同机数据库连接，不支持网络文件系统或多机共享 WAL。同步 SQLite 会阻塞 Node 事件循环；高负载性能、备份恢复和故障注入尚未验收。订单数据库含账号信息，应限制权限；备份须按 SQLite 的在线备份/WAL 规则进行。游戏端持久去重仍必不可少，此存储不将远端发货变成跨服务事务。
 
 5 项 SQLite 订单测试验证数据库重开、幂等状态、回滚、容量、四个独立 worker 抢同一交易号、未知 schema 拒绝以及发货响应丢失后重启恢复。未验证真实支付平台。
+
+
+## HTTP 处理器
+
+createOrderHandler(orderService, options) 位于 server/src/orders-http.mjs，可作为 Node HTTP request listener。必须显式装配已配置可信 verifyPayment 的 OrderService；默认 start.mjs 仍仅启动登录服务，不偷偷启用测试支付验证器。部署需 HTTPS、域名和受信代理配置。
+
+所有请求使用 Authorization: Bearer <游戏会话>，不接受 query token。绑定由服务端 OrderService 确定，不能通过请求切换游戏、平台或环境。
+
+| 方法与路径 | JSON 请求 | 结果 |
+| --- | --- | --- |
+| POST /v1/orders | {"productId":"coins","requestId":"purchase-001"} | 创建或返回相同请求的订单 |
+| GET /v1/orders/{orderId} | 无 | 当前账号的公开订单 |
+| POST /v1/orders/{orderId}/confirm | {"evidence":{...}} | 交平台验证器核验后更新支付状态 |
+
+响应成功统一 HTTP 200 {order,callId}，失败 {errorCode,callId}。callId 是服务端 UUID，与 SDK 日志关联；所有响应 no-store。订单号为服务端生成的小写 UUID，路径不接受查询参数或其他方法。没有 /fulfill 客户端路由。
+
+默认每来源 60 秒 30 次、JSON 正文最多 8192 字节，超限分别为 PAY.RATE_LIMITED/429（含 Retry-After）与 REQUEST.TOO_LARGE/413。不信任 X-Forwarded-For，代理后的来源额度需按部署环境配置 limiter。非 JSON 为 415，错误格式为 400，未知路径为 404，无效会话为 401，跨账号订单与不存在订单统一 404。超过正文上限或提前拒绝时关闭连接，不复用带未读正文的连接。
+
+options.log 接收服务端已格式化 JSON，包含 time/interface/callId/logId/stage/params/result；订单正文、授权头和回执整体脱敏，日志回调异常不改变响应。测试中的 evidence.valid 只存在测试验证器中，不能用于真实服务。

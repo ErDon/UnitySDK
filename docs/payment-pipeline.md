@@ -25,7 +25,7 @@ if (!checked.valid) {
 
 成功仅返回冻结的 notification：clientKey、isSandbox、orderId、tradeOrderId、userOpenId、createdAtSeconds，不透传正文额外字段。官方样例的 user_openid 可以为空，因此用户归属仍必须通过服务端可信的预支付关联记录校验，不能只信通知里的订单号。
 
-后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。下述 acceptWebhook 已提供通知到 Paid 的本地事务，当前尚无 webhook HTTP 路由和真实发货接入，不能将这两个解析函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。下述 acceptWebhook 已提供通知到 Paid 的本地事务，下述独立 HTTP handler 已提供通知路由，尚未部署和接入真实发货，不能将这两个解析函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
 
 本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额，以及签名正确但应用/环境/事件不符、非法载荷和解析顺序。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
 
@@ -43,9 +43,19 @@ if (!checked.valid) {
 
 首次匹配将 Created 改为 Paid，返回 `{ accepted: true, orderId, state, duplicate: false }`。重启后重复通知仍幂等；已 Fulfilled 订单保持 Fulfilled。另一平台交易尝试再支付同一订单返回 PAY.TRANSACTION_CONFLICT，必须对账处理，不能重复发货或自动声称退款。交易号被其他订单占用返回 PAY.TRANSACTION_REUSED。这些检查与状态写入在同一事务内，避免检查后再写入的竞争。
 
-Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游戏幂等发货接收方完成后续步骤；本方法不发放权益、不暴露 HTTP 服务、不自动查询上游订单。预支付记录仍须来自可信平台下单响应，不能开放 register 给客户端。新增测试覆盖 Paid/重启/已发货重复通知、签名正确但换单/换用户、两连接重复通知及第二笔交易冲突，不代表真实平台沙盒或生产验收。
+Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游戏幂等发货接收方完成后续步骤；本方法不发放权益、不自动查询上游订单，HTTP 由下述 handler 承接。预支付记录仍须来自可信平台下单响应，不能开放 register 给客户端。新增测试覆盖 Paid/重启/已发货重复通知、签名正确但换单/换用户、两连接重复通知及第二笔交易冲突，不代表真实平台沙盒或生产验收。
 
-## 状态与步骤
+## HTTP 通知入口装配
+
+`createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。
+
+成功及重复通知均在订单事务提交后响应 HTTP 200 `{ received: true, callId }`，不返回订单或用户详情。签名/时间失败为 401，其他无效载荷为 400，关联冲突为 409，超限为 413，限流为 429，存储失败为 503。日志含时间、接口、调用号、独立日志号和结果码，参数脱敏；日志回调异常不改变响应。未知服务器异常只返回 SERVER.INTERNAL。
+
+部署必须使用 HTTPS 并设置请求/头读取超时；默认 limiter 是按连接来源 IP 的进程内实现，多实例应在网关或共享存储限流。handler 不信任客户端转发的 IP 头，也不提供客户端预支付注册或发货接口。当前只有回环 HTTP 验证，尚未注册平台回调地址、处理生产通知或完成退款业务。
+
+测试：在 server 目录运行 `node --test`；tiktok-webhook-http.test.mjs 使用真实本机 HTTP 和 SQLite 检查提交后确认、重复、篡改、路由、编码、限额与日志隔离。
+
+## 客户端编排步骤
 
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。
 2. 订单为 Fulfilled：直接返回成功，不再打开收银台。

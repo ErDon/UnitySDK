@@ -36,7 +36,7 @@ factory 使用 DouyinProviderFactory；构造函数参数和 HTTP 会话桥接�
 - BeginStartup 替换并静默释放旧启动尝试，不调用旧完成回调；传入无效构造参数时保留旧任务。每次提供新的 runtime 桥接实例。
 - CancelStartup 返回 INIT.CANCELLED 并结束当前等待，已运行的业务 SDK 不会被关闭；不撤销官方 SDK 已进行的动作。
 - UnitySdkHost.Shutdown 同时放弃启动任务和释放业务 SDK。使用宿主启动流程时应调用该入口；直接 SDK.Shutdown 不负责关闭宿主持有的启动任务。
-- 旧的 Initialize / InitializeWithFactory 会先放弃待处理启动，再执行直接装配；依然要求官方宿主已就绪。
+- Initialize / InitializeWithFactory 成功装配后才放弃待处理启动；配置、工厂或实例校验失败时保留旧启动与现有 SDK。直接装配依然要求官方宿主已就绪。
 - 宿主销毁时静默释放启动并 Shutdown。所有这些入口在 Unity 主线程调用，不允许从 SDK 日志回调重入。
 
 验证：tests/StartupPlayChecks.cs.txt 在隔离 Unity 2022.3 工程运行 Play Mode，覆盖自动启动后登录、自动超时、任务替换、取消、Shutdown 及迟到回调抑制。使用模拟 runtime/factory，不代表真机初始化或微信/TikTok 启动适配已经完成。

@@ -1,1 +1,18 @@
-{"name":"com.erdon.unitysdk.transport.http","version":"0.1.0","displayName":"ErDon SDK HTTPS Session Transport","unity":"2022.3","dependencies":{"com.erdon.unitysdk":"0.1.0","com.unity.modules.unitywebrequest":"1.0.0","com.unity.modules.jsonserialize":"1.0.0"}}
+{
+  "name": "com.erdon.unitysdk.transport.http",
+  "version": "0.1.0",
+  "displayName": "ErDon SDK HTTPS Session Transport",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.erdon.unitysdk": "0.1.0",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Configured Platform Startup",
+      "description": "JSON configuration startup with optional HTTPS session exchange; requires one official platform SDK and adapter.",
+      "path": "Samples~/ConfiguredStartup"
+    }
+  ]
+}

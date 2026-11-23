@@ -127,6 +127,11 @@
 
 ## 2026-11-23 执行记录
 
+### 可导入的配置启动示例
+
+HTTP UPM 包新增 Configured Platform Startup sample：读取面板 JSON、验证配置、按需创建 UnitySessionExchange/UnityNetwork、等待真实平台启动后提供 LoginFromGame 按钮入口，不自动登录或请求支付。根对象跨场景保留，重复组件不抢占启动或关闭原实例，所属组件销毁时关闭宿主；会话不打印。附完整导入、服务端协议前提、模块裁剪、生命周期和验证范围说明，getting-started 增加入口。用 Unity 2022.3.14f1c1 实际核心/HTTP/Unity 程序集，以 warnaserror 编译默认和排除登录/网络两分支均通过。尚未完成导入后 Play Mode 与真实游戏端到端运行，不勾选独立游戏完整验收。同时修正 startup.md 旧说法，明确直接初始化成功后才放弃旧启动，失败保留旧任务。
+
+
 ### 官方单体 SDK 保留边界实测
 
 新增只读 inspect-vendor-retention 工具，对三份实际 ManagedStripped 导出类型、方法体存在性和程序集 SHA-256；缺失指定程序集拒绝测试通过。重跑微信/抖音五类全关排除检查、TikTok 仅登录组合六项排除及登录依赖保留检查均通过。同时证实官方微信 Login/ReportEvent、抖音 Login/CreateRewardedVideoAd/ReportAnalytics、TikTok 已关闭的广告/上报官方入口仍存在。微信及 TikTok 官方 link.xml 使用整程序集 preserve=all；抖音内部保留原因未据此推断。完整范围说明写入 docs/platform-isolation.md，元数据数量与哈希记录在 compatibility/vendor-retention-2026-11-23.json。该证据明确自有实现排除与官方内部代码保留的界限，不证明最终 JS/Wasm/资源隔离，相关待办不提前勾选。

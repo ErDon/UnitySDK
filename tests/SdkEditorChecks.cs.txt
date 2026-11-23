@@ -27,6 +27,17 @@ public static class SdkEditorChecks {
   if(s.Validate().Count==0) throw new Exception("missing adapter allowed");
   bool blocked=false;try {new SdkBuildGuard().OnPreprocessBuild(null);}catch(BuildFailedException){blocked=true;}
   if(!blocked) throw new Exception("build not blocked");
+  const string vendorRoot="Assets/Plugins/com.tiktok.minigame";
+  if(UnityEditor.AssetDatabase.IsValidFolder(vendorRoot) || Directory.Exists(vendorRoot))
+      throw new Exception("Isolation fixture path already exists; refusing to modify it");
+  if(!UnityEditor.AssetDatabase.IsValidFolder("Assets/Plugins"))UnityEditor.AssetDatabase.CreateFolder("Assets","Plugins");
+  UnityEditor.AssetDatabase.CreateFolder("Assets/Plugins","com.tiktok.minigame");
+  try {
+      if(PlatformDependencyCatalog.CheckVendorInstallations("WeChat").Count==0)
+          throw new Exception("Official vendor root without adapter escaped detection");
+      if(PlatformDependencyCatalog.CheckVendorInstallations("TikTok").Count!=0)
+          throw new Exception("Target vendor root rejected");
+  } finally {UnityEditor.AssetDatabase.DeleteAsset(vendorRoot);}
   // A real Unity precompiled reference must be checked even though it is not a source assembly.
   var reference = CompilationPipeline.GetAssemblies(AssembliesType.Player)
       .SelectMany(a=>a.compiledAssemblyReferences).FirstOrDefault();

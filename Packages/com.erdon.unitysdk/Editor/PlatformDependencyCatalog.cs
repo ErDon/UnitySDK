@@ -12,6 +12,11 @@ namespace ErDon.UnitySDK.Editor
 {
     public static class PlatformDependencyCatalog
     {
+        public static List<string> CheckVendorInstallations(string target)
+        {
+            return PlatformIsolationPolicy.CheckVendorInstallations(target,
+                PlatformIsolationPolicy.KnownVendorRoots.Where(AssetDatabase.IsValidFolder));
+        }
         public static PlatformDependency[] ReadInstalled()
         {
             var entries = new List<PlatformDependency>();
@@ -52,6 +57,7 @@ namespace ErDon.UnitySDK.Editor
                 report.GetFiles().Select(x=>x.path),
                 report.packedAssets.SelectMany(x=>x.contents).Select(x=>x.sourceAssetPath));
             errors.AddRange(PlatformDependencyCatalog.CheckPlayerAssemblies(target));
+            errors.AddRange(PlatformDependencyCatalog.CheckVendorInstallations(target));
             Directory.CreateDirectory("Library/ErDonSdk");
             File.WriteAllText("Library/ErDonSdk/last-artifact-audit.txt",
                 "Target="+target+"\nScope=registered assemblies and BuildReport source assets only\n"+

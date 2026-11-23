@@ -16,6 +16,28 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class PlatformIsolationPolicy
     {
+        // Known installed vendor roots must be checked even when their ErDon adapter is absent.
+        public static string[] KnownVendorRoots { get { return new[] {
+            "Packages/com.qq.weixin.minigame", "Assets/Plugins/com.tiktok.minigame",
+            "Assets/Plugins/ByteGame/com.bytedance.starksdk", "Packages/com.bytedance.starksdk"
+        }; } }
+        public static List<string> CheckVendorInstallations(string target, IEnumerable<string> installedRoots)
+        {
+            var errors = new List<string>();
+            var roots = new HashSet<string>(installedRoots.Select(Normalize), StringComparer.OrdinalIgnoreCase);
+            foreach(var root in KnownVendorRoots) {
+                if(!roots.Contains(root))continue;
+                // com.bytedance.starksdk is shared by vendor distributions; UPM identity alone is ambiguous.
+                if(root == "Packages/com.bytedance.starksdk") {
+                    if(target != "Douyin" && target != "TikTok")errors.Add("Foreign ByteDance SDK installation: " + root);
+                    continue;
+                }
+                var platform = root == "Packages/com.qq.weixin.minigame" ? "WeChat" :
+                    root == "Assets/Plugins/com.tiktok.minigame" ? "TikTok" : "Douyin";
+                if(platform != target)errors.Add("Foreign SDK installation: " + platform + "/" + root);
+            }
+            return errors;
+        }
         public static List<string> CheckPlatformDefines(string target, string defines, string engineTarget)
         {
             var errors = new List<string>();

@@ -325,3 +325,10 @@ StartupTests 和公共回归通过，覆盖零提前创建、后台派发、成�
 UnitySdkHost 新增 BeginStartup / CancelStartup / Shutdown，Update 驱动启动 Tick。新任务替换静默释放旧尝试，直接装配会清理等待任务，销毁时释放启动与业务 SDK。日志回调重入检查沿用 SDK 防护，构造无效新任务不会替换旧任务。
 
 独立 Unity startup-host-play.log 输出 SDK_STARTUP_PLAY_PASS，实际 Play Mode 验证自动就绪后登录、超时、替换、取消、关闭和迟到回调。使用测试 runtime/factory，不代替真机或其他平台初始化验证。更新启动文档和关闭入口边界。
+
+### 官方依赖无适配包时的混装检查
+
+补充核心内置的已知官方目录检查，不再完全依赖对应 ErDon 适配包是否安装。面板、构建前和产物审计接入相同策略；明确外平台目录会阻断，不自动删除或移动文件。记录字节同名 UPM 身份歧义和任意改名目录的覆盖限制。
+
+公共策略测试通过，覆盖无适配官方目录、目标目录、抖音/TikTok 分离、Mock 和路径边界。Unity 检查增加临时空官方目录探针，存在该路径时拒绝覆盖，仅清理自己创建的测试叶目录。
+隔离 Unity vendor-roots.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0，实际 AssetDatabase 检测通过。

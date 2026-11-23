@@ -7,6 +7,11 @@ class IsolationTests
   var wx=new PlatformDependency{Platform="WeChat",Package="wx",Version="1.0.0",Assemblies=new[]{"WX.Runtime"},AssetRoots=new[]{"Packages/wx/Runtime"}};
   var tt=new PlatformDependency{Platform="TikTok",Package="tt",Version="1.0.0",Assemblies=new[]{"TT.Runtime"},AssetRoots=new[]{"Assets/TikTok"}};
   var deps=new[]{wx,tt};
+  Require(PlatformIsolationPolicy.CheckVendorInstallations("WeChat",new[]{"Assets/Plugins/com.tiktok.minigame"}).Count==1,"vendor without adapter rejected");
+  Require(PlatformIsolationPolicy.CheckVendorInstallations("WeChat",new[]{"Packages/com.qq.weixin.minigame"}).Count==0,"target vendor allowed");
+  Require(PlatformIsolationPolicy.CheckVendorInstallations("TikTok",new[]{"Assets/Plugins/ByteGame/com.bytedance.starksdk"}).Count==1,"Douyin vendor isolated from TikTok");
+  Require(PlatformIsolationPolicy.CheckVendorInstallations("Mock",new[]{"Packages/com.qq.weixin.minigame"}).Count==1,"mock cannot ship real vendor");
+  Require(PlatformIsolationPolicy.CheckVendorInstallations("WeChat",new[]{"Assets/Plugins/com.tiktok.minigameOther"}).Count==0,"exact root match");
   Require(PlatformIsolationPolicy.CheckPlatformDefines("WeChat","DEBUG;ERDON_PLATFORM_WECHAT","WebGL").Count==0,"single correct define");
   Require(PlatformIsolationPolicy.CheckPlatformDefines("WeChat","ERDON_PLATFORM_WECHAT;ERDON_PLATFORM_TIKTOK","WebGL").Count>0,"two platforms rejected");
   Require(PlatformIsolationPolicy.CheckPlatformDefines("TikTok","ERDON_PLATFORM_DOUYIN","WebGL").Count>0,"wrong target rejected");

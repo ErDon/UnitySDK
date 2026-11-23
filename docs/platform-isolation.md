@@ -37,3 +37,11 @@
 
 
 预编译引用检查使用 Unity 实际 Player 编译图，文件名比较同时规范化 Windows/Unix 分隔符和 DLL 扩展名。tests/SdkEditorChecks.cs.txt 将真实编译引用临时登记为外部平台依赖，确认检查会拦截；该测试仅构造内存清单，不修改插件或业务工程。它不覆盖未被引用但仍被打包的原生插件，后者仍需导入设置和产物核验。
+
+## 已知官方依赖目录检查
+
+仅靠已安装适配包的 erdon-platform.json 不够：游戏可能单独导入某个官方 SDK，而未安装该平台适配。现在面板、构建前检查和构建后审计额外查看已知官方目录：微信 UPM、TikTok 的 Assets/Plugins/com.tiktok.minigame、BGDT 的 Assets/Plugins/ByteGame/com.bytedance.starksdk，以及字节同名 UPM 目录。
+
+发行工程采用单目标官方依赖：发现明确属于其他平台的上述目录即阻止构建，即使导入器暂时关闭也不自动放行。工具不会删除或移动 SDK；应在独立发行工程保留目标依赖。此规则比单纯“最终产物不包含它”更严格，用来避免同名程序集/桥接的导入冲突。
+
+Packages/com.bytedance.starksdk 的包名本身不能区分抖音和 TikTok，因此只把它作为微信/Mock 的外平台依赖；抖音/TikTok 间仍须结合版本快照及官方安装来源核对。任意改名目录和未登记第三方资源尚不能靠此规则识别，完整导出产物检查仍待完成。不能把目录检查通过当作裁剪已证明。

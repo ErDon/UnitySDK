@@ -78,6 +78,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.HelpBox("官方依赖需按目标平台独立安装。此预览不是依赖安装检查或构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);
+            foreach (var issue in PlatformDependencyCatalog.CheckVendorInstallations(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);
             if (GUILayout.Button("检查并保存配置")) {
                 settings.SaveSettings();
                 var issues = settings.Validate();

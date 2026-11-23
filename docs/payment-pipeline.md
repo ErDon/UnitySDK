@@ -21,9 +21,13 @@ if (!checked.valid) {
 
 此函数要求非空 Buffer 且不超过 64 KiB，默认允许前后 300 秒，可缩短窗口；HTTP 层仍须在读取过程中限长。缺失、重复 t/s、额外字段、格式错误或超长头均拒绝。返回 WEBHOOK.INVALID_BODY、WEBHOOK.INVALID_SIGNATURE 或 WEBHOOK.TIMESTAMP_OUT_OF_RANGE；无效服务器配置抛 TypeError。时间窗口内的重复请求仍能验签成功，不能替代持久化幂等处理。
 
-后续处理必须匹配应用、用户、内部订单与平台订单，并隔离测试订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由、订单关联持久化和真实发货接入，不能将此函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+`readTikTokPaymentWebhook({ ...验签参数, clientKey, isSandbox })` 在验签后解析支付通知；clientKey 与布尔型 isSandbox 必须由服务端显式提供。它拒绝错误应用、环境不匹配、非支付成功事件、非法 UTF-8/JSON 和缺失或非法订单字段，分别返回 WEBHOOK.APP_MISMATCH、WEBHOOK.ENVIRONMENT_MISMATCH、WEBHOOK.EVENT_UNSUPPORTED 或 WEBHOOK.INVALID_PAYLOAD。退款通知不会被当作购买成功，目前也不处理退款业务。
 
-本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
+成功仅返回冻结的 notification：clientKey、isSandbox、orderId、tradeOrderId、userOpenId、createdAtSeconds，不透传正文额外字段。官方样例的 user_openid 可以为空，因此用户归属仍必须通过服务端可信的预支付关联记录校验，不能只信通知里的订单号。
+
+后续处理必须匹配用户、内部订单与平台订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由、订单关联持久化和真实发货接入，不能将这两个函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+
+本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额，以及签名正确但应用/环境/事件不符、非法载荷和解析顺序。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
 
 ## 状态与步骤
 

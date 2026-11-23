@@ -124,6 +124,10 @@
 
 ## 2026-11-23 执行记录
 
+### 微信官方转换与完整包核验
+
+在隔离 SDK 副本运行官方 WXConvertCore.DoExport(true)，发现本地 0.1.23 缺少 wx_perf_2022.a/2021.a，ProcessWxPerfBinaries 抛空引用，退出1。新增隔离转换探针，约束输出到测试工程新目录，预检所需插件导入器；不修改原游戏包。随后克隆官方仓库提交 915d4bf4f60ef0cd1c29316a8d67257185d609a7 并保留干净原件，使用另一个副本导入。完整官方包包含缺失库，package.json 版本为0.1.1；重新编译发现 ReportEvent 参数从本地基线的泛型字典变为 Dictionary<string,string>，WeChatAnalytics CS1503。记录两个不同基线，不拼接包、不静默改变数字事件语义。后续需实现显式版本兼容策略并验证，再继续官方转换；转换/真机清单未勾选。
+
 ### 微信 WebGL 开发构建与配置持久化修复
 
 新增可重跑的 MiniGameDevelopmentBuild/MiniGameBuildProbe 模板及 docs/development-build.md，在全新 WeChatBuildProject 导入核心、微信适配和本地 0.1.23 包。配置和构建分两次 Unity 进程执行。首次构建发现 SdkProjectSettings 与 SdkSettingsWindow 放在同一脚本文件，保存的 m_Script 为 0，重开后读取默认 Mock，正确被构建检查阻断。将配置类移入同名 SdkProjectSettings.cs 并提交稳定 meta；重新保存后有有效脚本 GUID，重开工程正确读取微信配置。

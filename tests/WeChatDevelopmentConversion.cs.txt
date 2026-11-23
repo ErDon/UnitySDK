@@ -1,0 +1,31 @@
+using System;
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+using WeChatWASM;
+public static class WeChatDevelopmentConversion {
+ public static void Run() {
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+  var output=Path.GetFullPath(Path.Combine(root,"Builds/WeChatConversion"));
+  if(!output.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Output outside test project");
+  if(Directory.Exists(output))throw new Exception("Use a fresh conversion output directory");
+  foreach(var plugin in new[]{"WxPerfJsBridge.jslib","wx_perf_2022.a","wx_perf_2021.a"}) {
+   var path="Packages/com.qq.weixin.minigame/Runtime/Plugins/"+plugin;
+   if(!(AssetImporter.GetAtPath(path) is PluginImporter))
+    throw new Exception("Official conversion dependency missing or not imported: "+path);
+  }
+  EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene("Assets/DevelopmentBuildProbe.unity",true)};
+  var config=WXConvertCore.config;
+  config.ProjectConf.DST=output;
+  config.ProjectConf.Appid="build-only-placeholder";
+  config.CompileOptions.DevelopBuild=true;
+  config.CompileOptions.fbslim=false;
+  config.CompileOptions.DeleteStreamingAssets=false;
+  EditorUtility.SetDirty(config);AssetDatabase.SaveAssets();
+  var result=WXConvertCore.DoExport(true);
+  if(result!=WXConvertCore.WXExportError.SUCCEED)throw new Exception("Official conversion failed: "+result);
+  foreach(var file in new[]{"game.js","game.json","project.config.json"})
+   if(!File.Exists(Path.Combine(output,"minigame",file)))throw new Exception("Missing conversion output: "+file);
+  Debug.Log("SDK_WECHAT_CONVERSION_FILES_PASS");
+ }
+}

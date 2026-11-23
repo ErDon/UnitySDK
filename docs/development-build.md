@@ -19,3 +19,11 @@
 ## 配置持久化
 
 SdkProjectSettings 必须位于同名脚本文件，以便 Unity 保存稳定脚本引用。早期开发版将该类型放在 SdkSettingsWindow.cs，可能保存 `m_Script: {fileID: 0}` 并在重启后恢复默认值。升级后先核对面板值，再保存并重启确认；早期未恢复的配置需重新填写，不能直接假定旧文件已正确加载。
+
+## 官方转换验证进展
+
+`tests/WeChatDevelopmentConversion.cs.txt` 是隔离工程的官方转换探针，复制到 `Assets/Editor/WeChatDevelopmentConversion.cs` 后执行 `WeChatDevelopmentConversion.Run`。转换器会修改官方插件导入设置，必须先复制完整官方包并将隔离工程 manifest 指向副本，不得直接指向游戏项目正在使用的包。输出目录 `Builds/WeChatConversion` 必须尚不存在；脚本不删除旧产物。占位 App ID 只用于构建，不用于上传或设备验收。
+
+本地 0.1.23 包缺少 `wx_perf_2022.a` 和 `wx_perf_2021.a`，实际调用在 `ProcessWxPerfBinaries` 空引用失败。探针增加这两个文件及桥接导入器的前置诊断，避免继续报告难定位的空引用。
+
+随后从官方仓库 https://github.com/wechat-miniprogram/minigame-tuanjie-transform-sdk 克隆提交 `915d4bf4f60ef0cd1c29316a8d67257185d609a7`。该提交包标识为 0.1.1，包含两份性能库；它不能与本地 0.1.23 视为同一基线。使用完整副本导入时，现有 WeChatAnalytics 编译失败：官方 `WX.ReportEvent` 要求 `Dictionary<string,string>`，本地旧包接受泛型对象字典。尚未解决参数类型兼容，不能声明该官方提交受支持，也未完成转换。禁止只复制新版二进制进旧包，或静默把数字参数转成字符串冒充一致语义。

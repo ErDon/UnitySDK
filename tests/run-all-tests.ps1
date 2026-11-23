@@ -25,6 +25,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Operation lifecycle compile failed'}
     & .\.tests\OperationLifecycleTests.exe
     if($LASTEXITCODE -ne 0){throw 'Operation lifecycle tests failed'}
+    & $compiler /nologo /out:.tests\NativeExtensionTests.exe $registryCore .\tests\NativeExtensionTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Native extension contract compile failed'}
+    & .\.tests\NativeExtensionTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Native extension contract tests failed'}
     & $compiler /nologo /out:.tests\NetworkFacadeTests.exe $registryCore .\tests\NetworkFacadeTests.cs
     if($LASTEXITCODE -ne 0){throw 'Network facade compile failed'}
     & .\.tests\NetworkFacadeTests.exe

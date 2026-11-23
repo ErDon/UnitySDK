@@ -1,6 +1,6 @@
-# 数据上报（公共聚合与微信适配已实现）
+# 数据上报（公共聚合与微信、抖音适配已实现）
 
-当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信工厂已提供适配，微信运行时 JSON 可设置 analytics=true；面板标记当前仅支持微信。抖音、TikTok 和 Mock 上报尚未接通，对应配置仍拒绝启用。真实构建仍须完成整体产物验收。
+当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信和抖音工厂已提供适配，相应运行时 JSON 可设置 analytics=true；面板标记支持微信、抖音。TikTok 和 Mock 上报尚未接通，对应配置仍拒绝启用。真实构建仍须完成整体产物验收。
 
 ## 参数与结果
 
@@ -53,3 +53,11 @@ if (!result.Dispatched)
 WeChatAnalytics 使用 `WX.ReportEvent<Dictionary<string,object>>`。本地 WX.dll 到 wx-runtime-editor.dll 的调用链检查表明该方法调用 LitJson.JsonMapper.ToJson，然后传递 JSON 字符串。没有平台成功或失败回调，无法判断静默丢弃、后台配置缺失或网络未送达。可观察到的同步异常转为 ANALYTICS.PROVIDER_FAILED，不返回异常原文；释放后的调用返回 SDK.DISPOSED。
 
 `tests/run-wechat-factory-tests.ps1` 新增 WeChatAnalyticsTests：引用实际 Wx.dll、wx-runtime-editor.dll 和官方 LitJson.dll，验证编译、序列化标量、参数映射、快照、异常、释放和按需工厂。未调用真实微信容器；目标小游戏内运行、字段入库与升级回归仍待真机验证。
+
+## 抖音接入
+
+官方 TTSDK 6.9.7 的 `TT.ReportAnalytics<T>(string, Dictionary<string,T>)` 返回 void，无接收确认回调。官方附带 ttsdk.xml 要求先在后台创建事件、配置事件名和字段。统一接口通过 Dictionary<string,object> 传递参数，继续使用公共的 String/Int32/Double 子集，不自行改变事件名或追加字段。
+
+本地官方 DLL 中 `TTAPIImpl.ReportAnalytics<T>` 先设置内部字段 `cp_event_key_name`，再逐项构造 `TTSDK.UNBridgeLib.LitJson.JsonData(value)`。因此适配器拒绝业务参数使用该名称，返回 `ANALYTICS.RESERVED_PARAMETER`，避免覆盖事件名。官方实现自身可能输出事件名；SDK 自己的日志脱敏不代表第三方插件日志也已脱敏，应按官方插件配置管理其日志。
+
+初始化 platform=Douyin、analytics=true，由 DouyinProviderFactory 按需创建。同步异常返回 ANALYTICS.PROVIDER_FAILED，释放后返回 SDK.DISPOSED。不自动重试、不确认后台入库。`tests/run-douyin-tests.ps1` 包含实际 DLL 编译、官方 JsonData 标量构造/序列化、参数映射、保留字段拒绝和释放检查；真机送达尚未验证。

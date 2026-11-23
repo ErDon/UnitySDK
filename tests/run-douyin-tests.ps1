@@ -34,6 +34,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Douyin factory compile failed'}
     & $UnityMono .\.tests\douyin\DouyinFactoryTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin factory tests failed'}
+    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinAnalyticsTests.exe $coreSources $platformSources .\tests\DouyinAnalyticsTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Douyin analytics compile failed'}
+    & $UnityMono .\.tests\douyin\DouyinAnalyticsTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Douyin analytics tests failed'}
     & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinRuntimeTests.exe $coreSources $platformSources .\tests\DouyinRuntimeTests.cs
     if($LASTEXITCODE -ne 0){throw 'Douyin runtime compile failed'}
     & $UnityMono .\.tests\douyin\DouyinRuntimeTests.exe

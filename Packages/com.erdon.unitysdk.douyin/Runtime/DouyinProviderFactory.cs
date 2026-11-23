@@ -3,7 +3,7 @@ using System;
 namespace ErDon.UnitySDK.Douyin
 {
     /// <summary>Use only after official TTSDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class DouyinProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory
+    public sealed class DouyinProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory, IAnalyticsProviderFactory
     {
         public string Platform { get { return "Douyin"; } }
         readonly string gameId;
@@ -28,6 +28,7 @@ namespace ErDon.UnitySDK.Douyin
             try { return new VerifiedAuth(new DouyinCredentialProvider(), exchange, mainThreadDispatch); }
             catch { try { exchange.Dispose(); } catch { } throw; }
         }
+        public IAnalytics CreateAnalytics() { return new DouyinAnalytics(); }
         public IStorage CreateStorage() { return new DouyinStorage(gameId, environment); }
         public IRewardedAds CreateRewardedAds() { return new DouyinRewardedAds(); }
         public IShare CreateShare() { return new DouyinShare(); }

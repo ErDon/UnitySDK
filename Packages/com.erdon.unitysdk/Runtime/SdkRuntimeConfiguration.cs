@@ -20,7 +20,7 @@ namespace ErDon.UnitySDK
             if (platform != "Mock" && string.IsNullOrWhiteSpace(appId)) issues.Add("CONFIG.APP_ID_REQUIRED");
             try {
                 SdkCompiledModules.Validate(new SdkConfig { LoginEnabled=login, StorageEnabled=storage,
-                    ShareEnabled=share, RewardedAdsEnabled=rewardedAds, AnalyticsEnabled=analytics });
+                    ShareEnabled=share, RewardedAdsEnabled=rewardedAds, AnalyticsEnabled=analytics, NetworkEnabled=network, PayEnabled=payments });
             } catch (InvalidOperationException ex) { issues.Add(ex.Message); }
             return issues;
         }

@@ -8,7 +8,7 @@ Unity 菜单：Tools → ErDon SDK → 配置与预览。
 
 当前允许微信、抖音、TikTok 的非生产 Development Build 技术验证，Mock Player 和正式/生产构建仍由 IPreprocessBuildWithReport 阻断。三平台已完成独立开发构建及官方小游戏导出，见 [构建证据与边界](development-build.md)；这些结果不代替真机和正式发布验收。
 
-独立平台程序集、运行时 JSON 导出、模块注册和已登记依赖审计已经实现；完整最终产物隔离仍待验收。模块开关首先控制运行时创建与调用。在 WebGL 目标下点击“应用构建能力选择（触发重编译）”，会同步五类适配实现的编译选择：登录、存储、分享、广告、上报。Editor 保留能力以供预览，Player 排除对应实现，构建前及运行时拒绝重新开启未编译的能力。支付、网络、公共核心与官方单体 SDK 的最终裁剪仍未完成。未知平台能力不能静默降级为成功。
+独立平台程序集、运行时 JSON 导出、模块注册和已登记依赖审计已经实现；完整最终产物隔离仍待验收。模块开关首先控制运行时创建与调用。在 WebGL 目标下点击“应用构建能力选择（触发重编译）”，会同步七类能力实现的编译选择：登录、存储、分享、广告、上报、网络、支付。Editor 保留能力以供预览，Player 排除对应实现，构建前及运行时拒绝重新开启未编译的能力。网络开关排除 UnityNetwork/NetworkProviderFactory/BoundedResponseBuffer；支付开关排除 VerifiedPayment/UnityOrderClient/OrderResponsePolicy。登录 HTTP 会话兑换独立保留。公共契约和官方单体 SDK 的最终保留范围仍需审计。未知平台能力不能静默降级为成功。
 
 
 ## 按配置创建运行时对象
@@ -172,4 +172,4 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 
 抖音/TikTok 的网络装配同样依赖显式注入 createNetwork；省略不会自动退回 Mock，也不会偷偷引入 HTTP 包。平台工厂和 HTTP 包通过核心 INetwork 契约组合。当前复用 UnityWebRequest 传输路径，未适配 TTRequest 的独立参数类型。需要平台域名白名单及运行环境支持，配置放行并不代表已通过小游戏真机网络测试。
 
-构建能力选择保留项目其他宏，只维护 ERDON_EXCLUDE_LOGIN/STORAGE/SHARE/ADS/ANALYTICS。修改勾选不会立即触发重编译，需要再次应用；如果勾选已排除的能力却未应用，构建报 CONFIG.MODULE_NOT_COMPILED。手工构建脚本也可调用 SdkProjectSettings.instance.ApplyCapabilityDefines()，然后等编译结束再构建。对运行时 JSON 和直接 SDK.Initialize/InitializeWithFactory 均有未编译能力检查，失败发生在能力创建和替换现有 SDK 之前。
+构建能力选择保留项目其他宏，只维护 ERDON_EXCLUDE_LOGIN/STORAGE/SHARE/ADS/ANALYTICS/NETWORK/PAYMENTS。修改勾选不会立即触发重编译，需要再次应用；如果勾选已排除的能力却未应用，构建报 CONFIG.MODULE_NOT_COMPILED。手工构建脚本也可调用 SdkProjectSettings.instance.ApplyCapabilityDefines()，然后等编译结束再构建。对运行时 JSON 和直接 SDK.Initialize/InitializeWithFactory 均有未编译能力检查，失败发生在能力创建和替换现有 SDK 之前。

@@ -6,7 +6,7 @@ using Mono.Cecil;
 class CheckLinkedPlatform {
  static int Main(string[] args) {
   if(args.Length<2 || args.Length>3 || !new[]{"WeChat","Douyin","TikTok"}.Contains(args[1])) {
-   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok> [Login,Storage,Share,Ads,Analytics]");return 2;
+   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok> [Login,Storage,Share,Ads,Analytics,Network,Payments]");return 2;
   }
   try {
    var target="ErDon.UnitySDK."+args[1];
@@ -15,8 +15,10 @@ class CheckLinkedPlatform {
     {"Login","CredentialProvider"},{"Storage","Storage"},{"Share","Share"},
     {"Ads","RewardedAds"},{"Analytics","Analytics"}
    };
-   foreach(var module in excluded)if(!names.ContainsKey(module))throw new Exception("Unknown excluded capability: "+module);
-   var forbiddenTypes=excluded.Select(x=>target+"."+args[1]+names[x]).ToArray();
+   foreach(var module in excluded)if(!names.ContainsKey(module) && module!="Network" && module!="Payments")throw new Exception("Unknown excluded capability: "+module);
+   var forbiddenTypes=excluded.Where(names.ContainsKey).Select(x=>target+"."+args[1]+names[x]).ToList();
+   if(excluded.Contains("Network"))forbiddenTypes.AddRange(new[]{"ErDon.UnitySDK.UnityNetwork","ErDon.UnitySDK.NetworkProviderFactory","ErDon.UnitySDK.BoundedResponseBuffer"});
+   if(excluded.Contains("Payments"))forbiddenTypes.AddRange(new[]{"ErDon.UnitySDK.VerifiedPayment","ErDon.UnitySDK.UnityOrderClient","ErDon.UnitySDK.OrderResponsePolicy"});
    var files=Directory.GetFiles(args[0],"*.dll");
    if(files.Length==0)throw new Exception("No linked assemblies");
    bool found=false;

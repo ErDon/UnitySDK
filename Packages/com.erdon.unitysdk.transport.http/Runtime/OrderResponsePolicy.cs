@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
 using System;
 using System.Globalization;
 namespace ErDon.UnitySDK
@@ -37,3 +38,5 @@ namespace ErDon.UnitySDK
         static bool AllCurrencyLetters(string value) { foreach(char c in value)if(c<'A'||c>'Z')return false;return true; }
     }
 }
+
+#endif

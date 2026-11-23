@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -69,3 +70,5 @@ namespace ErDon.UnitySDK
         public void Dispose(){if(disposed)return;disposed=true;foreach(var request in active)request.Abort();active.Clear();}
     }
 }
+
+#endif

@@ -23,8 +23,8 @@ namespace ErDon.UnitySDK.Editor
             var group = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
             if (group != BuildTargetGroup.WebGL) throw new InvalidOperationException("Switch to WebGL before applying capability selection");
             var defines = new List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(group).Split(';'));
-            string[] symbols = { "ERDON_EXCLUDE_LOGIN", "ERDON_EXCLUDE_STORAGE", "ERDON_EXCLUDE_SHARE", "ERDON_EXCLUDE_ADS", "ERDON_EXCLUDE_ANALYTICS" };
-            bool[] enabled = { login, storage, share, rewardedAds, analytics };
+            string[] symbols = { "ERDON_EXCLUDE_LOGIN", "ERDON_EXCLUDE_STORAGE", "ERDON_EXCLUDE_SHARE", "ERDON_EXCLUDE_ADS", "ERDON_EXCLUDE_ANALYTICS", "ERDON_EXCLUDE_NETWORK", "ERDON_EXCLUDE_PAYMENTS" };
+            bool[] enabled = { login, storage, share, rewardedAds, analytics, network, payments };
             for (int i = 0; i < symbols.Length; i++) {
                 defines.RemoveAll(x => x == symbols[i] || string.IsNullOrWhiteSpace(x));
                 if (!enabled[i]) defines.Add(symbols[i]);
@@ -36,8 +36,8 @@ namespace ErDon.UnitySDK.Editor
         {
             var issues = new List<string>();
             var defined = new HashSet<string>((symbols ?? "").Split(';'));
-            string[] names = { "LOGIN", "STORAGE", "SHARE", "ADS", "ANALYTICS" };
-            bool[] enabled = { login, storage, share, rewardedAds, analytics };
+            string[] names = { "LOGIN", "STORAGE", "SHARE", "ADS", "ANALYTICS", "NETWORK", "PAYMENTS" };
+            bool[] enabled = { login, storage, share, rewardedAds, analytics, network, payments };
             for (int i = 0; i < names.Length; i++)
                 if (enabled[i] && defined.Contains("ERDON_EXCLUDE_" + names[i]))
                     issues.Add("CONFIG.MODULE_NOT_COMPILED: " + names[i] + "；请重新应用构建能力选择。");

@@ -1,6 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$ManagedDirectory,
     [Parameter(Mandatory=$true)][ValidateSet('WeChat','Douyin','TikTok')][string]$Platform,
-    [ValidateSet('Login','Storage','Share','Ads','Analytics')][string[]]$ExcludedCapabilities=@(),
+    [ValidateSet('Login','Storage','Share','Ads','Analytics','Network','Payments')][string[]]$ExcludedCapabilities=@(),
     [string]$UnityEditor='C:\Program Files\Unity\Hub\Editor\2022.3.14f1c1\Editor')
 $ErrorActionPreference='Stop'
 $managed=(Resolve-Path -LiteralPath $ManagedDirectory).Path

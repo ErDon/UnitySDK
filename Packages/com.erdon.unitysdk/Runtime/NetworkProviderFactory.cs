@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_NETWORK || UNITY_EDITOR
 using System;
 namespace ErDon.UnitySDK
 {
@@ -19,3 +20,5 @@ namespace ErDon.UnitySDK
         public INetwork CreateNetwork(){return createNetwork();}
     }
 }
+
+#endif

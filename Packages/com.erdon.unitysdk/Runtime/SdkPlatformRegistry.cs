@@ -38,7 +38,9 @@ namespace ErDon.UnitySDK
             // Disabled login cannot accidentally construct an exchange via the factory.
             var factory=binding.Factory(gameId,environment,config.LoginEnabled?createSessionExchange:null);
             if(factory==null||factory.Platform!=config.Platform)throw new InvalidOperationException("CONFIG.PLATFORM_MISMATCH");
+#if !ERDON_EXCLUDE_NETWORK || UNITY_EDITOR
             if(config.NetworkEnabled)factory=new NetworkProviderFactory(factory,createNetwork);
+#endif
             var runtime=binding.Runtime();
             if(runtime==null)throw new InvalidOperationException("CONFIG.RUNTIME_REQUIRED");
             try {return new SdkStartup(config,runtime,factory,dispatch,engineLog,callback,timeoutMilliseconds);}

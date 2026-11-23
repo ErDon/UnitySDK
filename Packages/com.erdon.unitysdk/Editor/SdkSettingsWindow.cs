@@ -57,7 +57,7 @@ namespace ErDon.UnitySDK.Editor
             using (new EditorGUI.DisabledScope(EditorApplication.isPlaying || EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL)) {
                 if (GUILayout.Button("应用构建能力选择（触发重编译）")) settings.ApplyCapabilityDefines();
             }
-            EditorGUILayout.HelpBox("构建能力选择移除未勾选的登录、存储、分享、广告、上报适配实现；Editor 保留预览。支付、网络和官方 SDK 内部代码另行验证。", MessageType.Info);
+            EditorGUILayout.HelpBox("构建能力选择移除未勾选的五类平台适配及网络/支付通信实现；Editor 保留预览。公共接口和官方 SDK 内部代码的保留范围需单独审计。", MessageType.Info);
             EditorGUILayout.HelpBox("官方依赖需按目标平台独立安装。此预览不是依赖安装检查或构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);

@@ -13,7 +13,7 @@ try {
  $csc=Join-Path $editor 'Data/MonoBleedingEdge/lib/mono/4.5/csc.exe'
  $sources=@(Get-ChildItem Packages/com.erdon.unitysdk/Runtime/*.cs | Where-Object Name -ne 'UnitySdkHost.cs' | ForEach-Object FullName)
  $sources+=@(Get-ChildItem Packages/com.erdon.unitysdk.tiktok/Runtime/*.cs | ForEach-Object FullName)
- & $mono $csc /nologo /define:ERDON_EXCLUDE_LOGIN,ERDON_EXCLUDE_STORAGE,ERDON_EXCLUDE_SHARE,ERDON_EXCLUDE_ADS,ERDON_EXCLUDE_ANALYTICS "/reference:$dll" "/reference:${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\netstandard.dll" "/reference:$json" "/out:$out/CompiledModuleTests.exe" $sources tests/CompiledModuleTests.cs
+ & $mono $csc /nologo /define:ERDON_EXCLUDE_LOGIN,ERDON_EXCLUDE_STORAGE,ERDON_EXCLUDE_SHARE,ERDON_EXCLUDE_ADS,ERDON_EXCLUDE_ANALYTICS,ERDON_EXCLUDE_NETWORK,ERDON_EXCLUDE_PAYMENTS "/reference:$dll" "/reference:${env:ProgramFiles(x86)}\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.1\Facades\netstandard.dll" "/reference:$json" "/out:$out/CompiledModuleTests.exe" $sources tests/CompiledModuleTests.cs
  if($LASTEXITCODE -ne 0){throw 'Excluded capability compilation failed'}
  & $mono "$out/CompiledModuleTests.exe"
  if($LASTEXITCODE -ne 0){throw 'Excluded capability tests failed'}

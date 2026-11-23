@@ -10,6 +10,12 @@ namespace ErDon.UnitySDK
         public static void Validate(SdkConfig config)
         {
             if (config == null) throw new ArgumentNullException("config");
+#if ERDON_EXCLUDE_NETWORK && !UNITY_EDITOR
+            if (config.NetworkEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: NETWORK");
+#endif
+#if ERDON_EXCLUDE_PAYMENTS && !UNITY_EDITOR
+            if (config.PayEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: PAYMENTS");
+#endif
 #if ERDON_EXCLUDE_LOGIN && !UNITY_EDITOR
             if (config.LoginEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: LOGIN");
 #endif

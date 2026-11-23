@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_NETWORK || UNITY_EDITOR
 using System;
 using System.IO;
 namespace ErDon.UnitySDK
@@ -20,3 +21,5 @@ namespace ErDon.UnitySDK
         public void Dispose(){stream.Dispose();}
     }
 }
+
+#endif

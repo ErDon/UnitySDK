@@ -88,10 +88,12 @@ $env:PYTHONIOENCODING = "utf-8"
 
 构建探针现在序列化 SdkProjectSettings.CreateRuntimeConfiguration() 的完整快照，避免关闭模块后场景仍硬编码开启它们。已有测试工程须更新 MiniGameBuildProbe.cs 和 MiniGameDevelopmentBuild.cs，并重新运行 Build 生成场景；不要直接沿用旧场景做新的裁剪验收。
 
-隔离工程先运行 `MiniGameDevelopmentBuild.ConfigureAllCapabilitiesOff`，进程结束后再运行 Build。配置方法关闭所有运行时能力，并应用当前支持的五类适配编译排除；网络/支付的代码裁剪不由这个测试证明。构建成功后：
+隔离工程先运行 `MiniGameDevelopmentBuild.ConfigureAllCapabilitiesOff`，进程结束后再运行 Build。配置方法关闭所有运行时能力，并应用七类能力编译排除。网络/支付检查覆盖自有实现类，不代表真实支付或所有第三方代码。构建成功后：
 
 ```powershell
-./tools/check-linked-platform.ps1 -ManagedDirectory '<隔离工程>/Library/Bee/artifacts/WebGL/ManagedStripped' -Platform TikTok -ExcludedCapabilities Login,Storage,Share,Ads,Analytics
+./tools/check-linked-platform.ps1 -ManagedDirectory '<隔离工程>/Library/Bee/artifacts/WebGL/ManagedStripped' -Platform TikTok -ExcludedCapabilities Login,Storage,Share,Ads,Analytics,Network,Payments
 ```
 
 检查器扫描所有链接程序集的类型定义和类型引用，拒绝所选平台的排除能力残留，并继续要求平台注册方法存在。它不是官方 SDK 内部代码或最终 JS/Wasm 的完整审计。本轮 TikTok 实际构建通过全部五项检查，且保存的场景开关全部为关闭；同一检查器对未裁剪的抖音旧构建要求 Login 排除时正确失败。
+
+七类关闭增量：TikTok 实际构建已通过，检查额外确认 UnityNetwork、NetworkProviderFactory、BoundedResponseBuffer、VerifiedPayment、UnityOrderClient、OrderResponsePolicy 均无类型或引用残留。登录会话兑换不受 NETWORK 排除符号控制；部分启用组合仍需独立验证。

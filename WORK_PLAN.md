@@ -676,3 +676,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 微信与抖音全部关闭能力的构建组合（2026-11-23）
 
 更新两份隔离工程的配置快照探针后，分别执行 ConfigureAllCapabilitiesOff 和 Build。WeChatBuildProject-all-off-build.log、DouyinBuildProject-all-off-build.log 均输出 SDK_DEVELOPMENT_WEBGL_BUILD_PASS 并退出 0；链接后五类排除能力类型和引用检查通过，平台自动注册保留。微信兼容宏 ERDON_WECHAT_STRING_ANALYTICS 仍保留。三平台全部关闭组合已有实际证据，矩阵同步更新；完整能力裁剪仍需网络/支付/核心及官方内部代码边界，保持未勾选。
+
+### 网络与支付实现的编译排除（2026-11-23）
+
+面板及构建/运行时配置校验扩展 NETWORK、PAYMENTS；条件排除 UnityNetwork、NetworkProviderFactory、BoundedResponseBuffer 和 VerifiedPayment、UnityOrderClient、OrderResponsePolicy，保留公共接口/DTO，登录 UnitySessionExchange 不受网络排除控制。七项禁用的 C# 专项及 run-all-tests.ps1 默认模式全量公共回归通过。tiktok-seven-off-build.log 构建成功退出 0，七项链接类型/引用排除检查及注册保留通过。支付能力仍无真实收银台实现；部分开启组合、其他平台新组合及官方内部代码最终审计继续待完成。

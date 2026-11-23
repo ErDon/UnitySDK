@@ -46,6 +46,7 @@ namespace ErDon.UnitySDK
     public interface IPay : IDisposable { void Pay(PaymentRequest request,Action<PaymentResult> callback); }
 
     // Owns order client and launcher. Platform launch success never authorizes entitlement delivery.
+#if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
     public sealed class VerifiedPayment : IPay
     {
         readonly IOrderClient orders;readonly IPaymentLauncher launcher;readonly Action<Action> post;
@@ -115,4 +116,5 @@ namespace ErDon.UnitySDK
         }
         public void Dispose(){if(disposed)return;disposed=true;try{orders.Dispose();}finally{if(!ReferenceEquals(orders,launcher))launcher.Dispose();}}
     }
+#endif
 }

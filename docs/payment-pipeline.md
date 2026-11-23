@@ -55,6 +55,16 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 `test/tiktok-trade-client.test.mjs` 使用注入响应检查端点、字段、参数拒绝、响应上限和不重试。没有访问真实支付接口，商户权限、令牌保管、档位校验及真实平台验收仍待完成。
 
+## 持久化预支付编排
+
+`TikTokPrepaymentFlow(payments, tradeClient)`（server/src/tiktok-prepayment-flow.mjs）把平台创建请求与关联存储连接起来。仅供可信服务器内部调用：`create` 接收 binding/isSandbox/openId、accessToken、orderId 及商品展示/Beans 参数；productId 从已有游戏订单读取。调用前必须完成玩家认证、目录定价和令牌身份匹配，尚未提供面向客户端的 HTTP 下单入口。
+
+平台请求前以 SQLite 事务保存该游戏订单的 Pending 尝试；并发调用或重启后再调用均返回 PAY.PREPAYMENT_UNCERTAIN，不重复请求。请求成功后先注册预支付关联，再将尝试记为 Ready；相同参数再次调用复用平台单号。身份、价格或商品内容变化返回 PAY.PREPAYMENT_CONFLICT。令牌更新不改变已完成尝试的身份摘要。
+
+目前两个落库步骤不是同一事务；若注册后、写 Ready 前进程退出，Pending 会保留，后续不能自动再次下单。请求错误也保留 Pending（包括尚未发送时被传输组件校验拒绝的情况），需要后续服务器对账/恢复工具处理。没有自动过期、自动解锁或取消后重新付款支持，不应删除记录强行重试。此行为优先避免重复创建，尚不代表完整支付重试流程。
+
+`test/tiktok-prepayment-flow.test.mjs` 验证单次创建与复用、在途和失败阻断、非本游戏/已付款拒绝，以及 SQLite 关闭重开后的 Pending 保留。仍需接通令牌托管、平台档位校验、恢复和真实收银台。
+
 ## HTTP 通知入口装配
 
 `createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。

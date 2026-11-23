@@ -83,3 +83,17 @@ Packages/com.bytedance.starksdk 的包名本身不能区分抖音和 TikTok，�
 微信参数使用 `Wx,wx-runtime`；抖音可增加 `com.bytedance.ttsdk.ref`。缺少任何指定程序集会失败，不会用空报告当成功。该工具只读输入；输出是待审查清单，没有“裁剪全部通过”的结论。重复构建会覆盖 ManagedStripped，应在每次构建后保留报告及对应配置，不能把后来构建的元数据配到较早导出包。
 
 当前结论：运行时禁用与自有能力实现排除已有证据；官方内部能力代码的进一步精简仍待平台支持及真机验证。排除其他平台 SDK、最终 JS/Wasm/原生/资源审计仍是独立待办，不受本表替代。
+
+## 最终导出文件逐字节核对
+
+`tools/inspect-export-files.py` 读取最终目录全部文件（含压缩文件），流式计算 SHA-256，并与三平台的完整 v2 文件清单比对。使用 Python 3.12 或更新版本：
+
+```powershell
+python tools/inspect-export-files.py --root '<小游戏导出目录>' --platform TikTok --inventory '<微信完整清单.json>' --inventory '<抖音完整清单.json>' --inventory '<TikTok完整清单.json>' --output '<导出目录之外的报告.json>'
+```
+
+报告列出相对路径、大小、哈希及匹配的平台。文件改名不会隐藏相同内容；目标与其他平台共享的文件单独标注。空文件无法用于识别平台，不算外平台证据。仅匹配外平台基线的非空文件需要审查来源，但相同字节本身不能证明代码归属或运行。未匹配文件必须继续核对，合并、压缩或转换后的 JS/Wasm/数据包不能靠此工具完成隔离验收。报告固定 `isolation=not-assessed`，零匹配不是通过证明。
+
+工具拒绝缺少任一平台基线、旧版选取文件清单、空导出目录及符号链接/junction；报告不能写进导出目录或覆盖输入清单。回归入口为 `python tests/test_export_files.py`。
+
+2026-11-24 对既有 TikTok 1.1.6 带 StreamingAssets 导出核对 17 个文件，结果记录在 [文件审查报告](../compatibility/tiktok-export-files-2026-11-24.json)。基线为微信本地 0.1.23 完整清单、抖音 6.9.7 独立工程插件完整清单及 TikTok 干净官方 1.1.6 清单；报告记录三份清单哈希。未发现非空文件仅匹配外平台基线，压缩 Wasm、框架 JS 和数据包仍未评估；此报告不与后续重建的 ManagedStripped 混用。

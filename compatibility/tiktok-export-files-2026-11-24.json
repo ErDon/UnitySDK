@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "platform": "TikTok",
+  "baselines": [
+    {
+      "platform": "WeChat",
+      "packageName": "com.qq.weixin.minigame",
+      "packageVersion": "0.1.23",
+      "inventorySha256": "fcc1a00a8da3368378dbb144b4ed580060653efd8d8dd47ffb10bb2048d1b762"
+    },
+    {
+      "platform": "Douyin",
+      "packageName": "com.bytedance.starksdk",
+      "packageVersion": "6.9.7",
+      "inventorySha256": "5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0"
+    },
+    {
+      "platform": "TikTok",
+      "packageName": "com.bytedance.starksdk",
+      "packageVersion": "1.1.6-Release",
+      "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962"
+    }
+  ],
+  "files": [
+    {
+      "path": "data-package/0ceb2fdcfb74c236.webgl.data.unityweb.bin.br",
+      "bytes": 1135422,
+      "sha256": "de4a587c3caa821ee89cdc241d1dd8aeebd28408c15b1227599ae61c0b6f8576",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "data-package/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution"
+    },
+    {
+      "path": "game.js",
+      "bytes": 4513,
+      "sha256": "f0d5a36879a90d40eab2f12470a1ce3eefe7dc01b905abceca9a5b880b467ebc",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "game.json",
+      "bytes": 538,
+      "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "images/background.png",
+      "bytes": 31536,
+      "sha256": "e430cc1ea369eb3e6aece786f15d1e0b35ce6275d686258d6251308dd89c72b1",
+      "matchingPlatforms": [
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "images/unity_logo.png",
+      "bytes": 9664,
+      "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6",
+      "matchingPlatforms": [
+        "Douyin",
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "plugin-config.js",
+      "bytes": 529,
+      "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2",
+      "matchingPlatforms": [
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "plugin.js",
+      "bytes": 839734,
+      "sha256": "93e25bd22663b61f922cc73d78538297772ee5466c60de42b810c0cbee42306d",
+      "matchingPlatforms": [
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "plugin.provenance.json",
+      "bytes": 592,
+      "sha256": "28e22759c5171859add635ae63ce6f5c87521b937b3b9ca6a8f024d10822d970",
+      "matchingPlatforms": [
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "project.config.json",
+      "bytes": 69,
+      "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "StreamingAssets/erdon-sdk-probe.txt",
+      "bytes": 41,
+      "sha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "StreamingAssets/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution"
+    },
+    {
+      "path": "unity-namespace.js",
+      "bytes": 437,
+      "sha256": "387850337a3fd248bc77a6cfd0bcc1ec03d837e4f2c91b368f330be400b7077f",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "wasmcode/b7cf5f7d5eff158d.webgl.wasm.code.unityweb.wasm.br",
+      "bytes": 5685301,
+      "sha256": "2c902a6d5987eac380c541d6047870f4c73ba42010933504b489fdd597a66776",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "wasmcode/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution"
+    },
+    {
+      "path": "webgl-wasm-split.js",
+      "bytes": 894,
+      "sha256": "b87d4fce279dbaf306305a6d93cae2ef88d61b16b1d3703965787a70e9822639",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "webgl.framework.js",
+      "bytes": 766913,
+      "sha256": "f1ce9e017f7cefabccfa23f23a0aebace93ccf35546eb3ad38a975c7478a3e4b",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    }
+  ],
+  "fileCount": 17,
+  "totalBytes": 8476183,
+  "foreignOnlyMatchCount": 0,
+  "isolation": "not-assessed",
+  "authenticityVerified": false,
+  "limitation": "Exact bytes only. Renaming is detected; transformed, merged or compressed code requires separate review. Shared or unmatched bytes do not prove isolation."
+}

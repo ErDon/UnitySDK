@@ -27,10 +27,12 @@ namespace ErDon.UnitySDK
         public string PlatformMessage { get; private set; }
         public SdkError(string code, string reason, string platformCode, string sanitizedPlatformMessage)
             : this(code, reason) { PlatformCode = platformCode; PlatformMessage = sanitizedPlatformMessage; }
+        internal SdkError Snapshot() { return (SdkError)MemberwiseClone(); }
         public SdkError(string code, string reason) { Code = code; Reason = reason; }
     }
     public sealed class LoginResult
     {
+        internal LoginResult Snapshot() { var copy = (LoginResult)MemberwiseClone(); copy.Error = Error == null ? null : Error.Snapshot(); return copy; }
         public bool Success { get { return Error == null; } }
         public string Session { get; private set; }
         public SdkError Error { get; private set; }
@@ -54,6 +56,7 @@ namespace ErDon.UnitySDK
     }
     public sealed class StorageResult
     {
+        internal StorageResult Snapshot() { var copy = (StorageResult)MemberwiseClone(); copy.Error = Error == null ? null : Error.Snapshot(); return copy; }
         public bool Success { get { return Error == null; } }
         public string Value { get; private set; }
         public SdkError Error { get; private set; }
@@ -77,6 +80,7 @@ namespace ErDon.UnitySDK
     }
     public sealed class ShareResult
     {
+        internal ShareResult Snapshot() { var copy = (ShareResult)MemberwiseClone(); copy.Error = Error == null ? null : Error.Snapshot(); return copy; }
         // Dispatched means the platform accepted the invocation, not that a recipient received it.
         public bool Success { get { return Error == null; } }
         public SdkError Error { get; private set; }
@@ -241,6 +245,7 @@ namespace ErDon.UnitySDK
             Action<LoginResult> done = result => {
                 if (epoch != generation) return;
                 if (Interlocked.Exchange(ref completed, 1) != 0) return;
+                result = result == null ? null : result.Snapshot();
                 PostCompletion(post, epoch, call, "SDK.Login", () => {
                     if (epoch != generation) return;
                     busy = false; cancelLogin = null;
@@ -266,6 +271,7 @@ namespace ErDon.UnitySDK
         }
         static void InvokeCallback(Action<LoginResult> callback, LoginResult result, string call)
         {
+            result = result.Snapshot();
             result.CallId = call;
             if (result.Error != null) {
                 result.Error.CallId = call;
@@ -292,6 +298,7 @@ namespace ErDon.UnitySDK
             var timer = Stopwatch.StartNew();
             Action<ShareResult> done = result => {
                 if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
+                result = result == null ? null : result.Snapshot();
                 PostCompletion(post, epoch, call, "SDK.Share", () => {
                     if (epoch != generation) return;
                     sharing = false; cancelShare = null; checkShareTimeout = null;
@@ -305,6 +312,7 @@ namespace ErDon.UnitySDK
         }
         static void FinishShare(Action<ShareResult> callback, ShareResult result, string call)
         {
+            result = result.Snapshot();
             result.CallId = call;
             if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = "SDK.Share"; result.Error.Stage = "ShareDispatch"; }
             Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Share", call, "Complete", "{}", result.Success ? "Dispatched" : result.Error.Code);
@@ -334,6 +342,7 @@ namespace ErDon.UnitySDK
             var timer = Stopwatch.StartNew();
             Action<PaymentResult> done = result => {
                 if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
+                result = result == null ? null : result.Snapshot();
                 PostCompletion(post, epoch, call, "SDK.Pay", () => {
                     if (epoch != generation) return;
                     paying = false; cancelPay = null; checkPayTimeout = null;
@@ -347,6 +356,7 @@ namespace ErDon.UnitySDK
         }
         static void FinishPay(Action<PaymentResult> callback, PaymentResult result, string call)
         {
+            result = result.Snapshot();
             result.CallId = call;
             if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = "SDK.Pay"; result.Error.Stage = "Payment"; }
             Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Pay", call, "Complete", "{}",
@@ -420,6 +430,7 @@ namespace ErDon.UnitySDK
                 } catch { result = StorageResult.Fail("STORAGE.PROVIDER_FAILED", "Storage provider failed"); }
                 finally { callingStorage = false; }
             }
+            result = result.Snapshot();
             result.CallId = call;
             if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = api; result.Error.Stage = "Storage"; }
             Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, api, call, "Complete", parameters, result.Success ? "Success" : result.Error.Code);

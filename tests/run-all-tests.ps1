@@ -3,6 +3,10 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\ResultSnapshotTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\tests\ResultSnapshotTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Result snapshot compile failed'}
+    & .\.tests\ResultSnapshotTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Result snapshot tests failed'}
     & $compiler /nologo /out:.tests\DispatchTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\tests\DispatchTests.cs
     if($LASTEXITCODE -ne 0){throw 'Dispatch compile failed'}
     & .\.tests\DispatchTests.exe

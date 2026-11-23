@@ -254,3 +254,10 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 新增 DispatchTests，覆盖后台线程抛错、入队后抛错、三能力完成、后续请求恢复、去重、Shutdown 和日志脱敏；全部公共回归通过。该保证限于聚合完成派发，不声称修复任意自定义 provider 内部的线程调度。
 
 独立 Unity dispatch-recovery.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 结果与错误快照隔离
+
+修复 provider 复用结果或共享 SdkError 时，后续调用覆盖上层历史 CallId/Operation 的问题。登录/分享/支付在接受结果时复制，聚合交付前独立复制错误；存储同步结果同样隔离。不可变订单对象保留引用，无需复制。
+
+新增 ResultSnapshotTests：覆盖异步排队前后的 Retry 数据、重复登录历史 ID、跨能力共享错误、存储结果复用和调用方修改隔离。调整旧测试为检查返回错误的关联 ID，不再要求 SDK 修改 provider 原错误。全部公共回归通过。
+独立 Unity result-snapshot.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

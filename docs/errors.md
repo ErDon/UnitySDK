@@ -67,3 +67,9 @@
 SDK.Login / SDK.Share / SDK.Pay 的完成派发若遇到 mainThreadDispatch 抛异常，会记录 SDK.DISPATCH_FAILED（Dispatch 阶段、原调用 CallId），不记录异常正文。已收到的平台结果保留，在下一次主线程 SDK.Tick 中交付，不把调度失败伪装成平台失败，也不重试真实交易或平台操作。
 
 UnitySdkHost 自动 Tick；自定义宿主必须持续在主线程 Tick。SDK 不在后台线程直接调用游戏回调。调度器先入队/执行再抛异常时，完成动作最多执行一次；Shutdown/重新初始化后的旧恢复任务被丢弃。调度器应将每个动作可靠地派发到主线程；静默丢弃动作或错误线程执行不属于本次异常恢复保证。
+
+## 结果与错误的调用隔离
+
+聚合层交付的 LoginResult、ShareResult、PaymentResult、StorageResult 及其中 SdkError 是本次调用的独立快照。底层可以复用结果对象，但 SDK 不会把 CallId/Operation/Stage 写回底层对象；后续请求不会改写游戏已保存结果的关联 ID。异步结果在首次接受回调时先复制，再排队到主线程，排队期间对原错误的 WithRetry 修改不影响本次快照。
+
+这不是对任意并发写入 provider 对象的同步保证；provider 应在调用完成回调时提供一致的数据，不要在回调执行期间并发修改它。游戏仍可对自己持有的错误调用 WithRetry，此操作只影响该结果，不改变其他调用。

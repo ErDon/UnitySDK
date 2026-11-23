@@ -49,7 +49,7 @@ class Tests
         SDK.Login(r=>failure=r);
         pending.Pending(LoginResult.Fail(original));
         while(queue.TryDequeue(out job)) job();
-        Check(failure.CallId==original.CallId && original.Operation=="SDK.Login" && original.PlatformCode=="42", "error correlation");
+        Check(failure.CallId==failure.Error.CallId && failure.Error.Operation=="SDK.Login" && failure.Error.PlatformCode=="42" && original.CallId==null, "error correlation");
         Check(logs[logs.Count-1].Contains(failure.CallId),"log correlation");
         SDK.Shutdown();
         Console.WriteLine("PASS: cancellation, timeout, user callback exception; duplicate/stale callback, credential redaction, log fields, fallback, disabled, uninitialized");

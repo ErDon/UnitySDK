@@ -12,6 +12,7 @@ namespace ErDon.UnitySDK
     }
     public sealed class PaymentResult
     {
+        internal PaymentResult Snapshot() { var copy = (PaymentResult)MemberwiseClone(); copy.Error = Error == null ? null : Error.Snapshot(); return copy; }
         public string CallId { get; internal set; }
         public string TraceId { get { return CallId; } }
         public bool Success { get { return Error==null && Order!=null && Order.State==OrderState.Fulfilled; } }

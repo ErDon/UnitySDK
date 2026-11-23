@@ -17,13 +17,20 @@ public static class MiniGameDevelopmentBuild {
   s.network=false;s.payments=false;s.SaveSettings();
   Debug.Log("SDK_DEVELOPMENT_BUILD_CONFIGURED");
  }
+ public static void ConfigureAllCapabilitiesOff() {
+  var s=SdkProjectSettings.instance;
+  if(s.platform==DistributionPlatform.Mock || s.production)throw new Exception("Configure an isolated non-production platform project first");
+  s.login=s.storage=s.share=s.rewardedAds=s.analytics=s.network=s.payments=false;
+  s.ApplyCapabilityDefines();
+  Debug.Log("SDK_ALL_CAPABILITIES_OFF_CONFIGURED");
+ }
  public static void Build() {
   if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("Run with -buildTarget WebGL");
   var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
   var settings=SdkProjectSettings.instance;
   if(settings.Validate(true).Count!=0)throw new Exception("Invalid development configuration");
   var probe=new GameObject("SDK Build Probe").AddComponent<MiniGameBuildProbe>();
-  probe.platform=settings.platform.ToString();
+  probe.configuration=settings.CreateRuntimeConfiguration();
   const string scenePath="Assets/DevelopmentBuildProbe.unity";
   if(!EditorSceneManager.SaveScene(scene,scenePath))throw new Exception("Scene save failed");
   PlayerSettings.WebGL.compressionFormat=WebGLCompressionFormat.Disabled;

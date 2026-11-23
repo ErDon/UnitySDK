@@ -5,11 +5,18 @@ using Mono.Cecil;
 // Inspect linked managed metadata; this is not a native/JS payload audit.
 class CheckLinkedPlatform {
  static int Main(string[] args) {
-  if(args.Length!=2 || !new[]{"WeChat","Douyin","TikTok"}.Contains(args[1])) {
-   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok>");return 2;
+  if(args.Length<2 || args.Length>3 || !new[]{"WeChat","Douyin","TikTok"}.Contains(args[1])) {
+   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok> [Login,Storage,Share,Ads,Analytics]");return 2;
   }
   try {
    var target="ErDon.UnitySDK."+args[1];
+   var excluded=args.Length==3?args[2].Split(','):new string[0];
+   var names=new System.Collections.Generic.Dictionary<string,string> {
+    {"Login","CredentialProvider"},{"Storage","Storage"},{"Share","Share"},
+    {"Ads","RewardedAds"},{"Analytics","Analytics"}
+   };
+   foreach(var module in excluded)if(!names.ContainsKey(module))throw new Exception("Unknown excluded capability: "+module);
+   var forbiddenTypes=excluded.Select(x=>target+"."+args[1]+names[x]).ToArray();
    var files=Directory.GetFiles(args[0],"*.dll");
    if(files.Length==0)throw new Exception("No linked assemblies");
    bool found=false;
@@ -21,6 +28,8 @@ class CheckLinkedPlatform {
      if(name==forbidden || assembly.MainModule.AssemblyReferences.Any(x=>x.Name==forbidden))
       throw new Exception("Foreign platform adapter retained: "+forbidden);
     }
+    foreach(var type in assembly.MainModule.GetTypes().Select(t=>t.FullName).Concat(assembly.MainModule.GetTypeReferences().Select(t=>t.FullName)))
+     if(forbiddenTypes.Contains(type))throw new Exception("Excluded capability type or reference retained: "+type);
     if(name=="ErDon.UnitySDK.Editor")throw new Exception("Editor SDK retained");
     if(name==target){
      var registration=assembly.MainModule.Types.SingleOrDefault(t=>t.FullName==target+"."+args[1]+"Registration");
@@ -31,6 +40,7 @@ class CheckLinkedPlatform {
     }
    }
    if(!found)throw new Exception("Target adapter missing after linking: "+target);
+   if(excluded.Length>0)Console.WriteLine("LINKED_EXCLUDED_CAPABILITIES_PASS: "+string.Join(",",excluded));
    Console.WriteLine("LINKED_PLATFORM_REGISTRATION_PASS (managed adapters only; not final JS/Wasm isolation)");return 0;
   }catch(Exception error){Console.Error.WriteLine(error.Message);return 1;}
  }

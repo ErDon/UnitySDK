@@ -668,3 +668,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 能力编译裁剪首轮实现（2026-11-23）
 
 三平台登录/存储/分享/广告/上报实现增加 Player 条件编译，工厂不再引用被排除实现。面板提供应用构建能力选择按钮，保留其他宏；构建前检查勾选与排除符号冲突，运行时 JSON/SDK.Initialize/InitializeWithFactory 拒绝未编译能力并保留旧实例。Editor 不裁剪以供预览。run-compiled-module-tests.ps1 验证 TikTok 五类类型缺失及工厂/配置拒绝；三平台默认回归和核心测试通过。实际 tiktok-modules-build.log 构建成功退出 0，链接后 TikTokCredentialProvider 消失，TikTokStorage 和自动注册保留。网络/支付/公共核心与官方内部代码仍待处理，其他平台及模块组合的实际构建验证待补，因此模块裁剪整体不打勾。
+
+### 全部关闭能力的实际构建验证（2026-11-23）
+
+发现测试场景原来硬编码开启存储/分享/广告/上报，改为序列化面板配置完整快照，并新增 ConfigureAllCapabilitiesOff。tiktok-all-off-build.log 构建成功退出 0，场景配置五类开关均关闭；check-linked-platform.ps1 的 ExcludedCapabilities 检查确认五类 TikTok 适配定义及引用均消失、注册方法仍在。工具对未裁剪的抖音旧产物正确拒绝 Login 排除断言。此项不等同于其他平台组合、网络/支付、官方 SDK 内部及真机验收，整体裁剪继续未勾选。

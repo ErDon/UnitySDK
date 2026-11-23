@@ -83,3 +83,15 @@ $env:PYTHONIOENCODING = "utf-8"
 本次 1.1.6 官方导出成功退出 0，Verify 亦通过。两个 JSON 可解析，wasmcode/data-package 目录包含非空压缩 Wasm 和数据文件，链接后 TikTok 注册检查通过。当前空工程没有 StreamingAssets 内容，实际 game.json 仅列出这两个分包；后续带标记资源的构建已生成 StreamingAssets 第三个分包，Verify 内容一致性检查通过；设备端下载与读取仍待验证。文件生成不代表客户端可启动或全部平台功能通过。
 
 要验证资源分包，将第一步替换为 `TikTokDevelopmentConversion.ConfigureWithResource`。它在隔离工程生成固定内容的 `Assets/StreamingAssets/erdon-sdk-probe.txt`，遇到同名不同内容的文件会拒绝覆盖。Verify 会解析 game.json、检查分包目录及重复根目录，并在源测试资源存在时要求 StreamingAssets 分包及同内容目标文件；源工程无测试资源时仍可验证无资源构建。测试只证明文件打包保留，不证明设备端读取成功。
+
+### 全部能力关闭的构建验证
+
+构建探针现在序列化 SdkProjectSettings.CreateRuntimeConfiguration() 的完整快照，避免关闭模块后场景仍硬编码开启它们。已有测试工程须更新 MiniGameBuildProbe.cs 和 MiniGameDevelopmentBuild.cs，并重新运行 Build 生成场景；不要直接沿用旧场景做新的裁剪验收。
+
+隔离工程先运行 `MiniGameDevelopmentBuild.ConfigureAllCapabilitiesOff`，进程结束后再运行 Build。配置方法关闭所有运行时能力，并应用当前支持的五类适配编译排除；网络/支付的代码裁剪不由这个测试证明。构建成功后：
+
+```powershell
+./tools/check-linked-platform.ps1 -ManagedDirectory '<隔离工程>/Library/Bee/artifacts/WebGL/ManagedStripped' -Platform TikTok -ExcludedCapabilities Login,Storage,Share,Ads,Analytics
+```
+
+检查器扫描所有链接程序集的类型定义和类型引用，拒绝所选平台的排除能力残留，并继续要求平台注册方法存在。它不是官方 SDK 内部代码或最终 JS/Wasm 的完整审计。本轮 TikTok 实际构建通过全部五项检查，且保存的场景开关全部为关闭；同一检查器对未裁剪的抖音旧构建要求 Login 排除时正确失败。

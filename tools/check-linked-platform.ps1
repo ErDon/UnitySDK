@@ -1,5 +1,6 @@
 param([Parameter(Mandatory=$true)][string]$ManagedDirectory,
     [Parameter(Mandatory=$true)][ValidateSet('WeChat','Douyin','TikTok')][string]$Platform,
+    [ValidateSet('Login','Storage','Share','Ads','Analytics')][string[]]$ExcludedCapabilities=@(),
     [string]$UnityEditor='C:\Program Files\Unity\Hub\Editor\2022.3.14f1c1\Editor')
 $ErrorActionPreference='Stop'
 $managed=(Resolve-Path -LiteralPath $ManagedDirectory).Path
@@ -13,5 +14,6 @@ $compiler=Join-Path $UnityEditor 'Data\MonoBleedingEdge\lib\mono\4.5\csc.exe'
 $exe=Join-Path $output 'CheckLinkedPlatform.exe'
 & $mono $compiler /nologo "/reference:$cecil" "/out:$exe" (Join-Path $PSScriptRoot 'CheckLinkedPlatform.cs')
 if($LASTEXITCODE -ne 0){throw 'Linked-platform inspector compile failed'}
-& $mono $exe $managed $Platform
+if ($ExcludedCapabilities.Count) { & $mono $exe $managed $Platform ($ExcludedCapabilities -join ',') }
+else { & $mono $exe $managed $Platform }
 if($LASTEXITCODE -ne 0){throw 'Linked-platform inspection failed'}

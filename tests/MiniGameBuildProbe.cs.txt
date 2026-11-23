@@ -1,13 +1,12 @@
 using ErDon.UnitySDK;
 using UnityEngine;
-// Isolated build probe: no login, backend, ads display, analytics send or payment is invoked.
+// Isolated build probe. Does not call login, display ads, report events or pay.
 public sealed class MiniGameBuildProbe : MonoBehaviour {
- public string platform = "WeChat";
+ public SdkRuntimeConfiguration configuration;
  public void Start() {
-  UnitySdkHost.BeginConfiguredStartup(new SdkRuntimeConfiguration {
-   platform=platform, gameId="development-build-probe", appId="build-only-placeholder",
-   login=false, storage=true, share=true, rewardedAds=true, analytics=true
-  }, null, result => Debug.Log(result.Success ? "SDK_BUILD_PROBE_READY" : result.Error.Code));
+  if(configuration==null) { Debug.LogError("SDK_BUILD_PROBE_CONFIG_MISSING"); return; }
+  UnitySdkHost.BeginConfiguredStartup(configuration, null,
+   result => Debug.Log(result.Success ? "SDK_BUILD_PROBE_READY" : result.Error.Code));
  }
  void OnDestroy() { UnitySdkHost.Shutdown(); }
 }

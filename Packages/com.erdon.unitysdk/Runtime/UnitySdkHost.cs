@@ -24,6 +24,7 @@ namespace ErDon.UnitySDK
         }
         void Update()
         {
+            SDK.Tick();
             Action action;
             while (queue.TryDequeue(out action)) {
                 try { action(); } catch (Exception) { Debug.LogError("SDK callback threw an exception; details omitted to protect credentials."); }

@@ -16,7 +16,7 @@ class Tests
         p.Pending(LoginResult.Ok("SECRET")); p.Pending(LoginResult.Ok("SECRET"));
         Check(calls==1,"duplicate completion");
         Check(!string.Join("",logs).Contains("SECRET"),"credential leak");
-        Check(logs[1].Contains("callId=") && logs[1].Contains("params={}"),"log fields");
+        Check(logs[1].Contains("callId=") && logs[1].Contains("params={timeoutMilliseconds:"),"log fields");
         SDK.Login(r=>calls++); SDK.Shutdown(); p.Pending(LoginResult.Ok("SECRET"));
         Check(calls==1,"stale completion");
         int fallback=0;
@@ -24,6 +24,23 @@ class Tests
         SDK.Login(r=>Check(r.Error.Code=="MODULE.DISABLED","disabled"));
         Check(fallback>=3,"log fallback");
         SDK.Shutdown(); SDK.Login(r=>Check(r.Error.Code=="SDK.NOT_INITIALIZED","uninitialized"));
-        Console.WriteLine("PASS: duplicate/stale callback, credential redaction, log fields, fallback, disabled, uninitialized");
+        var pending = new Provider(); var queue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
+        SDK.Initialize(new SdkConfig(), pending, a=>queue.Enqueue(a), (l,s)=>{});
+        string code = null; int finishes = 0;
+        SDK.Login(r=>{code=r.Error.Code; finishes++;}, 1000);
+        SDK.CancelLogin(); pending.Pending(LoginResult.Ok("late"));
+        Action job; while(queue.TryDequeue(out job)) job();
+        Check(code=="AUTH.CANCELLED" && finishes==1,"cancel/late callback");
+        code=null;
+        SDK.Login(r=>code=r.Error.Code, 20);
+        var deadline=System.Diagnostics.Stopwatch.StartNew();
+        while(queue.IsEmpty && deadline.ElapsedMilliseconds<2000) { System.Threading.Thread.Sleep(5); SDK.Tick(); }
+        while(queue.TryDequeue(out job)) job();
+        Check(code=="AUTH.TIMEOUT","timeout");
+        SDK.Login(r=>{throw new Exception("SECRET");},1000);
+        pending.Pending(LoginResult.Ok("SECRET"));
+        while(queue.TryDequeue(out job)) job();
+        SDK.Shutdown();
+        Console.WriteLine("PASS: cancellation, timeout, user callback exception; duplicate/stale callback, credential redaction, log fields, fallback, disabled, uninitialized");
     }
 }

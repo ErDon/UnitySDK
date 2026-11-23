@@ -38,18 +38,29 @@ namespace ErDon.UnitySDK
         static Action<SdkLogLevel, string> fallback;
         static int generation;
         static bool busy;
+        static Action cancelLogin;
+        static Action checkTimeout;
+        [ThreadStatic] static bool writingLog;
         public static void Initialize(SdkConfig settings, IAuth provider,
             Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog)
         {
+            EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             Shutdown();
             config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, LogCallback = settings.LogCallback };
             auth = provider; dispatch = mainThreadDispatch; fallback = engineLog;
             Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
         }
+        static void EnsureNotLogging()
+        {
+            if (writingLog) throw new InvalidOperationException("SDK operations cannot be invoked from the log sink");
+        }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
         static void Log(SdkLogLevel level, string api, string call, string stage, string parameters, string result)
         {
+            if (writingLog) return;
+            writingLog = true;
+            try {
             var sink = config == null ? null : config.LogCallback;
             var backup = fallback;
             string line = DateTimeOffset.Now.ToString("o") + " [" + level + "] platform=" + Safe(config == null ? "Unconfigured" : config.Platform)
@@ -57,13 +68,17 @@ namespace ErDon.UnitySDK
                 + " stage=" + stage + " params=" + parameters + " result=" + Safe(result);
             try { if (sink != null) { sink(level, line); return; } } catch { }
             try { if (backup != null) backup(level, line); } catch { }
+            } finally { writingLog = false; }
         }
-        public static void Login(Action<LoginResult> callback)
+        public static void Login(Action<LoginResult> callback) { Login(callback, 15000); }
+        public static void Login(Action<LoginResult> callback, int timeoutMilliseconds)
         {
+            EnsureNotLogging();
+            if (timeoutMilliseconds <= 0) throw new ArgumentOutOfRangeException("timeoutMilliseconds");
             if (callback == null) throw new ArgumentNullException("callback");
-            if (config == null) { callback(LoginResult.Fail("SDK.NOT_INITIALIZED", "Initialize SDK first")); return; }
+            if (config == null) { FinishImmediate(callback, Guid.NewGuid().ToString("N"), "SDK.NOT_INITIALIZED"); return; }
             string call = Guid.NewGuid().ToString("N");
-            Log(SdkLogLevel.Info, "SDK.Login", call, "Start", "{}", "Pending");
+            Log(SdkLogLevel.Info, "SDK.Login", call, "Start", "{timeoutMilliseconds:" + timeoutMilliseconds + "}", "Pending");
             if (!config.LoginEnabled) { FinishImmediate(callback, call, "MODULE.DISABLED"); return; }
             if (auth == null) { FinishImmediate(callback, call, "CAPABILITY.NOT_SUPPORTED"); return; }
             if (busy) { FinishImmediate(callback, call, "AUTH.IN_PROGRESS"); return; }
@@ -75,24 +90,47 @@ namespace ErDon.UnitySDK
                 if (Interlocked.Exchange(ref completed, 1) != 0) return;
                 post(() => {
                     if (epoch != generation) return;
-                    busy = false;
+                    busy = false; cancelLogin = null;
+                    checkTimeout = null;
                     result = result ?? LoginResult.Fail("AUTH.UNKNOWN", "Provider returned no result");
                     // Never log session credentials or arbitrary provider messages.
                     Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Login", call, "Complete", "{}",
                         (result.Success ? "Success" : result.Error.Code) + " durationMs=" + timer.ElapsedMilliseconds);
-                    callback(result);
+                    InvokeCallback(callback, result, call);
                 });
             };
+            cancelLogin = () => done(LoginResult.Fail("AUTH.CANCELLED", "Caller cancelled local login wait"));
+            checkTimeout = () => { if (timer.ElapsedMilliseconds >= timeoutMilliseconds) done(LoginResult.Fail("AUTH.TIMEOUT", "Login timed out")); };
             try { auth.Login(done); } catch { done(LoginResult.Fail("AUTH.UNKNOWN", "Provider threw an exception")); }
         }
         static void FinishImmediate(Action<LoginResult> callback, string call, string code)
         {
             Log(SdkLogLevel.Warning, "SDK.Login", call, "Complete", "{}", code);
-            callback(LoginResult.Fail(code, code));
+            InvokeCallback(callback, LoginResult.Fail(code, code), call);
+        }
+        static void InvokeCallback(Action<LoginResult> callback, LoginResult result, string call)
+        {
+            try { callback(result); }
+            catch { Log(SdkLogLevel.Error, "SDK.Login", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
+        }
+        public static void Tick()
+        {
+            EnsureNotLogging();
+            var check = checkTimeout;
+            if (check != null) check();
+        }
+        public static void CancelLogin()
+        {
+            EnsureNotLogging();
+            var cancel = cancelLogin;
+            if (cancel != null) cancel();
         }
         public static void Shutdown()
         {
-            generation++; busy = false;
+            EnsureNotLogging();
+            generation++; busy = false; cancelLogin = null;
+            checkTimeout = null;
+            if (config != null) Log(SdkLogLevel.Info, "SDK.Shutdown", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             var old = auth; auth = null; config = null;
             if (old != null) { try { old.Dispose(); } catch { } }
         }

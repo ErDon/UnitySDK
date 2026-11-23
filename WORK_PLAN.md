@@ -210,3 +210,11 @@ Runtime/Editor 两套官方 DLL 均通过分享入口编译与注入测试，原
 公共回归与订单协议测试通过；尚未接 SDK.Pay 聚合、平台收银台和真实 HTTPS 联调。Confirm 暂使用字符串回执，真实平台验证器仍需实现。
 
 独立 Unity 2022.3 工程 order-client.log 编译与 Editor 检查输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 客户端支付编排
+
+新增 IPay、IPaymentLauncher、VerifiedPayment，按服务端订单状态恢复流程。Paid 不重复拉收银台，Fulfilled 才成功；平台取消/失败先查单处理竞争。各阶段首回调胜出，核对确认结果订单/商品/金额，释放后不派发旧结果。
+
+公共回归和支付编排测试通过，覆盖恢复、重复回调、取消竞争、换单和所有权。尚未接 SDK.Pay 聚合、超时/取消、配置面板及真实平台 launcher；详见 docs/payment-pipeline.md。
+
+独立 Unity payment-pipeline.log 输出 SDK_EDITOR_CHECKS_PASS 并以 0 退出，验证编译和 Editor 检查。

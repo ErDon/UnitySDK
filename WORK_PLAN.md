@@ -252,4 +252,5 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 修复登录/分享/支付在派发完成回调时调度器抛异常导致 completed 已设置、busy 永远无法清除的问题。新增线程安全恢复队列，在 SDK.Tick 主线程交付原结果；执行门控兼容先入队再抛错，代次校验阻止旧实例回调。日志 SDK.DISPATCH_FAILED 关联原 callId，不泄露异常文本，不重试平台动作。
 
 新增 DispatchTests，覆盖后台线程抛错、入队后抛错、三能力完成、后续请求恢复、去重、Shutdown 和日志脱敏；全部公共回归通过。该保证限于聚合完成派发，不声称修复任意自定义 provider 内部的线程调度。
-`n独立 Unity dispatch-recovery.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+独立 Unity dispatch-recovery.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。

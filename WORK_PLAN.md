@@ -280,3 +280,9 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 从本地 0.1.23 包源码创建隔离 Unity 工程，未使用旧项目 Library；启用微信宏后完整官方源码及 SDK 适配编译加载通过，wechat-clean-verify.log 输出 WECHAT_SHARE_UNITY_COMPILE_PASS，退出码 0。
 
 使用新生成 Wx.dll 重跑工厂和分享测试通过，旧组合的 CS1684 警告消失。脚本改用 Unity Mono，新增可重跑的 Unity 检查源码。仍不声称本地包官方完整性、初始化、导出或真机完成。
+
+### 官方 SDK 升级快照比较
+
+新增 compare-sdk-inventory.ps1，生成前后版本与新增/删除/修改文件报告，按 DLL、C#、asmdef、meta、jslib 分类引导回归。拒绝混平台/混包、路径碰撞和无效输入，保护输入快照；不以哈希或版本号自动认定兼容。
+
+新增快照工具测试并并入 run-all-tests；测试覆盖三类差异、相同基线、坏路径/哈希/重复项、平台不一致及禁止覆盖。使用本地微信 0.1.23 的 334 文件快照实际比较通过。报告覆盖范围仍为 export-sdk-inventory 选择的文件，非完整包认证或语义兼容性分析。

@@ -1,6 +1,7 @@
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
+    & ./tests/run-inventory-tests.ps1
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
     & $compiler /nologo /out:.tests\ResultSnapshotTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\tests\ResultSnapshotTests.cs

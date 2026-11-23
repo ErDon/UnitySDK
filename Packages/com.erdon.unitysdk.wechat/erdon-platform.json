@@ -1,0 +1,7 @@
+{
+  "Platform": "WeChat",
+  "Package": "com.erdon.unitysdk.wechat",
+  "Version": "0.1.0",
+  "Assemblies": ["ErDon.UnitySDK.WeChat", "Wx", "wx-runtime", "wx-runtime-editor"],
+  "AssetRoots": ["Packages/com.erdon.unitysdk.wechat", "Packages/com.qq.weixin.minigame"]
+}

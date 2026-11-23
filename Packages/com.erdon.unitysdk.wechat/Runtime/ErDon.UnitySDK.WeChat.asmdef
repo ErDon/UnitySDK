@@ -1,0 +1,7 @@
+{
+  "name": "ErDon.UnitySDK.WeChat",
+  "references": ["ErDon.UnitySDK", "Wx"],
+  "includePlatforms": ["Editor", "WebGL"],
+  "defineConstraints": ["ERDON_PLATFORM_WECHAT"],
+  "autoReferenced": true
+}

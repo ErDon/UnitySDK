@@ -6,6 +6,8 @@ Unity 菜单：Tools → ErDon SDK → 配置与预览。
 
 配置现已连接 Editor Mock：进入 Play Mode，选择模拟结果，点击“按配置初始化 Mock”，再点击“调用 SDK.Login”。登录未勾选则返回 MODULE.DISABLED。微信、抖音、TikTok 已支持按配置装配，实际能力仍需各平台真机验收。可以模拟成功、取消、拒绝、限流和超时；不生成真实账号或订单。
 
+面板中的配置是下一次初始化使用的草稿。运行期间把草稿改成无效配置，会禁用新的 Mock 初始化，但不会阻止取消已有请求或释放当前 SDK；已初始化实例继续使用原配置。平台启动的取消和关闭按钮也不受草稿平台改成 Mock 的影响，退出 Play Mode 后统一禁用。
+
 当前允许微信、抖音、TikTok 的非生产 Development Build 技术验证，Mock Player 和正式/生产构建仍由 IPreprocessBuildWithReport 阻断。三平台已完成独立开发构建及官方小游戏导出，见 [构建证据与边界](development-build.md)；这些结果不代替真机和正式发布验收。
 
 独立平台程序集、运行时 JSON 导出、模块注册和已登记依赖审计已经实现；完整最终产物隔离仍待验收。模块开关首先控制运行时创建与调用。在 WebGL 目标下点击“应用构建能力选择（触发重编译）”，会同步七类能力实现的编译选择：登录、存储、分享、广告、上报、网络、支付。Editor 保留能力以供预览，Player 排除对应实现，构建前及运行时拒绝重新开启未编译的能力。网络开关排除 UnityNetwork/NetworkProviderFactory/BoundedResponseBuffer；支付开关排除 VerifiedPayment/UnityOrderClient/OrderResponsePolicy。登录 HTTP 会话兑换独立保留。公共契约和官方单体 SDK 的最终保留范围仍需审计。未知平台能力不能静默降级为成功。

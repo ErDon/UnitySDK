@@ -96,7 +96,8 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.HelpBox("需安装对应官方 SDK 和适配包并启用平台宏。这里只启动平台，不展示广告或发起支付；Editor 能力取决于官方 SDK。构建阻断仍生效。", MessageType.Info);
             EditorGUILayout.LabelField("网络工厂", EditorPlatformBootstrap.NetworkFactory == null ? "未注入（真实平台网络开启时需要）" : "已注入");
             EditorGUILayout.LabelField("登录后端工厂", EditorPlatformBootstrap.SessionExchangeFactory == null ? "未注入（关闭登录可测试启动）" : "已注入");
-            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.platform == DistributionPlatform.Mock)) {
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying)) {
+                using (new EditorGUI.DisabledScope(settings.platform == DistributionPlatform.Mock)) {
                 if (GUILayout.Button("按配置启动平台 SDK")) {
                     try {
                         lastResult = "正在等待平台初始化";
@@ -108,6 +109,7 @@ namespace ErDon.UnitySDK.Editor
                     } catch (InvalidOperationException ex) {
                         lastResult = ex.Message.StartsWith("CONFIG.", StringComparison.Ordinal) ? ex.Message : "平台启动配置失败，检查平台包和后端工厂。";
                     } catch { lastResult = "平台启动失败，检查配置字段和平台包。"; }
+                }
                 }
                 if (GUILayout.Button("取消平台启动等待")) UnitySdkHost.CancelStartup();
                 if (GUILayout.Button("关闭平台 SDK")) { UnitySdkHost.Shutdown(); lastResult = "已关闭平台 SDK"; }
@@ -121,10 +123,13 @@ namespace ErDon.UnitySDK.Editor
             adOutcome = (MockRewardedAdOutcome)EditorGUILayout.EnumPopup("广告模拟结果", adOutcome);
             previewTimeoutSeconds = EditorGUILayout.IntSlider("预览等待上限（秒）", previewTimeoutSeconds, 1, 120);
             EditorGUILayout.HelpBox("修改模块开关或模拟结果后重新初始化。等待上限只影响下一次 Mock 调用，不修改运行时 JSON 或在途请求；可留出时间点击取消。", MessageType.Info);
-            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying)) {
+                // Draft configuration validity must not prevent cancelling/releasing the active SDK.
+                using (new EditorGUI.DisabledScope(settings.Validate().Count != 0)) {
                 if (GUILayout.Button("按配置初始化 Mock")) {
                     try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome, ads: adOutcome, network: networkOutcome, analytics: analyticsOutcome); lastResult = "Mock 已初始化"; }
                     catch (Exception ex) { lastResult = ex.Message; }
+                }
                 }
                 using (new EditorGUI.DisabledScope(SDK.ActivePlatform != "Mock")) {
                 if (GUILayout.Button("调用 SDK.Request（不会联网）")) {

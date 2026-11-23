@@ -6,6 +6,8 @@
 
 ## 进度总览
 
+最近验证：2026-11-24 修复面板无效配置误禁用取消/释放按钮的问题，Unity 实际交互验证通过；属于第二阶段视觉验收的部分进展，整体项继续保留待验收。
+
 已完成并按列明范围验证 **65 / 78 个子项**，待完成或验收 **13 个**。这是清单数量统计，不代表整体工作量完成百分比；正式发布验收、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
@@ -818,3 +820,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 Play Mode 首轮复现：重复使用已持有 provider 的初始化被拒绝，但旧等待启动已提前释放。调整 UnitySdkHost 两种直接初始化方法，新的 SDK 成功后再取消旧启动，并显式拒绝释放期间重入。HostStartupPreservationChecks 覆盖重复 provider、工厂异常、空工厂三种失败保留，原启动仍可完成；成功替换释放一次、拒绝宿主重入并忽略旧迟到回调。host-startup-preservation-after.log 输出 SDK_HOST_STARTUP_PRESERVATION_PASS；完整公共回归通过。
 
 结合前序 LogContractTests、UnityLogSinkChecks、启动/操作/所有权/派发回归、域重载关闭的两轮 Play Mode 与真实 HTTP 生命周期记录，本阶段列明的 SDK 内部输出及生命周期复核已完成，勾选最后子项。该结论不包含官方 SDK 日志、真实平台接口/账号/支付或后续阶段真机验收。
+
+### 面板无效草稿不阻断运行实例清理（2026-11-24）
+
+缩小 SdkSettingsWindow 的 DisabledScope：配置校验只限制新的 Mock 初始化，平台选择只限制新的平台启动。取消和关闭根据 Play Mode/当前实例状态控制。隔离 UnityProject 刷新编译后，实际点击初始化 Mock，支付 Timeout 等待上限设为 61 秒，发起支付后勾选生产环境触发 CONFIG.PRODUCTION_MOCK。新初始化呈禁用状态，但取消支付仍可用，日志 callId=7201d4ba313a4b9c8b7a64a90011aab0 于 01:32:54 开始、01:33:37 返回 PAY.CANCELLED；面板显示错误原因及同一 CallId。无效草稿下继续点击释放 SDK，显示“已释放”，实例操作按钮随即禁用。恢复非生产配置并退出 Play Mode，启动/取消/关闭与 Mock 操作均禁用。证据为 .tests/panel-visual.log 及实际面板观察；未涉及真实订单或平台账号，第二阶段整体视觉验收仍未打勾。

@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 预支付授权服务与服务器定价
+
+新增 TikTokPrepaymentService，业务调用仅接收游戏会话与订单号。验证归属后从服务器冻结商品目录取价，从凭证提供器读取并校验完整作用域、用户、格式和有效期；异步取凭据后再次认证，随后调用已有持久化编排。响应不带平台令牌或用户身份。
+
+新增四项授权回归，与编排共十项通过，覆盖跨玩家、失效会话、读取期间撤销、错作用域/用户/过期令牌、价格快照和异常脱敏。凭证提供器尚无加密持久化实现，预支付 HTTP/Unity 联调仍待完成，总计 66/78。
+
 ### Unity 预支付启动器与服务端查询语义
 
 新增 IPrepaymentClient/PrepaymentResult 与 PreparedPaymentLauncher，按游戏订单取得预支付号，校验对应关系后调用可替换平台网关；具备并发、重复回调、非法返回和释放保护。TikTok 成功结果改为 AwaitServerConfirmation，VerifiedPayment 对该类型走 Get 而非提交空回执 Confirm，Created 状态不判支付成功。

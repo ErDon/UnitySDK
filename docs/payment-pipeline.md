@@ -65,6 +65,14 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 `test/tiktok-prepayment-flow.test.mjs` 验证单次创建与复用、在途和失败阻断、非本游戏/已付款拒绝，以及 SQLite 关闭重开后的 Pending 保留。仍需接通令牌托管、平台档位校验、恢复和真实收银台。
 
+## 服务端预支付授权与定价
+
+`TikTokPrepaymentService({ orders, flow, catalog, credentials, isSandbox })` 对外业务方法为 `prepare(gameSession, orderId)`，不接受客户端价格、openId 或平台令牌。orders 与 flow 必须共享同一 SQLite 存储。服务先认证游戏会话和订单归属，检查 Created 状态，再从独立冻结的 TikTok 商品目录读取 Beans 数量、数量单位、名称与图片；productId 必须存在于游戏订单商品目录。
+
+凭证提供器 `credentials.get(binding, subject)` 是服务器内部依赖，返回 `{ binding: bindingKey(binding), subject, accessToken, expiresAt }`，过期时间为毫秒。服务核对应用/游戏/环境作用域、用户和有效期，不符或读取异常返回 PAY.CREDENTIAL_UNAVAILABLE。异步读取后再次认证会话，随后交给持久化编排；响应仅含 orderId、tradeOrderId。当前身份映射使用 TikTok 登录验证器的 open_id 作为 subject。
+
+这是授权服务，不是令牌库实现；仍需接入加密持久化和生命周期管理。商品档位须由服务端运营配置与平台要求核对。尚未开放预支付 HTTP 路由。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
+
 ## HTTP 通知入口装配
 
 `createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。

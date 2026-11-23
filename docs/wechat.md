@@ -67,3 +67,14 @@ SDK.Login(result => {
 由于官方字符串帮助方法可能在错误时返回默认值，写入后回读并比较，删除后检查键是否仍存在：未保留值返回 STORAGE.WRITE_FAILED，未删除返回 STORAGE.REMOVE_FAILED；已存在键读取 null 返回 STORAGE.READ_FAILED。HasKey 本身不能区分官方吞掉的底层错误与不存在，此限制需真机确认，不能声称已覆盖所有配额/磁盘错误。同步回读增加一次访问，实际性能及配额限制待测。
 
 运行 `tests/run-wechat-storage-tests.ps1 -CompiledWxAssembly '<已导入官方SDK的Unity工程>/Library/ScriptAssemblies/Wx.dll'` 验证真实编译入口与注入存储行为。当前证据来自本机已有工程编译出的 Wx.dll，不是干净工程重建或真机持久化验收，完整平台构建仍不放行。
+
+
+## 分享
+
+WeChatShare 实现 IShare。在官方微信运行时初始化后，通过 UnitySdkHost.Initialize 的 shareProvider 参数或 IShareProviderFactory.CreateShare 创建它，并启用 SdkConfig.ShareEnabled。上层调用与失败示例见 [分享接口](share.md)。
+
+映射到 WX.ShareAppMessage(ShareAppMessageOption)：Title→title、ImageUrl→imageUrl、Query→query，query 原样传入，业务先编码；不自动补图或改变参数。可选图片为空时交给宿主默认行为。当前公共契约不提供 imageUrlId、path、toCurrentGroup 等微信专有扩展。
+
+核对的本地 0.1.23 DTO 没有成功/失败回调；调用正常返回即报告 Dispatched，不表示用户发送、取消或对方收到。底层抛异常返回 SHARE.PROVIDER_FAILED，原始异常不泄露；释放后调用返回 SDK.DISPOSED。实际宿主异步失败无法由该入口推断。
+
+run-wechat-share-tests.ps1 需要 OfficialPackagePath 与 CompiledWxAssembly，引用官方 DTO 和现有工程 Wx.dll 编译入口，注入 dispatch 验证字段、可选参数、非法参数、异常、释放及回调异常不重复调用。当前测试输出 WECHAT_SHARE_TESTS_PASS，但编译报告其他类型的 CS1684 警告，表明现有工程编译产物和 0.1.23 DTO 包不完全匹配。此证据仅限分享所用入口，不是干净官方工程编译或整包兼容通过。后续须从一致来源重新编译并完成真机分享。

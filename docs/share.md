@@ -1,6 +1,6 @@
 # 分享能力
 
-上层调用 SDK.Share，下层实现 IShare。当前提供公共流程与 Editor Mock，真实微信/抖音/TikTok 分享适配尚待实现；不能把 Mock 当作已接入平台。
+上层调用 SDK.Share，下层实现 IShare。当前提供公共流程、Editor Mock 和微信分享调用适配；微信仍待干净包编译及真机验收，抖音/TikTok 分享适配尚待实现。不能把 Mock 当作已接入平台。
 
 ## 调用
 

@@ -170,3 +170,9 @@ HTTP 客户端 Retry-After 改动经独立 Unity 2022.3 工程编译与 Editor �
 公共回归及分享专项测试通过，覆盖禁用不创建、主线程派发、重复回调、并发调用、超时/取消、释放后结果失效和日志脱敏。详见 docs/share.md。平台真实分享适配仍未完成。
 
 独立 Unity 工程 share-play.log 输出 SDK_PLAY_CHECKS_PASS，实际 Play Mode 验证分享发起及模块关闭。
+
+### 微信分享适配
+
+新增 WeChatShare，对接 WX.ShareAppMessage 与官方 ShareAppMessageOption，按本地 DTO 无结果回调的事实只报告已发起；不推断发送/取消/送达。注入行为测试覆盖映射、可选参数、异常、释放及调用者异常不重复回调。
+
+WECHAT_SHARE_TESTS_PASS；现有工程 Wx.dll 与本机 0.1.23 DTO 编译组合出现其他类型 CS1684 警告，因此只记录所用分享入口编译证据，不算整包兼容通过。干净官方依赖重编译、真实宿主分享仍待完成。

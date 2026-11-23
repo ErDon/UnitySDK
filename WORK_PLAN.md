@@ -32,3 +32,11 @@
 剩余：完整重试策略/traceId、运行模式生命周期回归，随后配置面板与构建裁剪。
 
 最终验证结果：SDK 与 MockLoginExample 在空白 Unity 工程批处理编译通过，分别生成 ErDon.UnitySDK.dll 与 Assembly-CSharp.dll，无 C# 编译错误。首个验证进程在退出阶段停留导致第二次启动工程占用，结束本任务的验证进程后重试成功。可用 tests/run-core-tests.ps1 重跑核心测试。未进行 PlayMode 与真机测试。
+
+### 第二阶段启动：配置面板预览
+
+已增加 Editor 专属程序集、项目级配置保存、平台与模块选择、配置检查/预览和 Player 构建阻断。当前配置未连接运行时装配，模块勾选显示计划状态；所有真实平台仍标记未实现。开发版没有可用于 Player 的适配器，因此主动阻断 Player 构建；不宣称完成平台裁剪。
+
+Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白测试工程 Assets/Editor/SdkEditorChecks.cs，通过 -executeMethod SdkEditorChecks.Run 执行。验证 Editor Mock 合法配置、生产 Mock、未实现模块、缺失真实适配与构建阻断。
+
+验证结果：Unity 2022.3.14f1c1 编译 Editor 包通过，执行 SdkEditorChecks.Run 输出 SDK_EDITOR_CHECKS_PASS；核心回归测试通过。配置界面尚未做交互视觉验收，尚未构建实际平台产物。

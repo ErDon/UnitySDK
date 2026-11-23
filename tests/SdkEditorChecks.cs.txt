@@ -1,0 +1,21 @@
+using System;
+using ErDon.UnitySDK.Editor;
+using UnityEditor.Build;
+using UnityEngine;
+public static class SdkEditorChecks {
+ public static void Run() {
+  var s=SdkProjectSettings.instance;
+  s.gameId="test-game"; s.platform=DistributionPlatform.Mock; s.production=false;
+  if(s.Validate().Count!=0) throw new Exception("valid editor mock rejected");
+  s.production=true;
+  if(s.Validate().Count==0) throw new Exception("production mock allowed");
+  s.production=false;s.payments=true;
+  if(s.Validate().Count==0) throw new Exception("unimplemented payments allowed");
+  s.payments=false;s.platform=DistributionPlatform.WeChat;s.appId="test-app";
+  if(s.Validate().Count==0) throw new Exception("missing adapter allowed");
+  bool blocked=false;try {new SdkBuildGuard().OnPreprocessBuild(null);}catch(BuildFailedException){blocked=true;}
+  if(!blocked) throw new Exception("build not blocked");
+  s.platform=DistributionPlatform.Mock;s.SaveSettings();
+  Debug.Log("SDK_EDITOR_CHECKS_PASS");
+ }
+}

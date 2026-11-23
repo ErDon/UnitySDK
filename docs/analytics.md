@@ -100,7 +100,7 @@ IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
 
 ## Editor Mock 面板
 
-在 SDK 配置面板勾选数据上报、选择 Mock 平台并进入 Play Mode。选择“上报模拟结果”后重新初始化 Mock，再点击 ReportEvent（不发送数据）。Dispatched 返回模拟调用完成，Failed 返回 ANALYTICS.PLATFORM_FAILED，Timeout 保持等待直到面板调用的 1 秒本地超时；也可点击“取消最近一次上报”。未勾选时调用返回 MODULE.DISABLED。
+在 SDK 配置面板勾选数据上报、选择 Mock 平台并进入 Play Mode。选择“上报模拟结果”后重新初始化 Mock，再点击 ReportEvent（不发送数据）。Dispatched 返回模拟调用完成，Failed 返回 ANALYTICS.PLATFORM_FAILED，Timeout 保持等待直到面板所设的预览等待上限；也可点击“取消最近一次上报”。未勾选时调用返回 MODULE.DISABLED。
 
 Mock 位于 Editor 程序集，不发送统计请求。改变模拟结果后需要重新初始化才能生效；改变配置开关也不修改已经初始化的 SDK 快照。真实平台运行时，这组 Mock 业务按钮保持禁用。面板按钮逻辑和 Play Mode 验证不同于视觉交互验收，后者仍需单独检查。
 

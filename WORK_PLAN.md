@@ -127,6 +127,12 @@
 
 ## 2026-11-24 执行记录
 
+### 可调整 Mock 等待上限与支付取消实测
+
+原面板超时预览固定 1 秒，手动取消操作窗口很短。新增 Editor 窗口级 1–120 秒等待上限，默认 10 秒，用于面板登录/广告/支付/网络/上报的下一次调用；不写入运行时 JSON，不改变在途调用或游戏接口默认值。实际 Unity 刷新编译后显示滑杆及说明。
+
+独立 UnityProject 选择支付 Timeout、等待 61 秒并初始化，点击支付后约 15 秒再点击取消，界面及 panel-visual.log 均返回 PAY.CANCELLED（e93d27616cb14957a386754f50e53ffb）。将滑杆改为 1 秒、不重新初始化，下一次支付从 01:23:58.621 到 01:23:59.622 返回 PAY.TIMEOUT（fcb3f67415674f01bbc62ed87de58994），原因和编号可见；随后退出 Play Mode。同步修改配置/广告/上报说明。仅支付分支完成这轮实际取消/超时检查，其他能力与完整面板视觉验收仍待补，进度 65/78。
+
 ### 广告与支付面板实际交互验收（部分）
 
 在独立 UnityProject 配置面板实际勾选广告、支付，观察配置预览同步出现两项能力；进入 Play Mode 后按配置初始化 Mock。点击广告显示“Mock 完整观看（非发奖凭证）”与 CallId；点击支付 Fulfilled 显示“Mock 已发货（非真实支付）”与 CallId。通过下拉菜单改为 Pending 并重新初始化后，支付返回 PAY.FULFILLMENT_PENDING、Payment verified; server delivery is pending 原因和 CallId，没有显示已发货。退出 Play Mode 后业务按钮禁用。

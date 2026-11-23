@@ -156,7 +156,7 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 - HttpOk：本地返回 HTTP 200 与 JSON `{"mock":true}`。
 - HttpUnauthorized：本地返回 HTTP 401，Success=true、IsHttpSuccess=false，用于验证业务对 HTTP 状态的处理。
 - ConnectionFailed：返回 NETWORK.UNAVAILABLE。
-- Timeout：保持请求等待，面板使用 1 秒超时；点击“取消最近一次网络请求”可提前返回 NETWORK.CANCELLED。
+- Timeout：保持请求等待，面板使用“预览等待上限（秒）”设置；点击“取消最近一次网络请求”可提前返回 NETWORK.CANCELLED。
 
 取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；真实平台开启网络必须注入工厂；未实现的数据上报继续拒绝。
 
@@ -177,3 +177,10 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 直接 SdkStartup 构造及 UnitySdkHost.BeginStartup/Initialize/InitializeWithFactory 同样在取得新运行时所有权或取消旧启动前检查编译能力。请求未编译能力时立即抛 CONFIG.MODULE_NOT_COMPILED，不等待官方初始化后再转换成 INIT.COMPOSITION_FAILED。构造被拒绝的 runtime 仍由调用方拥有，SDK 不负责释放它。Editor 的预览编译不受 Player 排除符号限制。
 
 UnitySdkHost 的直接 Initialize/InitializeWithFactory 只有在新的 SDK 初始化成功后才释放旧的等待启动。重复传入已由 SDK 拥有的 provider、空工厂或工厂抛异常时，原 SDK 和原启动继续有效；成功替换会释放旧启动并忽略其迟到回调。释放旧启动期间禁止再次进入宿主初始化。可在隔离 Play Mode 运行 tests/HostStartupPreservationChecks.cs.txt 的 Run 方法复核。
+
+
+## 调整 Mock 等待时间
+
+“预览等待上限（秒）”支持 1–120 秒，默认 10 秒，用于面板中的登录、广告、支付、网络和上报调用。选择 Timeout 模拟结果并重新初始化后，可以延长等待上限来手动测试取消，或设为 1 秒快速检查超时。成功/失败模拟通常立即完成，不会为了等待上限延迟返回。
+
+等待时间在每次点击调用时读取，调整它无需重新初始化，且不改变正在等待的调用。模块开关和模拟结果仍需重新初始化。该值仅保存在 Editor 窗口状态，不写入运行时配置 JSON，不影响游戏代码中的默认超时或真实平台启动超时。

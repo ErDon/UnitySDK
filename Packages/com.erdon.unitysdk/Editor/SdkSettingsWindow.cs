@@ -8,6 +8,7 @@ namespace ErDon.UnitySDK.Editor
     public sealed class SdkSettingsWindow : EditorWindow
     {
         Vector2 scroll;
+        [SerializeField] int previewTimeoutSeconds = 10;
         MockLoginOutcome outcome;
         MockPaymentOutcome paymentOutcome;
         MockRewardedAdOutcome adOutcome;
@@ -118,7 +119,8 @@ namespace ErDon.UnitySDK.Editor
             analyticsOutcome = (MockAnalyticsOutcome)EditorGUILayout.EnumPopup("上报模拟结果", analyticsOutcome);
             networkOutcome = (MockNetworkOutcome)EditorGUILayout.EnumPopup("网络模拟结果", networkOutcome);
             adOutcome = (MockRewardedAdOutcome)EditorGUILayout.EnumPopup("广告模拟结果", adOutcome);
-            EditorGUILayout.HelpBox("每次初始化读取当前配置；修改模块开关后重新初始化。超时模拟使用 1 秒；其他调用使用默认超时。", MessageType.Info);
+            previewTimeoutSeconds = EditorGUILayout.IntSlider("预览等待上限（秒）", previewTimeoutSeconds, 1, 120);
+            EditorGUILayout.HelpBox("修改模块开关或模拟结果后重新初始化。等待上限只影响下一次 Mock 调用，不修改运行时 JSON 或在途请求；可留出时间点击取消。", MessageType.Info);
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
                 if (GUILayout.Button("按配置初始化 Mock")) {
                     try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome, ads: adOutcome, network: networkOutcome, analytics: analyticsOutcome); lastResult = "Mock 已初始化"; }
@@ -126,7 +128,7 @@ namespace ErDon.UnitySDK.Editor
                 }
                 using (new EditorGUI.DisabledScope(SDK.ActivePlatform != "Mock")) {
                 if (GUILayout.Button("调用 SDK.Request（不会联网）")) {
-                    lastNetworkOperation = SDK.Request(new NetworkRequest("https://mock.invalid/preview", timeoutSeconds: 1), result => {
+                    lastNetworkOperation = SDK.Request(new NetworkRequest("https://mock.invalid/preview", timeoutSeconds: previewTimeoutSeconds), result => {
                         lastResult = (result.Success ? "Mock HTTP " + result.StatusCode : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
                     });
@@ -135,14 +137,14 @@ namespace ErDon.UnitySDK.Editor
                     lastAnalyticsOperation = SDK.ReportEvent(new AnalyticsEvent("preview_event"), result => {
                         lastResult = (result.Dispatched ? "模拟上报调用完成（不代表入库）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
-                    }, 1000);
+                    }, previewTimeoutSeconds * 1000);
                 if (GUILayout.Button("取消最近一次上报") && lastAnalyticsOperation != null) lastAnalyticsOperation.Cancel();
                 if (GUILayout.Button("取消最近一次网络请求") && lastNetworkOperation != null) lastNetworkOperation.Cancel();
                 if (GUILayout.Button("调用 SDK.ShowRewardedAd（不展示真实广告）")) {
                     SDK.ShowRewardedAd(new RewardedAdRequest("mock-ad-unit"), result => {
                         lastResult = (result.Success ? (result.Completed ? "Mock 完整观看（非发奖凭证）" : "Mock 提前关闭") : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
-                    }, adOutcome == MockRewardedAdOutcome.Timeout ? 1000 : 120000);
+                    }, previewTimeoutSeconds * 1000);
                 }
                 if (GUILayout.Button("取消本地广告等待")) SDK.CancelRewardedAd();
                 if (GUILayout.Button("调用 SDK.Share（仅模拟发起）")) {
@@ -155,14 +157,14 @@ namespace ErDon.UnitySDK.Editor
                     SDK.Pay(new PaymentRequest("mock-session", "mock-product", "mock-purchase"), result => {
                         lastResult = (result.Success ? "Mock 已发货（非真实支付）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
-                    }, paymentOutcome == MockPaymentOutcome.Timeout ? 1000 : 60000);
+                    }, previewTimeoutSeconds * 1000);
                 }
                 if (GUILayout.Button("取消本地支付等待")) SDK.CancelPay();
                 if (GUILayout.Button("调用 SDK.Login")) {
                     SDK.Login(result => {
                         lastResult = (result.Success ? "Mock 成功（非真实会话）" : DescribeError(result.Error)) + " callId=" + result.CallId;
                         Repaint();
-                    }, outcome == MockLoginOutcome.Timeout ? 1000 : 15000);
+                    }, previewTimeoutSeconds * 1000);
                 }
                 if (GUILayout.Button("取消当前登录")) SDK.CancelLogin();
                 EditorGUILayout.Space();

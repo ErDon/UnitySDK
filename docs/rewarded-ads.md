@@ -45,7 +45,7 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 
 1. 打开 `Tools > ErDon SDK > 配置与预览`，平台选择 Mock，填写 Game ID，勾选激励广告。
 2. 进入 Play Mode，选择广告模拟结果，然后点击“按配置初始化 Mock”。每次修改模拟结果或模块开关都需要重新初始化。
-3. 点击 `SDK.ShowRewardedAd` 按钮。Completed 表示模拟完整观看，ClosedEarly 表示提前关闭，LoadFailed 返回 ADS.LOAD_FAILED，Timeout 不回调，面板使用 1 秒本地超时。
+3. 点击 `SDK.ShowRewardedAd` 按钮。Completed 表示模拟完整观看，ClosedEarly 表示提前关闭，LoadFailed 返回 ADS.LOAD_FAILED，Timeout 不回调，面板使用“预览等待上限（秒）”设置。
 4. 可点击“取消本地广告等待”验证 ADS.CANCELLED。取消勾选并重新初始化后调用返回 MODULE.DISABLED。
 
 预览不加载广告、不产生收入、不发放真实奖励。导出的 JSON 保留 rewardedAds；ToSdkConfig 只为已实现的平台能力放行，不能作为真实平台初始化或构建完成的证明。

@@ -6,7 +6,7 @@
 
 ## 进度总览
 
-已完成并按列明范围验证 **63 / 78 个子项**，待完成或验收 **15 个**。这是清单数量统计，不代表整体工作量完成百分比；正式发布验收、真机与支付闭环仍未完成。
+已完成并按列明范围验证 **64 / 78 个子项**，待完成或验收 **14 个**。这是清单数量统计，不代表整体工作量完成百分比；正式发布验收、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
 | --- | ---: | ---: |
@@ -16,7 +16,7 @@
 | 第三阶段：微信登录与服务端 | 4 | 1 |
 | 第四阶段：广告、分享、存储、网络与上报 | 22 | 4 |
 | 第五阶段：支付与订单 | 4 | 2 |
-| 第六阶段：抖音、TikTok 与升级 | 7 | 2 |
+| 第六阶段：抖音、TikTok 与升级 | 8 | 1 |
 | 第七阶段：跨游戏接入与发布 | 2 | 3 |
 
 后续每次实现并验证一个子项，同步更新下方勾选与此表；只有代码或 Mock 验证的项目，会保留真实环境验收项。
@@ -109,7 +109,7 @@
 - [x] 抖音、TikTok 服务端登录验证器及模拟上游回归。
 - [x] 官方 SDK 全文件哈希快照、升级差异报告、版本矩阵及升级说明。
 - [x] TikTok 初始化桥接、本地 Runtime/Editor DLL 返回码核对与注入测试。
-- [ ] TikTok 干净官方插件核验与工程集成。
+- [x] TikTok 干净官方插件核验与独立工程集成；原安装包与工程 104 个文件逐一匹配，双 DLL 回归、开发构建/官方导出及注册验证通过。
 - [ ] 三平台升级后的真机回归、账号授权及后端联调。
 - [x] Android/iOS 扩展接入说明及自定义身份、装配、所有权和配置拒绝边界测试；本轮不接原生供应商。
 
@@ -126,6 +126,13 @@
 公共回归入口为 `tests/run-all-tests.ps1`；平台测试与版本边界见 [兼容矩阵](compatibility/README.md)。Unity 检查模板在 `tests/*Checks.cs.txt`，具体执行结果见下面对应记录。还未完成的真机、真实支付和正式构建不会标为已完成。
 
 ## 2026-11-24 执行记录
+
+### TikTok 干净官方插件核验与工程集成验收
+
+重新核对已下载官方 1.1.6 安装包 SHA-256 为 9d7154f1e89180fc6b9e76704362d72b37e9c78a5d59257b26f24700ffcc4f35，直接读取 unitypackage 中的 pathname/asset/asset.meta，与 TikTokBuildProject 官方插件目录逐文件核对：104 个文件路径集合及内容哈希全部一致，TIKTOK_ARCHIVE_PROJECT_MATCH_PASS。原件与工程的全文件清单比较同样 changedFileCount=0。新增 compatibility/tiktok-official-1.1.6.inventory.json 保存原件完整哈希基线，清单本身不冒充官方数字签名。
+
+针对同一原件重跑 Runtime/Editor 两套七组回归，14 组 PASS。核对 tiktok-registration.log 的 SDK_PLATFORM_REGISTRATION_PASS、tiktok-resource-build.log 的成功构建/正常退出、tiktok-resource-verify.log 的导出文件及 StreamingAssets 检查、tiktok-login-only-build.log 的开发构建成功证据。第六阶段“干净官方插件核验与工程集成”据此勾选，统计为 64/78；真机、后台、升级后真机和最终产物隔离保持待办。同步修正 TikTok 接入文档中仍称干净工程待验收的旧表述。另补入 Unity 为新增 BoundedJsonDownload 生成的稳定 .meta。
+
 
 ### 登录与订单 HTTP 宿主失效即时失败
 

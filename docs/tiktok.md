@@ -27,6 +27,8 @@
 
 对这份完整包运行 run-tiktok-tests.ps1，Runtime/Editor 两套 DLL 的七组签名和注入行为测试均通过。新建 TikTokBuildProject 使用完整原始插件，未移入旧游戏宏或修改其导入配置，Unity 2022.3.14f1c1 初次导入和 ConfigureTikTok 正常退出。随后 WebGL Development Build 得到 Succeeded errors=0，链接后 TikTok 适配器及注册方法检查通过；空场景 Play Mode 注册解析也通过，未调用平台 API。官方命令行小游戏导出也已成功退出 0，生成文件检查与 JSON 解析通过；操作和分包验证边界见 [开发构建](development-build.md)。真实平台初始化、功能和最终包体隔离必须分别验证，不能由上述测试代替。
 
+2026-11-24 复核：独立工程中的 104 个官方插件文件与原安装包逐文件一致（含源码、DLL 与导入设置），未发现添加、删除或修改；双 DLL 七组契约回归再次通过。完整哈希基线见 [官方包清单](../compatibility/tiktok-official-1.1.6.inventory.json)。该核对证明本次工程使用的插件内容与所下载基线一致，不代表任意未来下载或真机功能均已认证。
+
 ## 用法
 
 初始化层按 [微信组合示例](wechat.md) 的方式组合，只替换 provider 为：
@@ -101,7 +103,7 @@ void OnTikTokRuntimeReady()
 
 工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 TikTokCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
 
-SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置驱动启动已通过平台注册表接入，见 startup.md；真实宿主初始化和正式发布验收仍未完成。
 
 工厂验证随 run-tiktok-tests.ps1 执行，已分别引用 1.1.6-Release 的 Runtime/Editor DLL 通过配置、缺失后端拒绝和释放测试，不代表真机初始化成功。
 
@@ -125,15 +127,15 @@ UnitySdkHost.BeginStartup(
 
 上例只启用存储。启用登录时需注入后端 ISessionExchange 工厂。桥接初始化未完成时返回 INIT.IN_PROGRESS，已就绪重复调用直接成功；失败可显式重试，释放后忽略迟到回调。BeginStartup 负责默认 15 秒本地超时，取消/释放不卸载平台 SDK、不保证中断官方初始化。初始化入口应由一个启动所有者管理。
 
-此次成功码证据来自本地 1.1.6-Release 的 Runtime/Editor DLL：TT.InitSDK 转发到 TTSDKInner，成功路径 CompleteClaimedInitialization 调用 TTSDKInitCompletionGate.TrySucceed，将整数 0 写入任务结果，InvokeInitCallbackAsync 转发该结果。此为本地二进制契约核对；本地插件有定制，不是干净官方包认证，也不替代真机验证。记录 SHA-256 便于后续升级对比：
+最初的成功码核对使用本地 1.1.6-Release 的 Runtime/Editor DLL：TT.InitSDK 转发到 TTSDKInner，成功路径 CompleteClaimedInitialization 调用 TTSDKInitCompletionGate.TrySucceed，将整数 0 写入任务结果，InvokeInitCallbackAsync 转发该结果。此为二进制契约核对，不替代真机验证。后续下载的干净官方包两套 DLL 哈希与下列值一致，并已重新运行回归；旧游戏目录的其他定制文件不因此被认可。记录 SHA-256 便于后续升级对比：
 
 - ttsdk.dll：`35A7DBB619B812D58ABF6E33BB3CB05D9E7F77AD0BB1131C898B78D4F38D947D`
 - ttsdk-editor.dll：`3C9CA4A76EA625D6445F25DAAA3679AC9B5BBA69EA69E0E35759B21351C645F1`
 
-`tests/run-tiktok-tests.ps1` 包含两套 DLL 的初始化签名编译和注入返回码测试。干净插件工程加载与真实客户端初始化仍待验收。
+`tests/run-tiktok-tests.ps1` 包含两套 DLL 的初始化签名编译和注入返回码测试。干净插件工程加载、开发构建与官方导出已验证；真实客户端初始化仍待验收。
 
 ## 可选网络通信工厂
 
 运行时配置 network=true 时，向 UnitySdkHost.BeginConfiguredStartup 传入 `createNetwork: () => new UnityNetwork(this)`，其中 this 是游戏持久 MonoBehaviour。需要额外安装 com.erdon.unitysdk.transport.http；平台适配包本身不依赖该包。登录关闭可只验证网络启动路径。未传工厂返回 CONFIG.NETWORK_PROVIDER_REQUIRED；工厂直到平台就绪才会调用，SDK 负责释放实例。
 
-本地 1.1.6-Release 包包含 WebGL/Compatibility/UnityWebRequestCompatibility.cs，使用 UnityWebRequest 的兼容方法。本实现复用 UnityWebRequest，而不把其他平台的请求 DTO 套入 TTSDK。配置映射和平台身份/所有权测试已通过；具体小游戏网络栈的 HTTP 方法、取消、超时、响应头、重定向、二进制及接收限额仍需平台验证。TikTok 本地插件含定制的来源边界仍然适用。
+本地 1.1.6-Release 包包含 WebGL/Compatibility/UnityWebRequestCompatibility.cs，使用 UnityWebRequest 的兼容方法。本实现复用 UnityWebRequest，而不把其他平台的请求 DTO 套入 TTSDK。配置映射和平台身份/所有权测试已通过；具体小游戏网络栈的 HTTP 方法、取消、超时、响应头、重定向、二进制及接收限额仍需平台验证。后续工程验证使用上文完整官方原件，不沿用旧游戏目录中的其他定制。

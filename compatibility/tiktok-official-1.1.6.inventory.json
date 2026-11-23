@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 2,
+  "coverage": "all-files",
+  "platform": "TikTok",
+  "packageName": "com.bytedance.starksdk",
+  "packageVersion": "1.1.6-Release",
+  "source": "local-installed-package",
+  "authenticityVerified": false,
+  "capturedAt": "2026-11-23T16:17:10.6389786+00:00",
+  "files": [
+    {
+      "path": "DefaultTemplate.meta",
+      "bytes": 172,
+      "sha256": "88bb2039e1849f685685e33745fbee443a95ededc60a04cdfd0554e33ae81121"
+    },
+    {
+      "path": "DefaultTemplate/backgroundlandscape.png",
+      "bytes": 59837,
+      "sha256": "70869cbcf78912fc241b1f0749082514fc82b81f773be4689cb50f0f9cb2e13d"
+    },
+    {
+      "path": "DefaultTemplate/backgroundlandscape.png.meta",
+      "bytes": 2946,
+      "sha256": "13359e3ee07e6bf35b81765b1b6a142c4bc0a60d9b28eec1a337781cd5fff9ca"
+    },
+    {
+      "path": "DefaultTemplate/backgroundportrait.png",
+      "bytes": 31536,
+      "sha256": "e430cc1ea369eb3e6aece786f15d1e0b35ce6275d686258d6251308dd89c72b1"
+    },
+    {
+      "path": "DefaultTemplate/backgroundportrait.png.meta",
+      "bytes": 2946,
+      "sha256": "fc1cb7d8b82fc0c22e7193c988c9d91655bf319959bb558743368587a381821d"
+    },
+    {
+      "path": "DefaultTemplate/game.js",
+      "bytes": 4794,
+      "sha256": "61e4a4100264baf35e3e9b696a91d805d1ae8d213f244d9e47acf0a037766c13"
+    },
+    {
+      "path": "DefaultTemplate/game.js.meta",
+      "bytes": 155,
+      "sha256": "2adf9e870b35ecffc01efcaea27b5c73b2e3639c46271b5a9a26260c7048ff1f"
+    },
+    {
+      "path": "DefaultTemplate/images.meta",
+      "bytes": 172,
+      "sha256": "b5213341ad10b85987078b7687d89e52439673494f9e98b755a56eeb63d93f92"
+    },
+    {
+      "path": "DefaultTemplate/images/unity_logo.png",
+      "bytes": 9664,
+      "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6"
+    },
+    {
+      "path": "DefaultTemplate/images/unity_logo.png.meta",
+      "bytes": 2946,
+      "sha256": "2f53a11c4bc345bc65f9e29f65ad7207ac13025e7a8ccfbf8b355be8a7a82a09"
+    },
+    {
+      "path": "DefaultTemplate/plugin-config.js",
+      "bytes": 529,
+      "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2"
+    },
+    {
+      "path": "DefaultTemplate/plugin-config.js.meta",
+      "bytes": 155,
+      "sha256": "223dddc77d1315f96b017b255ac11153950600b131478207b10e3be9bdfde19a"
+    },
+    {
+      "path": "DefaultTemplate/plugin.js",
+      "bytes": 839734,
+      "sha256": "93e25bd22663b61f922cc73d78538297772ee5466c60de42b810c0cbee42306d"
+    },
+    {
+      "path": "DefaultTemplate/plugin.js.meta",
+      "bytes": 155,
+      "sha256": "11d05591fd3b259c3080262c060f412a90161a8865e59f7629f8e76e70e82e2d"
+    },
+    {
+      "path": "DefaultTemplate/plugin.provenance.json",
+      "bytes": 592,
+      "sha256": "28e22759c5171859add635ae63ce6f5c87521b937b3b9ca6a8f024d10822d970"
+    },
+    {
+      "path": "DefaultTemplate/plugin.provenance.json.meta",
+      "bytes": 158,
+      "sha256": "3e696e652581c257a756a5519c1ed6bc97d974eb3df7c37756f3e133fb232a4e"
+    },
+    {
+      "path": "DefaultTemplate/unity-namespace.js",
+      "bytes": 546,
+      "sha256": "13eee0692984a99fbeb6db3288a3116c095c9d204afc25deece2ba6c0fa160a1"
+    },
+    {
+      "path": "DefaultTemplate/unity-namespace.js.meta",
+      "bytes": 155,
+      "sha256": "8fc5a522a03f9c9f4ce16f1bf7629fa75d02d23b234f78648ad07dfdcf0bebc2"
+    },
+    {
+      "path": "DefaultTemplate/webgl-wasm-split.js",
+      "bytes": 878,
+      "sha256": "8d79a161f605a7b0ba3a6d94b9ad4ce8cde028240c55043a3d041d8c8e47d3af"
+    },
+    {
+      "path": "DefaultTemplate/webgl-wasm-split.js.meta",
+      "bytes": 155,
+      "sha256": "691dcdfbd3ac02dac2500d82acf8918466ad5bf5b28ec282acae285483f45ae1"
+    },
+    {
+      "path": "Editor.meta",
+      "bytes": 172,
+      "sha256": "10cc52192ab133dbf61511424cad890248d23b6a02a57692d9ca55342d09e993"
+    },
+    {
+      "path": "Editor/Extras.meta",
+      "bytes": 172,
+      "sha256": "9f4894b0d4e990f20faf6a4ba3e1a137c4f45d1262df3fd754bc7d59bdb4547d"
+    },
+    {
+      "path": "Editor/Extras/Integration.meta",
+      "bytes": 172,
+      "sha256": "a2f444500edc2db833abeb6e82cd7d0a80df703d7356e06277d4a29e31bfb991"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinMiniGameSettings.cs",
+      "bytes": 1108,
+      "sha256": "a5506705f8930217e3469e5704c70459f24754d83f75838e823a790d8de6920f"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinMiniGameSettings.cs.meta",
+      "bytes": 243,
+      "sha256": "813670d8f8b34d677e842fe1c7f099feb3693c26a844297adcc4059409cd6f0e"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinMiniGameSettingsEditor.cs",
+      "bytes": 16648,
+      "sha256": "5dfef8276b47945e779544725c56c181a61f8b5c777d36659d230e3d2f0d5b8a"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinMiniGameSettingsEditor.cs.meta",
+      "bytes": 243,
+      "sha256": "2747b81201d501276333dc93c7887b5bd2b1d81cd6cf34d4677c527b5d27a407"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinSubplatformInterface.cs",
+      "bytes": 6308,
+      "sha256": "b689e8ccbf6e9fc6e790be0880ad9300eb280f3ff84563c76801c1558733543b"
+    },
+    {
+      "path": "Editor/Extras/Integration/DouYinSubplatformInterface.cs.meta",
+      "bytes": 243,
+      "sha256": "9c8d0ef874bf8c0c2528128b9758dfac2d24edf71cc8957eb0c8f21241a73530"
+    },
+    {
+      "path": "Editor/Extras/Providers.meta",
+      "bytes": 172,
+      "sha256": "49f4dc65b7378fdde49401f335f578677f84e17a043b61830e261fdf408ea674"
+    },
+    {
+      "path": "Editor/Extras/Providers/TTMiniGameSupportProvider.cs",
+      "bytes": 5089,
+      "sha256": "7fd8f28005c00d0d486fd64ad08c3e43bfb9f3d777c174fbbe19afa4e70a05dd"
+    },
+    {
+      "path": "Editor/Extras/Providers/TTMiniGameSupportProvider.cs.meta",
+      "bytes": 243,
+      "sha256": "0482adea92c2476608db7c896add100cd26ee9d3c3bd70ad833670fc3f8295e7"
+    },
+    {
+      "path": "Editor/Extras/TTEditorSupportProviderRegister.cs",
+      "bytes": 370,
+      "sha256": "d5d3ced3c9c1a9a7c87c2dfaad7a28f251ce781c1c3271812ce141a3131585b9"
+    },
+    {
+      "path": "Editor/Extras/TTEditorSupportProviderRegister.cs.meta",
+      "bytes": 243,
+      "sha256": "f6c1e5ee32f8cd5cb0670e61836c5d6477ba5619e3edeb324b8c12b722954d08"
+    },
+    {
+      "path": "Editor/ttsdk_tools.dll",
+      "bytes": 302080,
+      "sha256": "ef32c7f127159c41d89cf62238aecebb5006c4e63d53071a7b3ec16e8bc854bd"
+    },
+    {
+      "path": "Editor/ttsdk_tools.dll.meta",
+      "bytes": 645,
+      "sha256": "c78764793474125cc0355657ecc76b4b49826bee5b89083f6f2fa7324ca758ad"
+    },
+    {
+      "path": "link.xml",
+      "bytes": 220,
+      "sha256": "0b683762e2d87984eddd4a66bfd3f06bdc3231c2130e7e1526dc53ecb626a5d4"
+    },
+    {
+      "path": "link.xml.meta",
+      "bytes": 158,
+      "sha256": "4fe55dae418520b6f013b43ea01723af438afa464dc1e2f72560729a690a7ea5"
+    },
+    {
+      "path": "LitJson.meta",
+      "bytes": 172,
+      "sha256": "1da4f71936743457857d77c05224219014b601222a88831bfd555b63fe513d31"
+    },
+    {
+      "path": "LitJson/TTLitJson.dll",
+      "bytes": 59904,
+      "sha256": "42e4a6461690260811f94872b8d34e27fcb932c637b65da0bb77aba41d3894c9"
+    },
+    {
+      "path": "LitJson/TTLitJson.dll.meta",
+      "bytes": 723,
+      "sha256": "f284d2188775009b09461284b13fbdce01d27fdd163c1506f56c0b0fc06b817d"
+    },
+    {
+      "path": "package.json",
+      "bytes": 5793,
+      "sha256": "4ce8a7f0a93f39b8f199cd71975e98dd6940135cd07e9d86d635c9334103c9ab"
+    },
+    {
+      "path": "package.json.meta",
+      "bytes": 158,
+      "sha256": "598304870b7a63475a7091c62d4057d1adc4ce0065226d24c929d047b2b1cb1c"
+    },
+    {
+      "path": "TTSDK.meta",
+      "bytes": 172,
+      "sha256": "686dfcd988044c82b4d146c99eb44d44e423b906e383ace937bfacc94a7b76b2"
+    },
+    {
+      "path": "TTSDK/ttsdk-editor.dll",
+      "bytes": 677888,
+      "sha256": "3c9ca4a76ea625d6445f25daaa3679ac9b5bba69ea69e0e35759b21351c645f1"
+    },
+    {
+      "path": "TTSDK/ttsdk-editor.dll.meta",
+      "bytes": 645,
+      "sha256": "ac31c9bea8293fe8440f4e250aad8b89e51fd7becdab75e1015c551edb06bcd3"
+    },
+    {
+      "path": "TTSDK/ttsdk.dll",
+      "bytes": 528384,
+      "sha256": "35a7dbb619b812d58abf6e33bb3cb05d9e7f77ad0bb1131c898b78d4f38d947d"
+    },
+    {
+      "path": "TTSDK/ttsdk.dll.meta",
+      "bytes": 723,
+      "sha256": "96779d2724be2453c1e7e44ff733d1210912ddf20ecdecc5f5cc88c4ed58393f"
+    },
+    {
+      "path": "WebGL.meta",
+      "bytes": 172,
+      "sha256": "593d2db73aca64a2f729bdb24b3f7538a908e6e5f6288476ab423c2d04898b8d"
+    },
+    {
+      "path": "WebGL/AssemblyInfo.cs",
+      "bytes": 234,
+      "sha256": "9685fa67e2667de610228bb9d70e1b75ad6e830f012ea2067b175d71d8f3026b"
+    },
+    {
+      "path": "WebGL/AssemblyInfo.cs.meta",
+      "bytes": 243,
+      "sha256": "3b8098161778f4b7503f8f2822c35fa3d974314ef17369e41a5c6d41c81c66f8"
+    },
+    {
+      "path": "WebGL/AssetBundle.meta",
+      "bytes": 172,
+      "sha256": "d900fb79ab4978ea0e8ed3774d7f9b9eb6005764a331c6ff3a1d1e6d5ed51b91"
+    },
+    {
+      "path": "WebGL/AssetBundle/DownloadHandlerTTAssetBundle.cs",
+      "bytes": 8364,
+      "sha256": "a92caa25b9c6b2f13766978ee52e61229f1f68db8da16e08f99ac65ffb8088a4"
+    },
+    {
+      "path": "WebGL/AssetBundle/DownloadHandlerTTAssetBundle.cs.meta",
+      "bytes": 243,
+      "sha256": "84eca372546536448bcf1adedd3f783e9f68d3668df5b5b81adad8107eff49d4"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundle.cs",
+      "bytes": 6751,
+      "sha256": "0731a4e2bfd21f39f2bdca7bb5d1b22636ea58d2575a52de4fd764728ff94a94"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundle.cs.meta",
+      "bytes": 243,
+      "sha256": "b79d232205d6aba99517183be229d894cda5ebb00a9859d0ef90baf4818ae686"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleExtensions.cs",
+      "bytes": 778,
+      "sha256": "24999e4b147deed31d5583858272c68dd1e849142114d7d8f51aef846cb159a5"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleExtensions.cs.meta",
+      "bytes": 243,
+      "sha256": "d4f21b46250815e774d690e794c5195b4d41035c42ee29367d819b4e99967827"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleProviders.cs.txt",
+      "bytes": 51843,
+      "sha256": "f759595e7a3ef2fed7616e130baec30c538c8734465db6b153d5fba7bf2d5703"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleProviders.cs.txt.meta",
+      "bytes": 158,
+      "sha256": "3fa302d6c6e4798bd8fc6702a4aea59d9fef092298e8b819a0aa041588e6a2f2"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleRequest.cs",
+      "bytes": 2792,
+      "sha256": "6e9daa3dbef2bc1c8d01ec8eb65b843e7decb116791f0080032a02fdd911354a"
+    },
+    {
+      "path": "WebGL/AssetBundle/TTAssetBundleRequest.cs.meta",
+      "bytes": 243,
+      "sha256": "39bce7460d43077b3304df9edc29e143d5d6beac242ad7a8b66aa5776eec2a35"
+    },
+    {
+      "path": "WebGL/Compatibility.meta",
+      "bytes": 172,
+      "sha256": "9e30afd1feb081e81cf967f6417636b4573a36b9d98612a8e3865ce060d49f77"
+    },
+    {
+      "path": "WebGL/Compatibility/UnityCacheCompatibility.cs",
+      "bytes": 1274,
+      "sha256": "7c0bedc91ad60b9da8b7f1cb862635ee5a95b9b537e93f217f3a3e9dc4996544"
+    },
+    {
+      "path": "WebGL/Compatibility/UnityCacheCompatibility.cs.meta",
+      "bytes": 243,
+      "sha256": "3e8386c9b407c31c99b51fb49c393cfd866654e269cb68519ed79720c49eedbe"
+    },
+    {
+      "path": "WebGL/Compatibility/UnityWebRequestCompatibility.cs",
+      "bytes": 373,
+      "sha256": "d1672808c115a0c4976ef46d953544832f81b820f58d01b94eea4fc2c1405c4b"
+    },
+    {
+      "path": "WebGL/Compatibility/UnityWebRequestCompatibility.cs.meta",
+      "bytes": 243,
+      "sha256": "2d3551cabe3d3dcc66dcf6f11977855a3be951ccca3454393d6847af7c3caf1d"
+    },
+    {
+      "path": "WebGL/FileSystem.meta",
+      "bytes": 172,
+      "sha256": "9df568dbdcc2d02b763bc87d3b66ca3674569e79780318d2492b0bfb4b380321"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManager.cs",
+      "bytes": 18505,
+      "sha256": "92fa44fc4ae382ba932ec811fe579de8475fc595c23f5ade734e60ea104bca01"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManager.cs.meta",
+      "bytes": 243,
+      "sha256": "c609290750ac3d84c7583177c67081bc5ea9a845bd6f0630f8ad4e9a47e69193"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManagerDefault.cs",
+      "bytes": 36573,
+      "sha256": "a1f9138ee237a5203331e9224aa85d3f15b14ce49bb12b00571d5b6b5fd41ba4"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManagerDefault.cs.meta",
+      "bytes": 243,
+      "sha256": "af14350c42236df4939e04ed750a1892ce0a53cc29760df55ce7495cba5b3b6e"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManagerWebGL.cs",
+      "bytes": 63044,
+      "sha256": "fc424a1a39e197bec68b1bd9ea05cc1f3ede81656ffb56ffb6c321e58d83a95b"
+    },
+    {
+      "path": "WebGL/FileSystem/TTFileSystemManagerWebGL.cs.meta",
+      "bytes": 243,
+      "sha256": "090327984b56276bf026192aa92a9691d6e0012240862d3d7b8a673887fb861a"
+    },
+    {
+      "path": "WebGL/Input.meta",
+      "bytes": 172,
+      "sha256": "7dc6cd4552a648b41f6d2df0036c5ad0b101c829ef7a70f4943ee8405065b512"
+    },
+    {
+      "path": "WebGL/Input/Input.cs",
+      "bytes": 7156,
+      "sha256": "bccb1258811c41ad5ef615b3df01dd2970c0ae8992cbf7dfc753de7a7ce7290e"
+    },
+    {
+      "path": "WebGL/Input/Input.cs.meta",
+      "bytes": 243,
+      "sha256": "50007d9c353f4370e084dd1d391a4253101d77868dc9a26d4ffec31ad0ac4f68"
+    },
+    {
+      "path": "WebGL/Input/TTPCInputHandler.cs",
+      "bytes": 7946,
+      "sha256": "f157d9edd638efc50c8759478ada2367306ed699c5f4b60f2e49deab8a91598a"
+    },
+    {
+      "path": "WebGL/Input/TTPCInputHandler.cs.meta",
+      "bytes": 243,
+      "sha256": "bdf705aff9ac115ebe9c9519f46f757006e498f2e794ed5671a07866054f5360"
+    },
+    {
+      "path": "WebGL/Network.meta",
+      "bytes": 172,
+      "sha256": "f444b1aac42e2c7eb0830495dfa23fa287577d95f86a8fcc5a3d0216107cea3c"
+    },
+    {
+      "path": "WebGL/Network/TTUDPSocketHandler.cs",
+      "bytes": 6936,
+      "sha256": "fcb965f9802eba419c92fb6e712db058013d2bd984c47aaa7eeaa497f5d69642"
+    },
+    {
+      "path": "WebGL/Network/TTUDPSocketHandler.cs.meta",
+      "bytes": 243,
+      "sha256": "78cfd3bacb7310db648991cceb928b17530381da1356b4d69e656f5f0e6f006a"
+    },
+    {
+      "path": "WebGL/TTAssetBundle.jslib",
+      "bytes": 907,
+      "sha256": "8f11d702c3abb96471523329b67333afb41c6f33b4e3039eda34d2ad62051183"
+    },
+    {
+      "path": "WebGL/TTAssetBundle.jslib.meta",
+      "bytes": 604,
+      "sha256": "696aea9edbb1e6ce4443f61277b79e93ccb93324753d33369655ebb6d00a3577"
+    },
+    {
+      "path": "WebGL/TTCallbackHandler.cs",
+      "bytes": 10123,
+      "sha256": "488e4825539c9ea0ade640fbc9e002613ca8e3424927f6b19b31d7a8c40be0d9"
+    },
+    {
+      "path": "WebGL/TTCallbackHandler.cs.meta",
+      "bytes": 243,
+      "sha256": "e357fd55c6233fd31b4e6d423b2e0998fc8c028b29de0dc6d4656cf8fcd27858"
+    },
+    {
+      "path": "WebGL/TTModel.cs",
+      "bytes": 14600,
+      "sha256": "33c394d9170a8e640cc3ffbc1f1cc1a27cbf33608928268e22c6ce94286411fd"
+    },
+    {
+      "path": "WebGL/TTModel.cs.meta",
+      "bytes": 243,
+      "sha256": "fa982fecf11f638b4f7e32f9f40a7762093ed03125d412d20dcaf5da7fab13d4"
+    },
+    {
+      "path": "WebGL/TTSDK.jslib",
+      "bytes": 22847,
+      "sha256": "24a6cf155ab95786180c2aa87de72401dca616066dc7cab321dc5f5578279f79"
+    },
+    {
+      "path": "WebGL/TTSDK.jslib.meta",
+      "bytes": 604,
+      "sha256": "52a35cf9df3854ccce7e9c007db4965bad7cf0bca68d9ad7e51080f336d59dac"
+    },
+    {
+      "path": "WebGL/TTSDKFirstFrameReporter.cs",
+      "bytes": 1910,
+      "sha256": "6de712afe7156ab10b5f8ae1d26cf32a262767afd505742c73b95733629016e4"
+    },
+    {
+      "path": "WebGL/TTSDKFirstFrameReporter.cs.meta",
+      "bytes": 243,
+      "sha256": "6372255c79f54b35c51e2ae43968e59ef44fec3ac8ebe2eeeae34c7c5b1ffa29"
+    },
+    {
+      "path": "WebGL/TTSDKType.cs",
+      "bytes": 151,
+      "sha256": "69152561792f434c0777dea729e7f9e9c4e34e9d0cb2c6e30a1107a5030dd11a"
+    },
+    {
+      "path": "WebGL/TTSDKType.cs.meta",
+      "bytes": 243,
+      "sha256": "ed3bad9e0023a95dc63516088699c78032c98b2eca43e349cbb5754bcdc941f5"
+    },
+    {
+      "path": "WebGL/TTStorageManager.cs",
+      "bytes": 4307,
+      "sha256": "6ebacaa8eeca5eadf8c544731bdc398afd849b91e725dd923bcca27ecbc8a769"
+    },
+    {
+      "path": "WebGL/TTStorageManager.cs.meta",
+      "bytes": 243,
+      "sha256": "47b8b40c06ac6c513c5181642b98fa04d729bd5558e28aaff4c9e0db592fe134"
+    },
+    {
+      "path": "WebGL/TTUNBridge.jslib",
+      "bytes": 3689,
+      "sha256": "e12b0ef43b0aaaff4460481a73871fc803ac07c88e5fd3f6e5152d50f5550c93"
+    },
+    {
+      "path": "WebGL/TTUNBridge.jslib.meta",
+      "bytes": 604,
+      "sha256": "95ddbbdec34aa4e8ac53dbd6226eafb63f9ed1be5183d2d40717cc61980f2cce"
+    },
+    {
+      "path": "WebGL/TTVersionAttribute.cs",
+      "bytes": 590,
+      "sha256": "763edfc1891422007c1bd253b53b50f10cca2af9d4119d12d6fbe4eca063b2c5"
+    },
+    {
+      "path": "WebGL/TTVersionAttribute.cs.meta",
+      "bytes": 243,
+      "sha256": "f7a855b853612d0b73cb8618bb939bc2e3122c99dd6437b964f621802421b6f4"
+    },
+    {
+      "path": "WebGL/TTWebGL.asmdef",
+      "bytes": 408,
+      "sha256": "61731dfbe9fa4a1cfabb14fa66393541aa99d8ec83c817306bbb12af82f595ac"
+    },
+    {
+      "path": "WebGL/TTWebGL.asmdef.meta",
+      "bytes": 166,
+      "sha256": "701ba594e09db5fedf1a1fbfb82376a0c88b20e9927b9ae5b18e82e611db135d"
+    },
+    {
+      "path": "WebGL/TTWebGLInterface.cs",
+      "bytes": 1671,
+      "sha256": "8b75fb9471299ceef8f2bafeebd1d96c31b152ec0d282cf5653f70db8d6d27b2"
+    },
+    {
+      "path": "WebGL/TTWebGLInterface.cs.meta",
+      "bytes": 243,
+      "sha256": "fc9ce5f27f4b2ad3bc797148c206d51fcda0f92785d987a63007cb04fcba8b26"
+    }
+  ]
+}

@@ -5,7 +5,8 @@
 | 组件 | 版本基线 | 当前证据 | 尚未完成 |
 | --- | --- | --- | --- |
 | Unity 核心/Editor/HTTP | SDK 0.1.0，Unity 2022.3.14f1c1 | 独立工程编译、Editor 检查、登录与存储 Play Mode 测试 | 域重载关闭、多游戏及目标平台构建 |
-| 微信 | com.qq.weixin.minigame 0.1.23 | 本地 0.1.23 包在隔离 Unity 工程重新编译、适配加载及工厂/分享测试，无原 CS1684 警告 | 官方来源完整性、初始化、导出、后端与真机 |
+| 微信本地基线 | com.qq.weixin.minigame 0.1.23 | 隔离重编译、能力契约回归及 Unity WebGL Development Build | 包缺少转换性能库；来源完整性、官方转换、后端与真机 |
+| 微信官方固定提交 | package 0.1.1；915d4bf4f60ef0cd1c29316a8d67257185d609a7 | 干净官方 Git 克隆；独立副本编译/官方小游戏转换；登录、工厂、存储、分享、广告、初始化与字符串上报七项契约回归 | 须显式 ERDON_WECHAT_STRING_ANALYTICS，数字上报拒绝；最终平台/模块裁剪、真机及真实服务端联调 |
 | TikTok | 1.1.6-Release | Runtime/Editor DLL 登录、存储、分享入口编译，注入行为测试 | 干净官方插件集成、真机与后端联调；本机插件含旧项目宏 |
 | 抖音 | TTSDK 6.9.7 | BGDT 官方安装、真实 DLL 登录/存储/分享入口编译与注入行为测试、隔离 Unity 工程编译加载 | 初始化、目标导出、后端联调及真机 |
 | BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入、cp 模式安装 TTSDK 6.9.7 | 导出构建链路 |
@@ -40,3 +41,11 @@
 v2 快照覆盖包目录全部文件；v1 历史快照仅覆盖当时选取的文件。比较器拒绝混用 v1/v2，需要用同一导出器重新抓取升级前后两份包。报告不是 API 语义分析，也不判断升级是否兼容；结果固定 `compatibility=not-assessed`。版本号没变化或 changedFileCount=0 都不是免测条件。工具不会安装/降级 SDK 或修改工程。测试 `tests/run-inventory-tests.ps1` 已并入公共测试入口。
 
 导出报告必须放在 SDK 包目录之外，以免报告本身参与下一次哈希。全文件哈希仍不证明来源完整性、外部依赖版本或服务端兼容性。
+
+## 微信官方提交回归
+
+来源：[官方仓库固定提交](https://github.com/wechat-miniprogram/minigame-tuanjie-transform-sdk/tree/915d4bf4f60ef0cd1c29316a8d67257185d609a7)。克隆原件保持干净，转换使用另一个完整副本，因为转换器会调整插件导入设置。0.1.1 与本地0.1.23是不同分发基线，不能按版本号推断兼容性。
+
+运行 `tests/run-wechat-official-tests.ps1 -OfficialPackagePath <该官方包> -CompiledWxAssembly <同一包在Unity中编译的Wx.dll>`。脚本显式启用字符串上报分支并使用真实 WX 类型编译七套契约测试。登录失败 DTO 在此提交为 LoginFailCallbackErr，本地0.1.23为 RequestFailCallbackErr；生产适配使用类型推断，测试分别实例化实际 DTO。初始化200等返回码测试是注入行为，不能充当实际宿主初始化成功证据。
+
+脚本版本检查只校验包标识，不能证明传入目录来源。执行前应核对固定 Git 提交与原件清洁状态，并确保 Wx.dll 来自同一工程；不可用另一个版本的缓存程序集混测。结果仅支持已列明范围，不代表支付、真机或所有官方 API 均受支持。

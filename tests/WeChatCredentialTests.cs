@@ -2,9 +2,16 @@ using System;
 using ErDon.UnitySDK;
 using ErDon.UnitySDK.WeChat;
 using WeChatWASM;
+#if ERDON_WECHAT_STRING_ANALYTICS
+using LoginFailure = WeChatWASM.LoginFailCallbackErr;
+#else
+using LoginFailure = WeChatWASM.RequestFailCallbackErr;
+#endif
 
 // WX's dispatch entry is stubbed; callback DTOs come from the actual pinned official DLL.
+#if !ERDON_WECHAT_REAL_WX
 namespace WeChatWASM { public class WX { public static void Login(LoginOption option) { throw new NotSupportedException(); } } }
+#endif
 class WeChatCredentialTests
 {
     static void Check(bool value, string message) { if (!value) throw new Exception(message); }
@@ -19,13 +26,13 @@ class WeChatCredentialTests
         provider.GetCredential(capture);
         Check(pending.timeout == 4321, "Timeout forwarded");
         pending.success(new LoginSuccessCallbackResult { code="secret-code" });
-        pending.fail(new RequestFailCallbackErr());
+        pending.fail(new LoginFailure());
         Check(calls==1 && credential.Code=="secret-code" && credential.Platform=="WeChat" && error==null, "First callback wins");
         provider.GetCredential(capture);
         pending.success(new LoginSuccessCallbackResult { code=" " });
         Check(error.Code=="AUTH.INVALID_CREDENTIAL" && credential==null, "Empty credential rejected");
         provider.GetCredential(capture);
-        pending.fail(new RequestFailCallbackErr { errno=123, errMsg="secret-code" });
+        pending.fail(new LoginFailure { errno=123, errMsg="secret-code" });
         Check(error.Code=="AUTH.PLATFORM_FAILED" && error.PlatformCode=="123" && error.PlatformMessage==null, "Numeric diagnosis without raw credential leak");
         provider.GetCredential(capture);
         provider.Dispose();

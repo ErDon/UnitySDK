@@ -125,6 +125,10 @@
 
 ## 2026-11-23 执行记录
 
+### 微信官方包七项契约回归
+
+新增 run-wechat-official-tests.ps1，使用固定提交915d4bf的完整官方插件及同包Unity编译Wx.dll，显式启用字符串上报分支；登录测试不再用WX入口替身，改为编译真实WX入口（行为仍注入）。发现新版本失败DTO为LoginFailCallbackErr，旧版本为RequestFailCallbackErr，按测试基线选用实际类型。七项凭证/工厂/存储/分享/广告/初始化/字符串上报回归全部通过；旧0.1.23登录回归也通过。官方克隆git status为空。兼容矩阵拆分本地和官方提交，明确来源、构建/转换证据与最终裁剪/真机待验范围；没有把注入初始化成功码视为真实初始化证明。
+
 ### 微信官方字符串上报兼容与转换通过
 
 新增 ERDON_WECHAT_STRING_ANALYTICS 显式编译选项，适配官方固定提交915d4bf的字符串字典上报签名；数值参数返回 ANALYTICS.PARAMETER_TYPE_UNSUPPORTED，零平台派发，不偷偷转成文本。原本地0.1.23仍用泛型路径。新专项使用官方 Wx.dll 编译并验证数字拒绝、字符串/空事件、快照及释放，WECHAT_STRING_ANALYTICS_PASS；旧基线工厂/上报/广告/初始化四项回归继续通过。

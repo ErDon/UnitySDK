@@ -36,7 +36,7 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("真实平台构建依赖与产物验收尚未完成；当前不允许真实平台构建。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (analytics || (network && platform != DistributionPlatform.Mock && platform != DistributionPlatform.WeChat))
+            if (analytics)
                 issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享、广告、网络和支付示例。");
             return issues;
         }
@@ -70,7 +70,7 @@ namespace ErDon.UnitySDK.Editor
             settings.payments = EditorGUILayout.Toggle("支付（Editor Mock）", settings.payments);
             settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
-            settings.network = EditorGUILayout.Toggle("网络（Mock / 微信）", settings.network);
+            settings.network = EditorGUILayout.Toggle("网络（可选通信工厂）", settings.network);
             settings.analytics = EditorGUILayout.Toggle("数据上报（待实现）", settings.analytics);
             if (EditorGUI.EndChangeCheck()) settings.SaveSettings();
             EditorGUILayout.Space();
@@ -97,7 +97,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("真实平台启动（仅 Play Mode）", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("需安装对应官方 SDK 和适配包并启用平台宏。这里只启动平台，不展示广告或发起支付；Editor 能力取决于官方 SDK。构建阻断仍生效。", MessageType.Info);
-            EditorGUILayout.LabelField("网络工厂", EditorPlatformBootstrap.NetworkFactory == null ? "未注入（微信网络开启时需要）" : "已注入");
+            EditorGUILayout.LabelField("网络工厂", EditorPlatformBootstrap.NetworkFactory == null ? "未注入（真实平台网络开启时需要）" : "已注入");
             EditorGUILayout.LabelField("登录后端工厂", EditorPlatformBootstrap.SessionExchangeFactory == null ? "未注入（关闭登录可测试启动）" : "已注入");
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.platform == DistributionPlatform.Mock)) {
                 if (GUILayout.Button("按配置启动平台 SDK")) {

@@ -6,7 +6,8 @@ class PlatformRegistryTests {
   public void Initialize(Action<SdkError> cb){Starts++;IsReady=true;cb(null);}public void Dispose(){Disposes++;}
  }
  sealed class Factory:IPlatformSdkProviderFactory {
-  public string Platform{get{return "WeChat";}}
+  public string Platform{get;set;}
+  public Factory(){Platform="WeChat";}
   public IAuth CreateAuth(Action<Action> post){throw new Exception("login should remain disabled");}
   public IStorage CreateStorage(){throw new Exception("storage should remain disabled");}
  }
@@ -40,6 +41,15 @@ class PlatformRegistryTests {
   Check(done&&networkCreated==1,"configured network created once");SDK.Shutdown();Check(transport.Disposes==1,"SDK owns injected transport");
   data.network=false;var disabledStartup=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,createNetwork:()=>{throw new Exception("disabled transport constructed");});
   disabledStartup.Start();disabledStartup.Tick();Check(done,"disabled network does not invoke constructor");SDK.Shutdown();SdkPlatformRegistry.Reset();
+  foreach(var target in new[]{"Douyin","TikTok"}){
+   data.platform=target;data.network=true;done=false;var platformTransport=new Network();
+   SdkPlatformRegistry.Register(target,()=>new Runtime{Platform=target},(g,e,x)=>new Factory{Platform=target});
+   Reject(()=>create(),"CONFIG.NETWORK_PROVIDER_REQUIRED");
+   using(var platformStartup=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,createNetwork:()=>platformTransport)){
+    platformStartup.Start();platformStartup.Tick();Check(done&&SDK.ActivePlatform==target,"network preserves platform identity");
+   }
+   SDK.Shutdown();Check(platformTransport.Disposes==1,"platform transport ownership");SdkPlatformRegistry.Reset();
+  }
   Console.WriteLine("PASS: configured platform selection, preflight, snapshot, ownership and session reset");
  }
 }

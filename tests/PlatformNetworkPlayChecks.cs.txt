@@ -1,0 +1,30 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class PlatformNetworkPlayChecks {
+ const string Key="ErDon.Tests.PlatformNetwork";
+ static PlatformNetworkPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+ public static void RunDouyin(){SessionState.SetString(Key,"Douyin");EditorApplication.isPlaying=true;}
+ static void Changed(PlayModeStateChange state){
+  string platform=SessionState.GetString(Key,"");
+  if(state!=PlayModeStateChange.EnteredPlayMode||platform=="")return;
+  SessionState.SetString(Key,"");
+  try {
+   UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false},null);
+   var host=UnityEngine.Object.FindObjectOfType<UnitySdkHost>();
+   var type=Type.GetType("ErDon.UnitySDK.UnityNetwork, ErDon.UnitySDK.Transport.Http");
+   if(type==null||!typeof(INetwork).IsAssignableFrom(type))throw new Exception("Optional HTTP provider not loaded");
+   // Validate provider construction without sending a request or invoking vendor initialization.
+   using(var provider=(INetwork)Activator.CreateInstance(type,new object[]{host})){}
+   int created=0;
+   var config=new SdkRuntimeConfiguration{platform=platform,gameId="test-game",appId="test-app",login=false,network=true};
+   using(var startup=SdkPlatformRegistry.CreateStartup(config,null,a=>a(),(l,s)=>{},r=>{},
+    createNetwork:()=>{created++;return (INetwork)Activator.CreateInstance(type,new object[]{host});})){}
+   if(created!=0)throw new Exception("Network constructed before platform readiness");
+   UnitySdkHost.Shutdown();Debug.Log("SDK_PLATFORM_NETWORK_PASS: "+platform);EditorApplication.Exit(0);
+  }catch(Exception e){Debug.LogError("SDK_PLATFORM_NETWORK_FAIL: "+e.Message);EditorApplication.Exit(1);}
+ }
+}
+

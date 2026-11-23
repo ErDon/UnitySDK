@@ -117,3 +117,9 @@ UnitySdkHost.BeginStartup(
 - ttsdk-editor.dll：`3C9CA4A76EA625D6445F25DAAA3679AC9B5BBA69EA69E0E35759B21351C645F1`
 
 `tests/run-tiktok-tests.ps1` 包含两套 DLL 的初始化签名编译和注入返回码测试。干净插件工程加载与真实客户端初始化仍待验收。
+
+## 可选网络通信工厂
+
+运行时配置 network=true 时，向 UnitySdkHost.BeginConfiguredStartup 传入 `createNetwork: () => new UnityNetwork(this)`，其中 this 是游戏持久 MonoBehaviour。需要额外安装 com.erdon.unitysdk.transport.http；平台适配包本身不依赖该包。登录关闭可只验证网络启动路径。未传工厂返回 CONFIG.NETWORK_PROVIDER_REQUIRED；工厂直到平台就绪才会调用，SDK 负责释放实例。
+
+本地 1.1.6-Release 包包含 WebGL/Compatibility/UnityWebRequestCompatibility.cs，使用 UnityWebRequest 的兼容方法。本实现复用 UnityWebRequest，而不把其他平台的请求 DTO 套入 TTSDK。配置映射和平台身份/所有权测试已通过；具体小游戏网络栈的 HTTP 方法、取消、超时、响应头、重定向、二进制及接收限额仍需平台验证。TikTok 本地插件含定制的来源边界仍然适用。

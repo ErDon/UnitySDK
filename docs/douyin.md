@@ -118,3 +118,9 @@ void BeginDouyinStartup()
 Dispose 只释放桥接自身并抑制迟到回调，不声称销毁或回滚官方 SDK。调用方必须在主线程使用并安排回调到主线程。此底层桥接尚未接入统一启动超时、日志 CallId 或面板自动启动；不能用它替代完整启动编排。官方不回调时会保持等待，不能据此开启业务。真机环境和 ContainerEnv 对不同宿主的意义仍待验收。
 
 run-douyin-tests.ps1 验证实际方法入口编译与注入状态码，覆盖成功/版本失败/未知码、首次回调、并发拒绝、重复成功、释放后迟到回调和异常脱敏；不是实际宿主初始化测试。
+
+## 可选网络通信工厂
+
+运行时配置 network=true 时，向 UnitySdkHost.BeginConfiguredStartup 传入 `createNetwork: () => new UnityNetwork(this)`，其中 this 是游戏持久 MonoBehaviour。需要额外安装 com.erdon.unitysdk.transport.http；平台适配包本身不依赖该包。登录关闭可只验证网络启动路径。未传工厂返回 CONFIG.NETWORK_PROVIDER_REQUIRED；工厂直到平台就绪才会调用，SDK 负责释放实例。
+
+本地 6.9.7 包包含 WebGL/Compatibility/UnityWebRequestCompatibility.cs，使用 UnityWebRequest 的兼容方法。本实现复用 UnityWebRequest，而不把其他平台的请求 DTO 套入 TTSDK。配置映射和平台身份/所有权测试已通过；具体小游戏网络栈的 HTTP 方法、取消、超时、响应头、重定向、二进制及接收限额仍需平台验证。TikTok 本地插件含定制的来源边界仍然适用。

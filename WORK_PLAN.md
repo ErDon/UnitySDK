@@ -55,7 +55,8 @@
 - [x] 网络 Mock 配置工厂/面板接入与 Play Mode 验证。
 - [x] 微信可选网络工厂配置装配；平台就绪后按需创建及缺工厂预检。
 - [x] Unity Editor 实际 HTTPS GET/HEAD 响应及接收限额检查。
-- [ ] 抖音/TikTok 网络工厂与小游戏平台网络验证。
+- [x] 抖音/TikTok 可选网络工厂配置接入及平台身份、所有权测试。
+- [ ] 三平台小游戏网络行为与 TikTok 干净插件工程验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -516,3 +517,10 @@ network-mock-editor.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0；�
 新增 NetworkHttpsPlayChecks，以不携带凭证的 https://example.com/ 为基线。实际通过 SDK.Request -> UnityNetwork -> UnityWebRequest 验证 GET 200、Content-Type 响应头及非空正文，1 字节限额触发 NETWORK.RESPONSE_TOO_LARGE，HEAD 200 正文为空。
 
 network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修改证书信任、代理或跳过 TLS 校验；测试只用于联网集成验证，不纳入离线公共回归。此证据限于 Unity Editor，不替代三平台开发工具/真机网络兼容、业务服务授权及支付接口测试。
+
+### 抖音与 TikTok 可选网络装配
+
+核对本地包均含 UnityWebRequestCompatibility，抖音另有 TTRequest 原生接口。当前配置沿用可选 INetwork 工厂，不引入平台 DTO，避免在公共核心依赖 TTSDK。network 对首批三平台放行，但必须显式注入通信工厂；支付/数据上报等未完成项的校验保持。
+
+公共回归通过，新增抖音/TikTok 网络配置映射、缺工厂预检、平台身份保留与 provider 单次释放验证。实际小游戏网络调用仍待真机，配置装配不作为网络兼容认证。
+隔离抖音工程加入可选 HTTP 包后，douyin-network-confirm.log 无 C# 错误，输出 SDK_PLATFORM_NETWORK_PASS: Douyin。检查实际 provider 构造和真实平台注册的配置解析，未执行平台初始化或 HTTP 请求。首轮测试的反射调用因 Unity 对象隐式 bool 选错重载，已改为显式 object[] 参数后通过。

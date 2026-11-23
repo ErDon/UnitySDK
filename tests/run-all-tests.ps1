@@ -3,6 +3,10 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\FactoryTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\tests\FactoryTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Factory compile failed'}
+    & .\.tests\FactoryTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Factory tests failed'}
     & $compiler /nologo /out:.tests\DouyinCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinCredentialProvider.cs .\tests\DouyinCredentialTests.cs
     if($LASTEXITCODE -ne 0){throw 'Douyin documented-contract compile failed'}
     & .\.tests\DouyinCredentialTests.exe

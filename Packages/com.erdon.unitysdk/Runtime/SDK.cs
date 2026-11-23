@@ -73,6 +73,12 @@ namespace ErDon.UnitySDK
         public bool StorageEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
+    public interface ISdkProviderFactory
+    {
+        // Return fresh instances. The SDK owns providers after successful creation.
+        IAuth CreateAuth(Action<Action> mainThreadDispatch);
+        IStorage CreateStorage();
+    }
     // Internal composition keeps provider selection out of game-facing calls.
     public static class SDK
     {
@@ -88,6 +94,42 @@ namespace ErDon.UnitySDK
         static bool changingLifecycle;
         static bool callingStorage;
         [ThreadStatic] static bool writingLog;
+        public static void InitializeWithFactory(SdkConfig settings, ISdkProviderFactory factory,
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog)
+        {
+            EnsureNotLogging();
+            if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
+            var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
+                StorageEnabled = settings.StorageEnabled, LogCallback = settings.LogCallback };
+            IAuth createdAuth = null;
+            IStorage createdStorage = null;
+            changingLifecycle = true;
+            try {
+                if (snapshot.LoginEnabled) {
+                    createdAuth = factory.CreateAuth(mainThreadDispatch);
+                    if (createdAuth == null) throw new InvalidOperationException("Enabled login has no provider");
+                    if (ReferenceEquals(createdAuth, auth) || ReferenceEquals(createdAuth, storage))
+                        throw new InvalidOperationException("Factory must return a fresh provider");
+                }
+                if (snapshot.StorageEnabled) {
+                    createdStorage = factory.CreateStorage();
+                    if (createdStorage == null) throw new InvalidOperationException("Enabled storage has no provider");
+                    if (ReferenceEquals(createdStorage, auth) || ReferenceEquals(createdStorage, storage))
+                        throw new InvalidOperationException("Factory must return a fresh provider");
+                }
+            } catch {
+                // Only roll back this attempt. Never dispose a provider belonging to the active SDK.
+                DisposeUnowned(createdAuth);
+                if (!ReferenceEquals(createdStorage, createdAuth)) DisposeUnowned(createdStorage);
+                throw;
+            } finally { changingLifecycle = false; }
+            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage);
+        }
+        static void DisposeUnowned(IDisposable provider)
+        {
+            if (provider == null || ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage)) return;
+            try { provider.Dispose(); } catch { /* Preserve the original factory failure. */ }
+        }
         public static void Initialize(SdkConfig settings, IAuth provider,
             Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null)
         {

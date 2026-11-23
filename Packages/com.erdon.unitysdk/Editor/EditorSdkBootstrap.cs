@@ -24,15 +24,22 @@ namespace ErDon.UnitySDK.Editor
     }
     public static class EditorSdkBootstrap
     {
+        sealed class MockFactory : ISdkProviderFactory
+        {
+            readonly MockLoginOutcome outcome;
+            public MockFactory(MockLoginOutcome outcome) { this.outcome = outcome; }
+            public IAuth CreateAuth(Action<Action> post) { return new EditorMockAuth(outcome); }
+            public IStorage CreateStorage() { return new EditorMockStorage(); }
+        }
         public static void Initialize(MockLoginOutcome outcome, Action<SdkLogLevel, string> logger = null)
         {
             var settings = SdkProjectSettings.instance;
             var issues = settings.Validate();
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
-            UnitySdkHost.Initialize(new SdkConfig {
+            UnitySdkHost.InitializeWithFactory(new SdkConfig {
                 Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, LogCallback = logger
-            }, settings.login ? new EditorMockAuth(outcome) : null, settings.storage ? new EditorMockStorage() : null);
+            }, new MockFactory(outcome));
         }
     }
     public sealed class EditorMockStorage : IStorage

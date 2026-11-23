@@ -7,15 +7,24 @@ namespace ErDon.UnitySDK
     {
         readonly ConcurrentQueue<Action> queue = new ConcurrentQueue<Action>();
         static UnitySdkHost instance;
+        public static void InitializeWithFactory(SdkConfig config, ISdkProviderFactory factory)
+        {
+            var host = GetOrCreate();
+            SDK.InitializeWithFactory(config, factory, a => host.queue.Enqueue(a), WriteLog);
+        }
         public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null)
+        {
+            var host = GetOrCreate();
+            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider);
+        }
+        static UnitySdkHost GetOrCreate()
         {
             if (instance == null) {
                 var go = new GameObject("ErDon SDK");
                 instance = go.AddComponent<UnitySdkHost>();
                 DontDestroyOnLoad(go);
             }
-            var host = instance;
-            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider);
+            return instance;
         }
         static void WriteLog(SdkLogLevel level, string message)
         {

@@ -152,3 +152,9 @@ Unity 2022.3 独立工程编译及 Editor 检查输出 SDK_EDITOR_CHECKS_PASS，
 官方文档恢复可访问后，核对 Minis OAuth 与 Unity Login 协议，实现独立 TikTok 验证器并接入启动器受信绑定。固定表单 POST，无网页 redirect_uri/code_verifier；测试包含特殊字符 code、错误响应、超限、脱敏和游戏会话隔离。22 项后端测试通过。身份校验不保存平台令牌，尚不支持后续支付授权；真实平台闭环仍待验收。
 
 HTTP 客户端 Retry-After 改动经独立 Unity 2022.3 工程编译与 Editor 检查通过，日志 retry-unity.log，退出码 0。
+
+### 按能力配置创建与失败回收
+
+增加 ISdkProviderFactory、SDK.InitializeWithFactory 及 UnitySdkHost 对应入口，未启用模块不创建 provider。创建失败回收本次对象，旧实例继续服务；拒绝复用旧 provider 与创建阶段重入。配置复制后再创建，避免工厂改变开关影响本次装配。Editor Mock 初始化改用该入口。
+
+公共 C# 回归及新工厂行为测试通过；独立 Unity Play Mode 输出 SDK_PLAY_CHECKS_PASS（factory-play.log），覆盖配置预览初始化与登录/存储开关。尚未完成真实平台自动初始化、配置生成或裁剪验收。

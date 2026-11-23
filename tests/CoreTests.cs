@@ -16,7 +16,7 @@ class Tests
         p.Pending(LoginResult.Ok("SECRET")); p.Pending(LoginResult.Ok("SECRET"));
         Check(calls==1,"duplicate completion");
         Check(!string.Join("",logs).Contains("SECRET"),"credential leak");
-        Check(logs[1].Contains("callId=") && logs[1].Contains("params={timeoutMilliseconds:"),"log fields");
+        Check(logs[1].Contains("callId=") && logs[1].Contains("timeoutMilliseconds"),"log fields");
         SDK.Login(r=>calls++); SDK.Shutdown(); p.Pending(LoginResult.Ok("SECRET"));
         Check(calls==1,"stale completion");
         int fallback=0;
@@ -40,6 +40,15 @@ class Tests
         SDK.Login(r=>{throw new Exception("SECRET");},1000);
         pending.Pending(LoginResult.Ok("SECRET"));
         while(queue.TryDequeue(out job)) job();
+        SDK.Shutdown();
+        var original = new SdkError("AUTH.PERMISSION_DENIED", "Denied", "42", "Sanitized denial");
+        SDK.Initialize(new SdkConfig(), pending, a=>queue.Enqueue(a), (l,s)=>logs.Add(s));
+        LoginResult failure=null;
+        SDK.Login(r=>failure=r);
+        pending.Pending(LoginResult.Fail(original));
+        while(queue.TryDequeue(out job)) job();
+        Check(failure.CallId==original.CallId && original.Operation=="SDK.Login" && original.PlatformCode=="42", "error correlation");
+        Check(logs[logs.Count-1].Contains(failure.CallId),"log correlation");
         SDK.Shutdown();
         Console.WriteLine("PASS: cancellation, timeout, user callback exception; duplicate/stale callback, credential redaction, log fields, fallback, disabled, uninitialized");
     }

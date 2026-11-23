@@ -14,7 +14,8 @@ namespace ErDon.UnitySDK
                 instance = go.AddComponent<UnitySdkHost>();
                 DontDestroyOnLoad(go);
             }
-            SDK.Initialize(config, provider, a => instance.queue.Enqueue(a), WriteLog);
+            var host = instance;
+            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog);
         }
         static void WriteLog(SdkLogLevel level, string message)
         {

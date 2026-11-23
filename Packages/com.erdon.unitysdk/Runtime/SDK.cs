@@ -9,6 +9,13 @@ namespace ErDon.UnitySDK
     {
         public string Code { get; private set; }
         public string Reason { get; private set; }
+        public string Operation { get; internal set; }
+        public string Stage { get; internal set; }
+        public string CallId { get; internal set; }
+        public string PlatformCode { get; private set; }
+        public string PlatformMessage { get; private set; }
+        public SdkError(string code, string reason, string platformCode, string sanitizedPlatformMessage)
+            : this(code, reason) { PlatformCode = platformCode; PlatformMessage = sanitizedPlatformMessage; }
         public SdkError(string code, string reason) { Code = code; Reason = reason; }
     }
     public sealed class LoginResult
@@ -16,6 +23,8 @@ namespace ErDon.UnitySDK
         public bool Success { get { return Error == null; } }
         public string Session { get; private set; }
         public SdkError Error { get; private set; }
+        public string CallId { get; internal set; }
+        public static LoginResult Fail(SdkError error) { if (error == null) throw new ArgumentNullException("error"); return new LoginResult { Error = error }; }
         public static LoginResult Ok(string session) { return new LoginResult { Session = session }; }
         public static LoginResult Fail(string code, string reason) { return new LoginResult { Error = new SdkError(code, reason) }; }
     }
@@ -78,7 +87,7 @@ namespace ErDon.UnitySDK
             if (callback == null) throw new ArgumentNullException("callback");
             if (config == null) { FinishImmediate(callback, Guid.NewGuid().ToString("N"), "SDK.NOT_INITIALIZED"); return; }
             string call = Guid.NewGuid().ToString("N");
-            Log(SdkLogLevel.Info, "SDK.Login", call, "Start", "{timeoutMilliseconds:" + timeoutMilliseconds + "}", "Pending");
+            Log(SdkLogLevel.Info, "SDK.Login", call, "Start", "{\"timeoutMilliseconds\":" + timeoutMilliseconds + "}", "Pending");
             if (!config.LoginEnabled) { FinishImmediate(callback, call, "MODULE.DISABLED"); return; }
             if (auth == null) { FinishImmediate(callback, call, "CAPABILITY.NOT_SUPPORTED"); return; }
             if (busy) { FinishImmediate(callback, call, "AUTH.IN_PROGRESS"); return; }
@@ -110,6 +119,12 @@ namespace ErDon.UnitySDK
         }
         static void InvokeCallback(Action<LoginResult> callback, LoginResult result, string call)
         {
+            result.CallId = call;
+            if (result.Error != null) {
+                result.Error.CallId = call;
+                result.Error.Operation = "SDK.Login";
+                if (result.Error.Stage == null) result.Error.Stage = "Login";
+            }
             try { callback(result); }
             catch { Log(SdkLogLevel.Error, "SDK.Login", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
         }

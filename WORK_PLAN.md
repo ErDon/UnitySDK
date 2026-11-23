@@ -24,3 +24,11 @@
 已补默认15秒超时、自定义超时、CancelLogin、首个完成信号胜出、迟到回调忽略、用户回调异常隔离、日志重入阻断及释放日志。Unity Update 驱动超时，不依赖后台计时线程。新增取消/超时/回调异常测试通过，原核心测试回归通过。
 
 仍待 Unity 实际导入、完整错误字段和配置/裁剪系统；不宣称完成第一阶段验收或真机验证。
+
+### 第一阶段增量：Unity 导入与错误关联
+
+已增加 LoginResult/Error 的 CallId、操作、阶段及平台原始诊断字段，新增错误与日志关联测试。修复 Unity 回调调度捕获可变静态宿主的问题。空白 Unity 2022.3.14f1c1 工程通过本地 UPM 依赖导入 SDK，生成 ErDon.UnitySDK.dll。最终增量与 Mock 示例进行批处理编译验证；不是 PlayMode 或真机功能验证。
+
+剩余：完整重试策略/traceId、运行模式生命周期回归，随后配置面板与构建裁剪。
+
+最终验证结果：SDK 与 MockLoginExample 在空白 Unity 工程批处理编译通过，分别生成 ErDon.UnitySDK.dll 与 Assembly-CSharp.dll，无 C# 编译错误。首个验证进程在退出阶段停留导致第二次启动工程占用，结束本任务的验证进程后重试成功。可用 tests/run-core-tests.ps1 重跑核心测试。未进行 PlayMode 与真机测试。

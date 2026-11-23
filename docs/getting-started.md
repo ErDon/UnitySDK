@@ -13,3 +13,9 @@
 ��֤��tests/CoreTests.cs �����ⲿ�����ĺ�����Ϊ���ԣ��� SDK.cs һ�����ִ�С������ظ��͹��ڻص���ƾ�ݲ�д��־����־�ֶΡ���־�ص��쳣��ģ��رռ�δ��ʼ���������� Unity �������ʵƽ̨��֤��
 
 ��־�ص�ֻ���ڽ������������������ SDK �ĳ�ʼ������¼��ȡ�����ͷŻ� Tick������ᴥ��Ĭ����־���ˡ���Ϸ��ɻص������ٴη����¼���ص����쳣�����벢��¼ CALLBACK.EXCEPTION�������ԭ�쳣���ݡ�
+
+### 错误关联字段（已实现）
+
+LoginResult.CallId 由 SDK 在派发时填写，与该调用日志一致。失败时 Error 包含 Code、Reason、Operation、Stage、CallId、PlatformCode、PlatformMessage；适配器必须只提交已脱敏的 PlatformMessage。当前 Stage 默认 Login，后续真实适配细化为授权/凭证交换等阶段。平台原始内容不自动写入日志，避免第三方异常携带凭据。
+
+创建失败：`LoginResult.Fail(new SdkError("AUTH.PERMISSION_DENIED", "授权被拒绝", "原始码", "脱敏说明"))`。游戏根据 Code 判断业务，不解析 PlatformMessage。未知错误不推断账号封禁或地区限制。完整重试策略与 traceId 尚待实现。

@@ -125,6 +125,12 @@
 
 ## 2026-11-23 执行记录
 
+### 修复平台自动注册被链接器裁剪
+
+实际检查官方转换的 ManagedStripped 发现 ErDon.UnitySDK.WeChat 缺失，虽然构建前 Player 程序集列表包含该程序集；此前“构建/转换成功”不能证明注册入口保留。为三个平台注册文件加入 AlwaysLinkAssembly，确保只引用核心注册表的游戏也让链接器处理平台 RuntimeInitializeOnLoadMethod。该标记不会导入未参与编译的平台，也不等于保留所有代码。
+
+微信重新执行开发构建，wechat-linker-registration.log 显示成功与exit0。新增 tools/check-linked-platform.ps1/CheckLinkedPlatform.cs，使用Cecil读取链接后元数据，确认微信适配器与带启动属性/方法体的Register保留，拒绝其他ErDon平台程序集/引用和Editor SDK。实际微信结果通过；错目标与空目录拒绝测试通过。随后官方转换输出到新的时间戳目录，wechat-conversion-linked.log出现SDK_WECHAT_CONVERSION_FILES_PASS，exit0，本次ManagedStripped检查再次通过。抖音/TikTok标记尚未经过各自实际构建，不沿用微信证据。最终JS/Wasm/官方资源完整隔离与真机仍待验收。
+
 ### 微信官方包七项契约回归
 
 新增 run-wechat-official-tests.ps1，使用固定提交915d4bf的完整官方插件及同包Unity编译Wx.dll，显式启用字符串上报分支；登录测试不再用WX入口替身，改为编译真实WX入口（行为仍注入）。发现新版本失败DTO为LoginFailCallbackErr，旧版本为RequestFailCallbackErr，按测试基线选用实际类型。七项凭证/工厂/存储/分享/广告/初始化/字符串上报回归全部通过；旧0.1.23登录回归也通过。官方克隆git status为空。兼容矩阵拆分本地和官方提交，明确来源、构建/转换证据与最终裁剪/真机待验范围；没有把注入初始化成功码视为真实初始化证明。

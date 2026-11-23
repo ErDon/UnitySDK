@@ -6,7 +6,8 @@ using WeChatWASM;
 public static class WeChatDevelopmentConversion {
  public static void Run() {
   var root=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
-  var output=Path.GetFullPath(Path.Combine(root,"Builds/WeChatConversion"));
+  var relativeOutput="Builds/WeChatConversion-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+  var output=Path.GetFullPath(Path.Combine(root,relativeOutput));
   if(!output.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new Exception("Output outside test project");
   if(Directory.Exists(output))throw new Exception("Use a fresh conversion output directory");
   foreach(var plugin in new[]{"WxPerfJsBridge.jslib","wx_perf_2022.a","wx_perf_2021.a"}) {
@@ -23,12 +24,12 @@ public static class WeChatDevelopmentConversion {
   config.CompileOptions.DeleteStreamingAssets=false;
   var serialized=new SerializedObject(config);
   var relative=serialized.FindProperty("ProjectConf.relativeDST");
-  if(relative!=null){relative.stringValue="Builds/WeChatConversion";serialized.ApplyModifiedPropertiesWithoutUndo();}
+  if(relative!=null){relative.stringValue=relativeOutput;serialized.ApplyModifiedPropertiesWithoutUndo();}
   EditorUtility.SetDirty(config);AssetDatabase.SaveAssets();
   var result=WXConvertCore.DoExport(true);
   if(result!=WXConvertCore.WXExportError.SUCCEED)throw new Exception("Official conversion failed: "+result);
   foreach(var file in new[]{"game.js","game.json","project.config.json"})
    if(!File.Exists(Path.Combine(output,"minigame",file)))throw new Exception("Missing conversion output: "+file);
-  Debug.Log("SDK_WECHAT_CONVERSION_FILES_PASS");
+  Debug.Log("SDK_WECHAT_CONVERSION_FILES_PASS output="+output);
  }
 }

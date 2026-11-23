@@ -22,7 +22,7 @@ SdkProjectSettings 必须位于同名脚本文件，以便 Unity 保存稳定脚
 
 ## 官方转换验证进展
 
-`tests/WeChatDevelopmentConversion.cs.txt` 是隔离工程的官方转换探针，复制到 `Assets/Editor/WeChatDevelopmentConversion.cs` 后执行 `WeChatDevelopmentConversion.Run`。转换器会修改官方插件导入设置，必须先复制完整官方包并将隔离工程 manifest 指向副本，不得直接指向游戏项目正在使用的包。输出目录 `Builds/WeChatConversion` 必须尚不存在；脚本不删除旧产物。占位 App ID 只用于构建，不用于上传或设备验收。
+`tests/WeChatDevelopmentConversion.cs.txt` 是隔离工程的官方转换探针，复制到 `Assets/Editor/WeChatDevelopmentConversion.cs` 后执行 `WeChatDevelopmentConversion.Run`。转换器会修改官方插件导入设置，必须先复制完整官方包并将隔离工程 manifest 指向副本，不得直接指向游戏项目正在使用的包。输出目录为 `Builds/WeChatConversion-UTC时间戳`，必须尚不存在；脚本不删除旧产物。占位 App ID 只用于构建，不用于上传或设备验收。
 
 本地 0.1.23 包缺少 `wx_perf_2022.a` 和 `wx_perf_2021.a`，实际调用在 `ProcessWxPerfBinaries` 空引用失败。探针增加这两个文件及桥接导入器的前置诊断，避免继续报告难定位的空引用。
 
@@ -31,3 +31,17 @@ SdkProjectSettings 必须位于同名脚本文件，以便 Unity 保存稳定脚
 新版本转换配置还需要 `ProjectConf.relativeDST`，探针通过 SerializedObject 在字段存在时写入隔离相对目录，同时保留绝对 DST；旧版本无该字段时不写入。
 
 启用上述接口兼容宏并配置 relativeDST 后，固定提交915d4bf已完成官方开发构建及转换，输出 SDK_WECHAT_CONVERSION_FILES_PASS，正常退出码0；game.json和project.config.json可解析。此证据不包含最终隔离审计、小游戏启动或真机功能。
+
+## 链接后验证自动注册
+
+构建前发现适配器程序集不保证其在 IL2CPP 链接后仍存在。游戏仅调用核心注册表时，平台包需要 `[assembly: UnityEngine.Scripting.AlwaysLinkAssembly]`，以便链接器处理 `RuntimeInitializeOnLoadMethod` 自动注册入口。该标记不会把未参与编译的平台包加入构建，也不是保留全部类型的 link.xml。
+
+构建完成后执行：
+
+```powershell
+./tools/check-linked-platform.ps1 -ManagedDirectory '<隔离工程>/Library/Bee/artifacts/WebGL/ManagedStripped' -Platform WeChat
+```
+
+工具读取程序集元数据，不执行其代码；检查目标适配器、带 Unity 启动标记和方法体的注册入口，并拒绝其他 ErDon 平台适配器及引用、Editor SDK。目录必须来自本次构建；空目录不会通过。它不检查全部官方二进制、合并后的 JS/Wasm 或资源，不能替代最终产物审计。
+
+此前第一轮成功构建与转换的 ManagedStripped 未包含微信适配器，不能作为自动注册可用的证据。修复后重新构建确认程序集与注册方法保留。开发者工具/真机是否实际初始化成功仍需运行验收。

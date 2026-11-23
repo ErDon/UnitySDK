@@ -57,3 +57,13 @@ SDK.Login(result => {
 该测试引用真实 0.1.23 官方 DTO DLL，替换 WX 调度入口，验证空凭据、首次回调胜出、原始消息脱敏、释放后回调、调用异常及超时传参。它不等价于完整官方运行时编译、微信开发者工具测试、服务端校验或真机验证。
 
 升级先在独立项目修改固定版本，核对 LoginOption、success/fail 数据结构与导出依赖；更新上述测试版本断言、执行回归，再验证开发者工具及真机成功/失败/超时链路。全部验收后更新兼容矩阵与包版本。公共 IPlatformCredentialProvider 和 SDK.Login 不因官方版本更新而改变。
+
+## 微信字符串存储
+
+`WeChatStorage(gameId, environment)` 实现 IStorage，使用已核对的 WX.StorageSetStringSync/GetStringSync/HasKeySync/DeleteKeySync。官方运行时初始化后，在 SDK 初始化层传入此实例并启用 StorageEnabled。上层继续使用 [统一存储接口](storage.md)。
+
+物理键前缀为 `erdon:v1:<转义gameId>:<转义environment>:`，值带 `erdon-string-v1:` 版本前缀。因此不同游戏与环境不共用键，空字符串不被误当作不存在，已有不兼容格式报 STORAGE.FORMAT_MISMATCH，不自动迁移或清空。Dispose 仅关闭实例，不擦除玩家数据；不提供清空整个微信应用存储的接口。
+
+由于官方字符串帮助方法可能在错误时返回默认值，写入后回读并比较，删除后检查键是否仍存在：未保留值返回 STORAGE.WRITE_FAILED，未删除返回 STORAGE.REMOVE_FAILED；已存在键读取 null 返回 STORAGE.READ_FAILED。HasKey 本身不能区分官方吞掉的底层错误与不存在，此限制需真机确认，不能声称已覆盖所有配额/磁盘错误。同步回读增加一次访问，实际性能及配额限制待测。
+
+运行 `tests/run-wechat-storage-tests.ps1 -CompiledWxAssembly '<已导入官方SDK的Unity工程>/Library/ScriptAssemblies/Wx.dll'` 验证真实编译入口与注入存储行为。当前证据来自本机已有工程编译出的 Wx.dll，不是干净工程重建或真机持久化验收，完整平台构建仍不放行。

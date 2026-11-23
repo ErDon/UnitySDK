@@ -106,3 +106,9 @@ SQLite 适用于同机持久化，不宣称实现多机共享存储；同步 API
 新增 IStorage 多态接口和 SDK.SetStorageSync/GetStorageSync/RemoveStorageSync 聚合入口；统一结果、错误阶段/CallId、参数长度脱敏日志、开关和所有权管理。配置面板勾选存储后装配 Editor 内存实现，提供读写删除预览；关闭不创建实现，不调用存储能力。
 
 六组独立回归通过。Unity 2022.3 实际 Play Mode 输出 SDK_PLAY_CHECKS_PASS，验证存储配置读写、删除与关闭，以及既有登录成功/失败/超时。详见 docs/storage.md。真实平台持久化适配及完整裁剪仍待实现，内存 Mock 不冒充平台存档。
+
+### 微信存储适配
+
+新增 WeChatStorage，封装本机官方 SDK 的四个字符串存储方法，按游戏/环境隔离键并给值加版本前缀，读取区分空值/不存在/格式不兼容，写入和删除后验证观察到的状态，Dispose 不擦除持久数据。
+
+测试引用现有 Unity 工程编译的 Wx.dll 校验调用签名，注入字典与失败行为验证隔离、持久语义及错误处理，输出 WECHAT_STORAGE_TESTS_PASS。这不是官方干净工程编译或真机验收；官方 HasKey 帮助方法的底层错误识别限制已写入文档。

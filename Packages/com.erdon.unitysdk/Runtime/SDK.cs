@@ -114,6 +114,10 @@ namespace ErDon.UnitySDK
         IAuth CreateAuth(Action<Action> mainThreadDispatch);
         IStorage CreateStorage();
     }
+    public interface IPlatformSdkProviderFactory : ISdkProviderFactory
+    {
+        string Platform { get; }
+    }
     // Internal composition keeps provider selection out of game-facing calls.
     public static class SDK
     {
@@ -148,6 +152,11 @@ namespace ErDon.UnitySDK
             IPay createdPay = null;
             changingLifecycle = true;
             try {
+                var platformFactory = factory as IPlatformSdkProviderFactory;
+                bool realPlatform = snapshot.Platform == "WeChat" || snapshot.Platform == "Douyin" || snapshot.Platform == "TikTok";
+                if ((realPlatform && platformFactory == null) || (platformFactory != null &&
+                    !string.Equals(platformFactory.Platform, snapshot.Platform, StringComparison.Ordinal)))
+                    throw new InvalidOperationException("CONFIG.PLATFORM_MISMATCH: configuration and provider factory must identify the same platform");
                 if (snapshot.LoginEnabled) {
                     createdAuth = factory.CreateAuth(mainThreadDispatch);
                     if (createdAuth == null) throw new InvalidOperationException("Enabled login has no provider");

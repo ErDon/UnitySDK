@@ -3,8 +3,9 @@ using System;
 namespace ErDon.UnitySDK.TikTok
 {
     /// <summary>Use only after official TTSDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class TikTokProviderFactory : ISdkProviderFactory, IShareProviderFactory
+    public sealed class TikTokProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory
     {
+        public string Platform { get { return "TikTok"; } }
         readonly string gameId;
         readonly string environment;
         readonly Func<ISessionExchange> createSessionExchange;
@@ -31,4 +32,3 @@ namespace ErDon.UnitySDK.TikTok
         public IShare CreateShare() { return new TikTokShare(); }
     }
 }
-

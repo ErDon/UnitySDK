@@ -3,8 +3,9 @@ using System;
 namespace ErDon.UnitySDK.Douyin
 {
     /// <summary>Use only after official TTSDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class DouyinProviderFactory : ISdkProviderFactory, IShareProviderFactory
+    public sealed class DouyinProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory
     {
+        public string Platform { get { return "Douyin"; } }
         readonly string gameId;
         readonly string environment;
         readonly Func<ISessionExchange> createSessionExchange;

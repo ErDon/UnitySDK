@@ -3,8 +3,9 @@ using System;
 namespace ErDon.UnitySDK.WeChat
 {
     /// <summary>Use only after official WeChat SDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class WeChatProviderFactory : ISdkProviderFactory, IShareProviderFactory
+    public sealed class WeChatProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory
     {
+        public string Platform { get { return "WeChat"; } }
         readonly string gameId;
         readonly string environment;
         readonly Func<ISessionExchange> createSessionExchange;
@@ -31,4 +32,3 @@ namespace ErDon.UnitySDK.WeChat
         public IShare CreateShare() { return new WeChatShare(); }
     }
 }
-

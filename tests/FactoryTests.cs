@@ -16,6 +16,12 @@ class FactoryTests
         public IAuth CreateAuth(Action<Action> post) { return Auth(); }
         public IStorage CreateStorage() { return Storage(); }
     }
+    sealed class PlatformFactory : IPlatformSdkProviderFactory {
+        public string Platform {get;set;}
+        public int Created;
+        public IAuth CreateAuth(Action<Action> post) {Created++;return new Provider();}
+        public IStorage CreateStorage() {Created++;return new Provider();}
+    }
     static void Check(bool value,string reason) { if(!value)throw new Exception(reason); }
     static void Start(SdkConfig config,Factory factory) { SDK.InitializeWithFactory(config,factory,a=>a(),(l,m)=>{}); }
     static void Reject(Action action) { bool failed=false;try{action();}catch(InvalidOperationException){failed=true;}Check(failed,"Must reject"); }
@@ -23,6 +29,10 @@ class FactoryTests
         Start(new SdkConfig{LoginEnabled=false,StorageEnabled=false},new Factory());
         LoginResult result=null;SDK.Login(r=>result=r);Check(result.Error.Code=="MODULE.DISABLED","Disabled factory never called");
         var old=new Provider();SDK.Initialize(new SdkConfig(),old,a=>a(),(l,m)=>{});
+        var wrong=new PlatformFactory{Platform="Douyin"};
+        Reject(()=>SDK.InitializeWithFactory(new SdkConfig{Platform="WeChat"},wrong,a=>a(),(l,m)=>{}));
+        Check(wrong.Created==0&&old.Disposals==0,"Mismatch rejected before provider creation or active disposal");
+        Reject(()=>Start(new SdkConfig{Platform="WeChat",LoginEnabled=false},new Factory()));
         var partial=new Provider();
         Reject(()=>Start(new SdkConfig{StorageEnabled=true},new Factory{Auth=()=>partial,Storage=()=>{throw new InvalidOperationException();}}));
         Check(partial.Disposals==1&&old.Disposals==0,"Rollback preserves previous instance");
@@ -36,6 +46,9 @@ class FactoryTests
         Start(new SdkConfig{StorageEnabled=true},new Factory{Auth=()=>both,Storage=()=>both});
         Check(old.Disposals==1&&SDK.GetStorageSync("key").Value=="value","Replacement installed");
         SDK.Shutdown();Check(both.Disposals==1,"Shared provider disposed exactly once");
+        var matching=new PlatformFactory{Platform="WeChat"};
+        SDK.InitializeWithFactory(new SdkConfig{Platform="WeChat"},matching,a=>a(),(l,m)=>{});
+        Check(matching.Created==1,"Matching platform accepted");SDK.Shutdown();
         Console.WriteLine("PASS: configuration-driven factory, rollback, disabled modules and ownership");
     }
 }

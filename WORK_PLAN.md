@@ -299,3 +299,9 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 
 公共回归新增字段映射、快照独立、未知版本/平台、生产 Mock、未实现能力拒绝测试并通过。Unity 检查增加配置转换与 JsonUtility 往返验证。自动平台启动装配和界面导出视觉验收仍未完成。
 首次资源导入阶段出现临时类型未找到信息；重开后的 runtime-config-confirm.log 无 C# 错误，输出 SDK_RUNTIME_CONFIG_PASS 与 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 配置与平台工厂身份校验
+
+新增 IPlatformSdkProviderFactory，三个内置工厂声明固定平台身份。InitializeWithFactory 在生命周期保护区内、创建任何能力之前校验真实平台配置与工厂，缺失或不一致抛 CONFIG.PLATFORM_MISMATCH；失败不破坏正在运行的旧 SDK。自定义工厂文档已更新。
+
+公共回归覆盖错误平台零创建、旧实例保护、缺少身份拒绝和匹配接受。抖音官方 DLL 测试、TikTok Runtime/Editor 两套测试、微信隔离重编译 Wx.dll 工厂测试均通过。身份声明不是第三方实现认证或包体裁剪证明。

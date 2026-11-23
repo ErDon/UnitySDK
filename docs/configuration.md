@@ -25,18 +25,19 @@ UnitySdkHost.InitializeWithFactory(config, factory) 接收 ISdkProviderFactory�
 using System;
 using ErDon.UnitySDK;
 
-sealed class GameSdkFactory : ISdkProviderFactory
+sealed class GameSdkFactory : IPlatformSdkProviderFactory
 {
+    public string Platform { get; private set; }
     readonly Func<Action<Action>, IAuth> createAuth;
     readonly Func<IStorage> createStorage;
-    public GameSdkFactory(Func<Action<Action>, IAuth> auth, Func<IStorage> storage)
-    { createAuth = auth; createStorage = storage; }
+    public GameSdkFactory(string platform, Func<Action<Action>, IAuth> auth, Func<IStorage> storage)
+    { Platform = platform; createAuth = auth; createStorage = storage; }
     public IAuth CreateAuth(Action<Action> post) { return createAuth(post); }
     public IStorage CreateStorage() { return createStorage(); }
 }
 ```
 
-调用 UnitySdkHost.InitializeWithFactory(config, new GameSdkFactory(authFactory, storageFactory))。关闭的能力对应函数可为空，因为不会被调用。工厂不要预先创建 provider，否则无法达到关闭模块不创建对象的效果。Editor 预览已走此入口。tests/FactoryTests.cs 覆盖开关、失败回收、旧实例保护、重入拒绝及共享对象只释放一次。
+调用 UnitySdkHost.InitializeWithFactory(config, new GameSdkFactory(config.Platform, authFactory, storageFactory))。关闭的能力对应函数可为空，因为不会被调用。工厂不要预先创建 provider，否则无法达到关闭模块不创建对象的效果。Editor 预览已走此入口。tests/FactoryTests.cs 覆盖开关、失败回收、旧实例保护、重入拒绝及共享对象只释放一次。
 
 此入口负责运行时装配，不等于官方包、JS 或资源已从构建产物裁剪；自动配置生成及真实平台包体核验仍待完成。
 
@@ -56,3 +57,5 @@ var config = data.ToSdkConfig();
 Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，广告/网络/上报仍被拒绝；真实平台支付在工厂装配时仍被拒绝。数据校验通过不代表官方依赖、启动或构建已验收。
 
 当前仍需游戏在官方初始化完成后装配，面板自动启动尚未完成；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
+
+真实平台工厂必须实现 IPlatformSdkProviderFactory，Platform 固定标识其实现的平台；内置工厂已实现。InitializeWithFactory 在创建能力之前核对配置身份，缺失或不一致抛 CONFIG.PLATFORM_MISMATCH，当前 SDK 保持运行。自定义工厂示例中的平台声明必须与其实际 provider 相符，不能只复制配置字符串来掩盖错误实现。此检查不能证明第三方工厂内部调用了正确 SDK，也不替代包体裁剪。

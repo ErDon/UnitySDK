@@ -82,3 +82,9 @@ Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白�
 新增无第三方依赖的 Node 参考服务：受信绑定、平台验证器扩展、微信固定上游校验、密码学随机会话及摘要存储、过期/撤销、同应用 code 原子重放拦截、HTTP 边界与脱敏日志。默认启动仅允许显式本地开发模式，内存存储仅用于联调；提供共享存储契约。
 
 六项 Node 测试通过，包括真实 loopback HTTP 请求，平台上游使用模拟响应。首次 socket 测试受沙箱 EACCES 限制，授权后同一套测试全部通过。微信官方文档页当前不可读取，平台验收、共享持久化、Unity HTTPS 联调、跨端 trace 和错误细化仍未完成。
+
+### 服务端失败原因与客户端日志关联
+
+新增可独立测试的 SessionResponsePolicy；HTTP 层将已登记的服务端错误码/HTTP 状态映射成具体原因及重试建议，未知正文不回显。LoginResult/SdkError 保留经过 UUID 格式校验的 ServerCallId，SDK 完成日志同时包含客户端 CallId 与服务端编号。新增 HTTP 交换参数检查。
+
+验证：核心、响应策略、登录编排和隔离回归全部通过。Unity 2022.3 独立工程实际编译并输出 SDK_EDITOR_CHECKS_PASS，正常退出码 0。此轮未做 HTTPS 网络联调；只完成安全错误映射与两端编号关联，不宣称完整 tracing 已实现。

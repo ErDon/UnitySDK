@@ -62,6 +62,6 @@ async function verify(binding, temporaryCode) {
 | 502 AUTH.PLATFORM_RESPONSE_INVALID | 非法 JSON、超限或缺少必要字段 |
 | 503 SERVER.CAPACITY | 内存存储达到上限 |
 
-日志由组件生成包含 time/interface/callId/logId/stage/params/result 的 JSON 行；可提供 `log(line)` 输出回调。参数整体脱敏，日志回调异常不影响登录结果。客户端 CallId 和服务端 callId 当前独立生成，跨端 trace 传播仍待实现。Unity HTTP 适配目前将多数非 200 错误映射为 AUTH.SERVER_REJECTED；细化服务端错误到客户端的映射仍待完成。
+日志由组件生成包含 time/interface/callId/logId/stage/params/result 的 JSON 行；可提供 `log(line)` 输出回调。参数整体脱敏，日志回调异常不影响登录结果。客户端 CallId 和服务端 callId 当前独立生成；客户端保留 ServerCallId 并写入完成日志以关联两端。Unity HTTP 适配只映射已登记的错误码/状态组合，未知错误归为 AUTH.SERVER_REJECTED，不输出任意服务端错误正文。完整 trace 传播仍待实现。
 
 发布前还需共享存储实现、部署级限流、HTTPS/域名配置、真实平台校验、跨端错误诊断、Unity 联调及运维验收。支付、事件与发货接口不在此增量内，仍属于总体计划待办。

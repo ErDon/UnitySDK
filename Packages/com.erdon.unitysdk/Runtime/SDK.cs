@@ -21,6 +21,7 @@ namespace ErDon.UnitySDK
         public string Operation { get; internal set; }
         public string Stage { get; internal set; }
         public string CallId { get; internal set; }
+        public string ServerCallId { get; internal set; }
         public string PlatformCode { get; private set; }
         public string PlatformMessage { get; private set; }
         public SdkError(string code, string reason, string platformCode, string sanitizedPlatformMessage)
@@ -33,6 +34,14 @@ namespace ErDon.UnitySDK
         public string Session { get; private set; }
         public SdkError Error { get; private set; }
         public string CallId { get; internal set; }
+        public string ServerCallId { get; private set; }
+        public LoginResult WithServerCallId(string value)
+        {
+            Guid parsed;
+            ServerCallId = Guid.TryParseExact(value, "D", out parsed) ? parsed.ToString("D") : null;
+            if (Error != null) Error.ServerCallId = ServerCallId;
+            return this;
+        }
         public string TraceId { get { return CallId; } }
         public static LoginResult Fail(SdkError error) { if (error == null) throw new ArgumentNullException("error"); return new LoginResult { Error = error }; }
         public static LoginResult Ok(string session) { return new LoginResult { Session = session }; }
@@ -114,7 +123,8 @@ namespace ErDon.UnitySDK
                     result = result ?? LoginResult.Fail("AUTH.UNKNOWN", "Provider returned no result");
                     // Never log session credentials or arbitrary provider messages.
                     Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Login", call, "Complete", "{}",
-                        (result.Success ? "Success" : result.Error.Code) + " durationMs=" + timer.ElapsedMilliseconds);
+                        (result.Success ? "Success" : result.Error.Code) + " durationMs=" + timer.ElapsedMilliseconds
+                        + " serverCallId=" + (result.ServerCallId ?? "none"));
                     InvokeCallback(callback, result, call);
                 });
             };

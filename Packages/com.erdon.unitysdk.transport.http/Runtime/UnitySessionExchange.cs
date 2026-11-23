@@ -9,7 +9,6 @@ namespace ErDon.UnitySDK
     public sealed class UnitySessionExchange : ISessionExchange
     {
         [Serializable] sealed class RequestData { public string gameId; public string appId; public string environment; public string platform; public string code; }
-        [Serializable] sealed class ResponseData { public string session; public string errorCode; }
         readonly MonoBehaviour host;
         readonly string endpoint, gameId, appId, environment;
         readonly HashSet<UnityWebRequest> active = new HashSet<UnityWebRequest>();
@@ -25,7 +24,11 @@ namespace ErDon.UnitySDK
         }
         public void Exchange(PlatformCredential credential, Action<LoginResult> callback)
         {
+            if(callback==null)throw new ArgumentNullException("callback");
             if(disposed){callback(LoginResult.Fail("SDK.DISPOSED","Exchange disposed"));return;}
+            if(credential==null || string.IsNullOrWhiteSpace(credential.Code) || string.IsNullOrWhiteSpace(credential.Platform)) {
+                callback(LoginResult.Fail("AUTH.INVALID_CREDENTIAL","Session exchange requires a platform credential"));return;
+            }
             host.StartCoroutine(Send(credential,callback));
         }
         IEnumerator Send(PlatformCredential credential, Action<LoginResult> callback)
@@ -43,18 +46,16 @@ namespace ErDon.UnitySDK
                 LoginResult result;
                 if(request.result==UnityWebRequest.Result.ConnectionError)
                     result=LoginResult.Fail("NETWORK.UNAVAILABLE","Session endpoint connection failed");
-                else if(request.responseCode==429)
-                    result=LoginResult.Fail(new SdkError("AUTH.RATE_LIMITED","Session endpoint rate limited").WithRetry(RetryPolicy.Delayed));
-                else if(request.responseCode!=200)
-                    result=LoginResult.Fail("AUTH.SERVER_REJECTED","Session endpoint rejected request");
                 else {
                     try {
                         if(request.downloadHandler.data.Length>65536)throw new FormatException();
-                        var response=JsonUtility.FromJson<ResponseData>(request.downloadHandler.text);
-                        if(response==null || !string.IsNullOrEmpty(response.errorCode) || string.IsNullOrWhiteSpace(response.session))
-                            result=LoginResult.Fail("AUTH.INVALID_SESSION","Session response is invalid");
-                        else result=LoginResult.Ok(response.session);
-                    }catch{result=LoginResult.Fail("AUTH.INVALID_RESPONSE","Malformed session response");}
+                        var response=JsonUtility.FromJson<SessionResponseData>(request.downloadHandler.text);
+                        result=SessionResponsePolicy.Evaluate(request.responseCode,response);
+                    }catch{
+                        result=request.responseCode==200
+                            ? LoginResult.Fail("AUTH.INVALID_RESPONSE","Malformed session response")
+                            : SessionResponsePolicy.Evaluate(request.responseCode,null);
+                    }
                 }
                 callback(result);
             }

@@ -40,3 +40,13 @@ new ErDon.UnitySDK.TikTok.TikTokCredentialProvider()
 - [运行环境与登录排错](https://developers.tiktok.com/docs/en/mini-games-development-troubleshooting)
 
 升级先核对 Runtime/Editor 两侧方法签名和导入目标，再回归测试，并完成真实容器、后端及真机验证后更新兼容矩阵。不得仅替换 DLL 就标记升级验收完成。
+
+## 字符串存储
+
+`TikTokStorage(gameId, environment)` 实现 IStorage。初始化层在官方 TT.InitSDK 成功后构造它，并通过 UnitySdkHost.Initialize 的 storageProvider 参数传入，同时设置 StorageEnabled=true。上层仍调用统一的 SetStorageSync/GetStorageSync/RemoveStorageSync。
+
+底层调用 TT.PlayerPrefs.SetString/GetString/HasKey/DeleteKey，写入和删除后调用 Save。物理键使用 `erdon:v1:<转义gameId>:<转义environment>:` 前缀，值带 `erdon-string-v1:`；不会读写其他命名空间，也不会在 Dispose 时清空存档。若改变 gameId/environment，看到的是另一个命名空间，旧存档不会自动迁移。
+
+写入后回读不一致返回 STORAGE.WRITE_FAILED；键存在但读取 null 返回 STORAGE.READ_FAILED；格式不兼容返回 STORAGE.FORMAT_MISMATCH；删除后键仍存在返回 STORAGE.REMOVE_FAILED。底层抛异常转换为 STORAGE.PROVIDER_FAILED，不泄露原文。键不存在返回 STORAGE.NOT_FOUND，空字符串仍是合法值。
+
+上述 run-tiktok-tests.ps1 同时编译两套官方 DLL 的存储入口并运行注入行为测试。真实 PlayerPrefs、Save 落盘、配额、宿主退出及设备重启仍需真机验证；回读成功不能作为磁盘持久化证明。当前平台构建仍不放行。

@@ -15,4 +15,4 @@
 
 配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。当前真实平台装配尚未完成，Player 构建会被明确阻断；请在独立测试工程接入。
 
-[存储接口与预览](docs/storage.md)：支持统一同步读写/删除、配置开关及 Editor 内存 Mock；微信存储适配已实现，真机持久化仍待验收。
+[存储接口与预览](docs/storage.md)：支持统一同步读写/删除、配置开关及 Editor 内存 Mock；微信和 TikTok 存储适配已实现，真机持久化仍待验收。

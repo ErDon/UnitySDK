@@ -14,5 +14,9 @@ try {
         if($LASTEXITCODE -ne 0){throw "TikTok compile failed: $binary"}
         & .\.tests\tiktok\TikTokCredentialTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok tests failed: $binary"}
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokStorage.cs .\tests\TikTokStorageTests.cs
+        if($LASTEXITCODE -ne 0){throw "TikTok storage compile failed: $binary"}
+        & .\.tests\tiktok\TikTokStorageTests.exe
+        if($LASTEXITCODE -ne 0){throw "TikTok storage tests failed: $binary"}
     }
 } finally {Pop-Location}

@@ -55,3 +55,31 @@ Packages/com.bytedance.starksdk 的包名本身不能区分抖音和 TikTok，�
 后续实现进展：已为三平台五类适配实现提供 ERDON_EXCLUDE_* 条件编译、面板应用入口及配置一致性拒绝。裁剪模式 C# 测试验证五类 TikTok 类型均不编译、工厂和运行时配置不能重新开启；实际 Unity TikTok Development Build 验证登录类型消失、存储类型及注册方法保留。前述未裁剪构建是修复前基线；默认不应用选择仍保留能力。尚不能宣称所有平台/模块、公共核心和官方 SDK 已完成裁剪。
 
 三平台全部关闭组合的实际验证现已补齐：微信官方提交 915d4bf、抖音 6.9.7、TikTok 官方 1.1.6，五类适配定义/引用缺失且注册保留。仍不将此结论扩大为全部模块或官方 SDK 已裁剪。详见 compatibility/README.md。
+
+## 官方 SDK 内部保留边界（2026-11-23 实测）
+
+能力未勾选时，聚合入口拒绝调用，应用构建选择后我们的对应实现可以从 Player 编译中排除。但官方 SDK 的桥接、序列化及内部入口有自己的保留规则。不能为追求体积而直接删掉官方 `link.xml`，否则反射、回调或 JS 桥接可能只在真机失败。
+
+本次读取三份实际 Development Build 的 ManagedStripped 元数据，并重新执行适配器排除与注册保留检查：
+
+| 官方基线与构建选择 | 链接后程序集类型数 / 方法数 | 仍存在的官方方法（有方法体） |
+| --- | --- | --- |
+| 微信固定提交 915d4bf；五类平台能力全部关闭 | Wx 18 / 456；wx-runtime 643 / 2322 | WeChatWASM.WX.Login、ReportEvent |
+| 抖音 6.9.7；五类平台能力全部关闭 | ttsdk 1574 / 7727；TTWebGL 81 / 418 | TTSDK.TT.Login、CreateRewardedVideoAd、ReportAnalytics |
+| TikTok 官方 1.1.6；只开启登录，其他六项关闭 | ttsdk 881 / 3801；TTWebGL 88 / 488 | TTSDK.TT.CreateRewardedVideoAd、ReportEvent |
+
+微信官方 `Runtime/Plugins/link.xml` 对 wx-runtime、LitJson、Wx 使用 `preserve="all"`。TikTok 官方 `link.xml` 对 com.tiktok.ttsdk、ttsdk、TTWebGL、TTLitJson 使用 `preserve="all"`。抖音所检查的根 link.xml 只显式保留 GraphicsSettings；本次没有据此推断其广泛保留的具体原因，实际元数据存在性才是本表依据。
+
+表中数量仅统计链接后类型定义和方法定义；不是最终 Wasm 体积、可达方法数量，也不表示这些能力被运行。TikTok 登录依赖 VerifiedAuth、UnitySessionExchange 在“网络和支付关闭”组合中仍被证明保留，六个关闭能力的自有实现类型不存在。官方 SDK 内部仍保留广告入口不代表 SDK.ShowRewardedAd 可以越过模块开关。
+
+可重新生成完整类型、方法、方法体标识及程序集 SHA-256 清单：
+
+```powershell
+./tools/inspect-vendor-retention.ps1 `
+  -ManagedDirectory '<目标工程>/Library/Bee/artifacts/WebGL/ManagedStripped' `
+  -AssemblyNames ttsdk,TTWebGL > vendor-retention.tsv
+```
+
+微信参数使用 `Wx,wx-runtime`；抖音可增加 `com.bytedance.ttsdk.ref`。缺少任何指定程序集会失败，不会用空报告当成功。该工具只读输入；输出是待审查清单，没有“裁剪全部通过”的结论。重复构建会覆盖 ManagedStripped，应在每次构建后保留报告及对应配置，不能把后来构建的元数据配到较早导出包。
+
+当前结论：运行时禁用与自有能力实现排除已有证据；官方内部能力代码的进一步精简仍待平台支持及真机验证。排除其他平台 SDK、最终 JS/Wasm/原生/资源审计仍是独立待办，不受本表替代。

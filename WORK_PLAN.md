@@ -127,6 +127,11 @@
 
 ## 2026-11-23 执行记录
 
+### 官方单体 SDK 保留边界实测
+
+新增只读 inspect-vendor-retention 工具，对三份实际 ManagedStripped 导出类型、方法体存在性和程序集 SHA-256；缺失指定程序集拒绝测试通过。重跑微信/抖音五类全关排除检查、TikTok 仅登录组合六项排除及登录依赖保留检查均通过。同时证实官方微信 Login/ReportEvent、抖音 Login/CreateRewardedVideoAd/ReportAnalytics、TikTok 已关闭的广告/上报官方入口仍存在。微信及 TikTok 官方 link.xml 使用整程序集 preserve=all；抖音内部保留原因未据此推断。完整范围说明写入 docs/platform-isolation.md，元数据数量与哈希记录在 compatibility/vendor-retention-2026-11-23.json。该证据明确自有实现排除与官方内部代码保留的界限，不证明最终 JS/Wasm/资源隔离，相关待办不提前勾选。
+
+
 ### 面板 Play Mode 视觉验收与错误原因补全
 
 在独立 UnityProject 的实际 SDK 面板刷新最新代码，验证进入 Play Mode 后初始化 Mock、登录成功、数据上报完成和关闭网络模块的拒绝结果；退出后操作按钮恢复禁用。发现登录、网络、分享、广告、支付和存储预览只显示错误码，遗漏 SDK 已提供的 Reason；现统一显示 Code/Reason，并给上报成功及失败结果补充 CallId。对 Reason 与 Code 相同的 MODULE.DISABLED 增加勾选模块后重新初始化的提示，避免重复显示同一个码。修改后重新编译并实际点击验证网络禁用提示与上报 CallId。此处只调整面板诊断显示，不改变上层错误契约或平台结果。其他模拟分支、全部按钮、跨平台选择和构建选择的完整视觉验收仍待补，因此顶部清单仍为 63/78。

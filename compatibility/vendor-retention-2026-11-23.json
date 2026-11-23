@@ -1,0 +1,88 @@
+{
+  "scope": "linked-managed-metadata-only; not final payload isolation or runtime validation",
+  "build": "Unity 2022.3.14f1c1 WebGL Development",
+  "observations": [
+    {
+      "platform": "wechat",
+      "officialBaseline": "915d4bf4f60ef0cd1c29316a8d67257185d609a7",
+      "excludedOwnCapabilities": [
+        "Login",
+        "Storage",
+        "Share",
+        "Ads",
+        "Analytics"
+      ],
+      "assemblies": [
+        {
+          "assembly": "Wx",
+          "sha256": "6ec200c4d018cfa004261ecb990470570b6f20ef8cee8569db6d07dc831853f8",
+          "typeDefinitions": 18,
+          "methodDefinitions": 456
+        },
+        {
+          "assembly": "wx-runtime",
+          "sha256": "7802ad302d0646596887bea81734592d9f91db63e6cc1a392b9889d3a0b56388",
+          "typeDefinitions": 643,
+          "methodDefinitions": 2322
+        }
+      ]
+    },
+    {
+      "platform": "douyin",
+      "officialBaseline": "6.9.7",
+      "excludedOwnCapabilities": [
+        "Login",
+        "Storage",
+        "Share",
+        "Ads",
+        "Analytics"
+      ],
+      "assemblies": [
+        {
+          "assembly": "ttsdk",
+          "sha256": "efd0c18993857a02a09b0460cff18d24dcac0e63eb4a7c73f9432dd9c90988bf",
+          "typeDefinitions": 1574,
+          "methodDefinitions": 7727
+        },
+        {
+          "assembly": "TTWebGL",
+          "sha256": "c7bcfaf55912910d064f99fb84620c7a6284980455fd6d353485b2ec329d9c14",
+          "typeDefinitions": 81,
+          "methodDefinitions": 418
+        },
+        {
+          "assembly": "com.bytedance.ttsdk.ref",
+          "sha256": "ae591887e84c5d155f0f9d7301805388916b2dc95c053d6906d37867b4bc1a92",
+          "typeDefinitions": 6,
+          "methodDefinitions": 3
+        }
+      ]
+    },
+    {
+      "platform": "tiktok",
+      "officialBaseline": "1.1.6-Release",
+      "excludedOwnCapabilities": [
+        "Storage",
+        "Share",
+        "Ads",
+        "Analytics",
+        "Network",
+        "Payments"
+      ],
+      "assemblies": [
+        {
+          "assembly": "ttsdk",
+          "sha256": "6919c2f8962f694afbeb1090f27faa8f714c101cf140ec6536ba4791243f1fa9",
+          "typeDefinitions": 881,
+          "methodDefinitions": 3801
+        },
+        {
+          "assembly": "TTWebGL",
+          "sha256": "97322596701d2c020ea2f0f10ac62d4c0feaae2b99a5634c226a08cc2dcbaa1f",
+          "typeDefinitions": 88,
+          "methodDefinitions": 488
+        }
+      ]
+    }
+  ]
+}

@@ -66,7 +66,8 @@
 - [x] TikTok 登录/存储/分享/工厂的 Runtime/Editor DLL 编译与行为验证。
 - [x] 抖音、TikTok 服务端登录验证器及模拟上游回归。
 - [x] 官方 SDK 全文件哈希快照、升级差异报告、版本矩阵及升级说明。
-- [ ] TikTok 官方初始化桥接与干净插件工程集成。
+- [x] TikTok 初始化桥接、本地 Runtime/Editor DLL 返回码核对与注入测试。
+- [ ] TikTok 干净官方插件核验与工程集成。
 - [ ] 三平台升级后的真机回归、账号授权及后端联调。
 - [ ] Android/iOS 扩展接入说明与边界验收；按用户要求本轮不接原生供应商。
 
@@ -448,3 +449,9 @@ Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所�
 
 官方程序集测试通过，覆盖 200 成功、0 不成功、未知码保留、重复/迟到回调与异常脱敏；真实设备初始化和官方包来源核验仍待办。
 隔离 Unity wechat-runtime.log 无 C# 编译错误，输出 WECHAT_RUNTIME_UNITY_COMPILE_PASS，退出码 0。
+
+### TikTok 初始化桥接
+
+核对本地 Runtime/Editor DLL 成功路径返回 0，新增 TikTokRuntime；非零统一平台失败并保留数字码，不猜测错误原因。两套 DLL 的初始化和原登录/分享/存储/工厂/广告测试通过。记录二进制哈希与证据路径，补 BeginStartup 示例和本地超时边界。
+
+本地插件含定制；干净官方包真实性、隔离插件工程集成及真机初始化仍未完成，不将本轮签名/注入测试视为这些验收。

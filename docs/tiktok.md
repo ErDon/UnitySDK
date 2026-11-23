@@ -90,3 +90,30 @@ void OnTikTokRuntimeReady()
 SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
 
 工厂验证随 run-tiktok-tests.ps1 执行，已分别引用 1.1.6-Release 的 Runtime/Editor DLL 通过配置、缺失后端拒绝和释放测试，不代表真机初始化成功。
+
+## 初始化桥接
+
+`TikTokRuntime` 调用 TT.InitSDK，等待 code=0 才设置 IsReady，其他整数统一返回 INIT.PLATFORM_FAILED，并保留 PlatformCode。不将抖音的 1/2 错误原因套用到 TikTok；也不接受微信的成功码 200。
+
+```csharp
+UnitySdkHost.BeginStartup(
+    new SdkConfig { Platform = "TikTok", LoginEnabled = false, StorageEnabled = true },
+    new TikTokRuntime(),
+    new TikTokProviderFactory("your-game-id", "test"),
+    result => {
+        if (!result.Success) {
+            UnityEngine.Debug.LogError(result.Error.Code + " platformCode=" + result.Error.PlatformCode);
+            return;
+        }
+        SDK.SetStorageSync("example", "ready");
+    });
+```
+
+上例只启用存储。启用登录时需注入后端 ISessionExchange 工厂。桥接初始化未完成时返回 INIT.IN_PROGRESS，已就绪重复调用直接成功；失败可显式重试，释放后忽略迟到回调。BeginStartup 负责默认 15 秒本地超时，取消/释放不卸载平台 SDK、不保证中断官方初始化。初始化入口应由一个启动所有者管理。
+
+此次成功码证据来自本地 1.1.6-Release 的 Runtime/Editor DLL：TT.InitSDK 转发到 TTSDKInner，成功路径 CompleteClaimedInitialization 调用 TTSDKInitCompletionGate.TrySucceed，将整数 0 写入任务结果，InvokeInitCallbackAsync 转发该结果。此为本地二进制契约核对；本地插件有定制，不是干净官方包认证，也不替代真机验证。记录 SHA-256 便于后续升级对比：
+
+- ttsdk.dll：`35A7DBB619B812D58ABF6E33BB3CB05D9E7F77AD0BB1131C898B78D4F38D947D`
+- ttsdk-editor.dll：`3C9CA4A76EA625D6445F25DAAA3679AC9B5BBA69EA69E0E35759B21351C645F1`
+
+`tests/run-tiktok-tests.ps1` 包含两套 DLL 的初始化签名编译和注入返回码测试。干净插件工程加载与真实客户端初始化仍待验收。

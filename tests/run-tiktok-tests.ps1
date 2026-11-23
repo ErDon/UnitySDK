@@ -34,5 +34,9 @@ try {
         if($LASTEXITCODE -ne 0){throw "TikTok ads compile failed: $binary"}
         & $UnityMono .\.tests\tiktok\TikTokAdsTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok ads tests failed: $binary"}
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokRuntimeTests.exe $coreSources $platformSources .\tests\TikTokRuntimeTests.cs
+        if($LASTEXITCODE -ne 0){throw "TikTok runtime compile failed: $binary"}
+        & $UnityMono .\.tests\tiktok\TikTokRuntimeTests.exe
+        if($LASTEXITCODE -ne 0){throw "TikTok runtime tests failed: $binary"}
     }
 } finally {Pop-Location}

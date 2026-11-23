@@ -33,11 +33,28 @@ export class TikTokPrepayments {
         !['gameId', 'appId', 'environment'].every(key => text(binding[key])) || typeof isSandbox !== 'boolean')
       throw new TypeError('Invalid TikTok prepayment binding');
   }
-  async register({ binding, isSandbox, orderId, tradeOrderId, openId, tokenAmount }) {
+  async register(input) {
+    this.#validateAssociation(input);
+    return this.store.transaction(() => this.#register(input));
+  }
+  // Called by the durable flow after receiving the platform create response.
+  async completeAttempt(input) {
+    this.#validateAssociation(input);
+    return this.store.transaction(() => {
+      const attempt = this.store.db.prepare('SELECT state,trade_order_id FROM erdon_tiktok_attempts WHERE order_id=?').get(input.orderId);
+      if (!attempt || (attempt.state === 'Ready' && attempt.trade_order_id !== input.tradeOrderId))
+        throw new OrderError('PAY.PREPAYMENT_CONFLICT', 409);
+      const association = this.#register(input);
+      this.store.db.prepare("UPDATE erdon_tiktok_attempts SET state='Ready',trade_order_id=? WHERE order_id=?").run(input.tradeOrderId, input.orderId);
+      return association;
+    });
+  }
+  #validateAssociation({ binding, isSandbox, orderId, tradeOrderId, openId, tokenAmount }) {
     this.validate(binding, isSandbox);
     if (![orderId, tradeOrderId, openId].every(text) || !Number.isSafeInteger(tokenAmount) || tokenAmount <= 0)
       throw new TypeError('Invalid TikTok prepayment association');
-    return this.store.transaction(() => {
+  }
+  #register({ binding, isSandbox, orderId, tradeOrderId, openId, tokenAmount }) {
       const order = this.store.read(orderId), scope = bindingKey(binding);
       if (!order || order.binding !== scope) throw new OrderError('PAY.ORDER_NOT_FOUND', 404);
       const existing = this.store.db.prepare(`SELECT ${columns} FROM erdon_tiktok_prepayments WHERE app_id=? AND trade_order_id=?`).get(binding.appId, tradeOrderId);
@@ -55,7 +72,6 @@ export class TikTokPrepayments {
         .run(binding.appId, tradeOrderId, orderId, scope, order.subject, openId, Number(isSandbox), tokenAmount);
       return this.snapshot({ appId: binding.appId, tradeOrderId, orderId, binding: scope,
         subject: order.subject, openId, sandbox: Number(isSandbox), tokenAmount });
-    });
   }
   async get({ binding, isSandbox, tradeOrderId }) {
     this.validate(binding, isSandbox);

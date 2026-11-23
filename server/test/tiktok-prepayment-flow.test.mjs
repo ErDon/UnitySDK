@@ -52,3 +52,14 @@ test('Pending survives closing and reopening the database and blocks another ups
   await assert.rejects(new TikTokPrepaymentFlow(new TikTokPrepayments(store), client).create(input), { code: 'PAY.PREPAYMENT_UNCERTAIN' });
   assert.equal(calls, 1);
 });
+test('failure updating Ready rolls back the platform association in the same transaction', async t => {
+  const f = await fixture(t); let calls = 0;
+  const flow = new TikTokPrepaymentFlow(f.payments, { create: async () => { calls++; return { tradeOrderId: 'trade' }; } });
+  f.store.db.exec(`CREATE TRIGGER fail_ready BEFORE UPDATE ON erdon_tiktok_attempts
+    WHEN NEW.state='Ready' BEGIN SELECT RAISE(ABORT,'injected storage failure'); END;`);
+  await assert.rejects(flow.create(input), { code: 'SERVER.STORAGE_UNAVAILABLE' });
+  assert.equal(await f.payments.get({ ...input, tradeOrderId: 'trade' }), null);
+  assert.equal(f.store.db.prepare('SELECT state FROM erdon_tiktok_attempts').get().state, 'Pending');
+  await assert.rejects(flow.create(input), { code: 'PAY.PREPAYMENT_UNCERTAIN' });
+  assert.equal(calls, 1);
+});

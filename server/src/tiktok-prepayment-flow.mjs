@@ -51,8 +51,7 @@ export class TikTokPrepaymentFlow {
     if (claim) return Object.freeze(claim);
     // Pending remains durable on any failure/crash: no retry can silently issue another create.
     const result = await this.client.create(Object.freeze(request));
-    await this.payments.register({ binding: scope, isSandbox, openId, orderId, tokenAmount, tradeOrderId: result.tradeOrderId });
-    this.store.transaction(() => this.store.db.prepare("UPDATE erdon_tiktok_attempts SET state='Ready',trade_order_id=? WHERE order_id=? AND state='Pending'").run(result.tradeOrderId, orderId));
+    await this.payments.completeAttempt({ binding: scope, isSandbox, openId, orderId, tokenAmount, tradeOrderId: result.tradeOrderId });
     return Object.freeze({ tradeOrderId: result.tradeOrderId });
   }
 }

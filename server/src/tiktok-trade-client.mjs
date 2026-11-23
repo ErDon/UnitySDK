@@ -23,6 +23,39 @@ export function createTikTokTradeClient({ fetchImpl = fetch, timeoutMs = 8000 } 
   if (typeof fetchImpl !== 'function' || !Number.isSafeInteger(timeoutMs) || timeoutMs <= 0 || timeoutMs > 120000)
     throw new TypeError('Invalid TikTok trade client configuration');
   return Object.freeze({
+    // Diagnostic/secondary verification only: SUCCESS does not replace a signed webhook.
+    async query({ accessToken, tradeOrderId } = {}) {
+      if (!validText(accessToken, 8192) || /\s/.test(accessToken) || !validText(tradeOrderId))
+        throw new TypeError('Invalid TikTok order query');
+      let response;
+      try {
+        response = await fetchImpl('https://open.tiktokapis.com/v2/minis/trade_order/query/', {
+          method: 'POST', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+          body: JSON.stringify({ trade_order_id: tradeOrderId })
+        });
+      } catch { throw new OrderError('PAY.QUERY_UNAVAILABLE', 502); }
+      if (!response.ok) {
+        try { await response.body?.cancel(); } catch { }
+        if (response.status === 401) throw new OrderError('PAY.PLATFORM_TOKEN_REJECTED', 401);
+        throw new OrderError('PAY.QUERY_UNAVAILABLE', 502);
+      }
+      let reader;
+      try {
+        reader = response.body.getReader();
+        const chunks = []; let length = 0;
+        for (;;) {
+          const { done, value } = await reader.read(); if (done) break;
+          length += value.length; if (length > 16384) throw new Error(); chunks.push(value);
+        }
+        const result = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
+        if (!record(result) || !record(result.error) || result.error.code !== 'ok' || !record(result.data) ||
+            result.data.trade_order_id !== tradeOrderId || !['PENDING', 'SUCCESS'].includes(result.data.trade_order_status))
+          throw new Error();
+        return Object.freeze({ tradeOrderId, status: result.data.trade_order_status });
+      } catch { throw new OrderError('PAY.QUERY_RESPONSE_INVALID', 502); }
+      finally { try { await reader?.cancel(); } catch { } }
+    },
     async create({ accessToken, tokenAmount, orderId, productId, productName, orderUrl, quantity, quantityUnit, imageUrl } = {}) {
       validateTikTokTradeRequest({ accessToken, tokenAmount, orderId, productId, productName, orderUrl, quantity, quantityUnit, imageUrl });
       const body = JSON.stringify({ token_type: 'BEANS', token_amount: tokenAmount, order_info: {

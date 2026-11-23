@@ -75,6 +75,12 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 平台令牌加密存储
 
+### 平台查单传输
+
+`createTikTokTradeClient().query({ accessToken, tradeOrderId })` 使用服务端保管的用户访问令牌，调用固定 HTTPS POST `/v2/minis/trade_order/query/`，返回冻结的 `{ tradeOrderId, status }`。只接受与请求相同的平台单号及 PENDING / SUCCESS 状态；未知状态、格式错误或超过 16 KiB 的响应返回 PAY.QUERY_RESPONSE_INVALID，网络或 HTTP 失败返回 PAY.QUERY_UNAVAILABLE，HTTP 401 返回 PAY.PLATFORM_TOKEN_REJECTED。禁止重定向，不自动重试，不回传上游消息或令牌。
+
+依据 [Payment APIs](https://developers.tiktok.com/docs/en/minis-payment-apis) 和 [In-App Purchases](https://developers.tiktok.com/docs/en/in-app-purchases)（2026-11-24 核对），此能力用于辅助核验，SUCCESS 不替代签名通知，也不直接执行 markPaid 或发货。当前是服务器内部传输接口，尚未装配受认证的查单业务入口或后台定时核验；调用者不可直接信任客户端传来的平台单号，需先验证游戏订单归属并读取已保存的平台关联。
+
 ### TikTok 服务端组合入口
 
 `server/src/tiktok-application.mjs` 的 `createTikTokApplication` 将登录兑换、凭据加密保存、游戏订单、预支付和签名通知组合成一个 HTTP handler。每个实例绑定一个游戏/应用/环境，配置中的 catalog 同时提供订单展示金额和 TikTok Beans 商品参数；两者必须由运营配置核对，SDK 不推算换算比例。

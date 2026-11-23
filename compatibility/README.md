@@ -7,8 +7,8 @@
 | Unity 核心/Editor/HTTP | SDK 0.1.0，Unity 2022.3.14f1c1 | 独立工程编译、Editor 检查、登录与存储 Play Mode 测试 | 域重载关闭、多游戏及目标平台构建 |
 | 微信 | com.qq.weixin.minigame 0.1.23 | 登录真实 DTO 契约；存储/分享引用本机已有 Wx.dll 编译入口（分享编译存在其他类型 CS1684 警告） | 干净官方工程编译、初始化、后端与真机 |
 | TikTok | 1.1.6-Release | Runtime/Editor DLL 登录、存储、分享入口编译，注入行为测试 | 干净官方插件集成、真机与后端联调；本机插件含旧项目宏 |
-| 抖音 | TTSDK 版本未确定 | 官方文档形状的登录替身测试 | 官方 SDK 安装/版本锁定、编译、后端联调及真机 |
-| BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入成功、界面打开 | 面板持续 Loading，尚未取得 TTSDK 列表或登录入口 |
+| 抖音 | TTSDK 6.9.7 | BGDT 官方安装、真实 DLL 登录入口编译与注入回调测试、隔离 Unity 工程编译加载 | 初始化、目标导出、后端联调及真机 |
+| BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入、cp 模式安装 TTSDK 6.9.7 | 导出构建链路 |
 | 公共服务端 | 0.1.0，Node 24.20.0 | 37 项测试：模拟微信/抖音/TikTok 上游、真实 loopback HTTP、SQLite 重开与并发连接、内存/SQLite 订单和幂等发货恢复 | 官方接口调用、Unity HTTPS、部署、备份与性能 |
 | Android/iOS 原生渠道 | 无 | 扩展边界设计 | 本轮不接具体供应商 |
 | Godot | 无 | 协议边界设计 | 本轮不实现引擎桥接 |
@@ -19,6 +19,7 @@
 - `tests/run-wechat-tests.ps1`：需本地官方 0.1.23 包；不是实际微信登录。
 - `tests/run-wechat-storage-tests.ps1`：需工程编译的 Wx.dll；不是干净包重编译。
 - `tests/run-tiktok-tests.ps1`：需本地 1.1.6-Release 插件；分别编译 Runtime/Editor 入口。
+- `tests/run-douyin-tests.ps1`：需 BGDT 安装的官方 TTSDK 6.9.7；真实 DLL 编译，回调为注入，不是真机登录。
 - `tests/SdkEditorChecks.cs.txt`、`tests/SdkPlayChecks.cs.txt`：复制到独立 Unity 测试工程后执行。
 - `server/` 下 `node --test`：包含临时本地端口和数据库，不访问真实平台。
 

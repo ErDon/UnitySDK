@@ -6,11 +6,16 @@
     "ErDon.UnitySDK.Douyin",
     "ttsdk",
     "ttsdk-editor",
+    "com.bytedance.ttsdk.ref",
+    "com.bytedance.ttsdk-editor",
+    "com.bytedance.ttsdk.base-editor",
+    "ttsdk_tools",
     "TTWebGL",
     "TTLitJson"
   ],
   "AssetRoots": [
     "Packages/com.erdon.unitysdk.douyin",
-    "Packages/com.bytedance.starksdk"
+    "Packages/com.bytedance.starksdk",
+    "Assets/Plugins/ByteGame/com.bytedance.starksdk"
   ]
 }

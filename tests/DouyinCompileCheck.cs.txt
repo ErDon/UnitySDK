@@ -1,0 +1,13 @@
+using UnityEditor;
+using UnityEngine;
+public static class DouyinCompileCheck {
+ public static void Configure() {
+  PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone,"ERDON_PLATFORM_DOUYIN");
+  Debug.Log("DOUYIN_DEFINE_CONFIGURED");
+ }
+ public static void Verify() {
+  var t=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinCredentialProvider, ErDon.UnitySDK.Douyin");
+  if(t==null) throw new System.Exception("Douyin adapter not loaded");
+  Debug.Log("DOUYIN_UNITY_COMPILE_PASS");
+ }
+}

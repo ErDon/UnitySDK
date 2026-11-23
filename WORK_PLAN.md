@@ -226,3 +226,11 @@ Runtime/Editor 两套官方 DLL 均通过分享入口编译与注入测试，原
 Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，仍仅为 Mock。公共回归与新增 PayTests 通过，覆盖禁用、并发、超时/取消、旧结果、释放和日志。真实平台支付参数、收银台和验签闭环仍未完成。
 
 独立 Unity Play Mode 的 pay-facade-play.log 输出 SDK_PLAY_CHECKS_PASS，实际验证已发货、待发货和禁用支付配置。
+
+### 抖音官方 TTSDK 安装与真实 DLL 契约验证
+
+通过官网 BGDT 3.0.271 的 cp 模式安装 TTSDK 6.9.7，真实路径 Assets/Plugins/ByteGame/com.bytedance.starksdk。补充平台审计的实际根目录和程序集，记录官方 Any Platform 导入设置风险。安装包不提交；本地生成 142 文件哈希快照。
+
+新增 run-douyin-tests.ps1，直接引用官方 DLL 编译登录适配器，测试中排除同名替身；注入回调覆盖匿名拒绝、空凭证、重复回调、释放及脱敏。官方 DLL 契约与全部公共回归通过。另建独立 DouyinCompileProject 验证完整官方插件集成。未验证真机、初始化及真实后端兑换，真实构建仍阻断。
+
+完整官方插件和适配层在 Unity 2022.3.14f1c1 独立工程编译加载通过，douyin-verify.log 输出 DOUYIN_UNITY_COMPILE_PASS，退出码 0。首次启动的命令行 extraScriptingDefines 没有生成适配程序集；改为显式设置测试工程 Standalone 宏，再重开验证 Type.GetType 成功，避免把未参与编译误记为通过。

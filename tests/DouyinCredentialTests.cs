@@ -3,6 +3,7 @@ using ErDon.UnitySDK;
 using ErDon.UnitySDK.Douyin;
 
 // Documentation contract only. This is not an official SDK binary and is never shipped.
+#if !OFFICIAL_DOUYIN
 namespace TTSDK {
     public static class TT {
         public static bool Force;
@@ -11,6 +12,7 @@ namespace TTSDK {
         }
     }
 }
+#endif
 class DouyinCredentialTests
 {
     static void Check(bool value,string message){if(!value)throw new Exception(message);}
@@ -30,8 +32,14 @@ class DouyinCredentialTests
         provider.GetCredential(capture);provider.Dispose();int before=count;success("late",null,true);
         Check(count==before,"disposed callback ignored");
         provider.GetCredential(capture);Check(error.Code=="SDK.DISPOSED","disposed request rejected");
+#if !OFFICIAL_DOUYIN
         new DouyinCredentialProvider().GetCredential(capture);
         Check(TTSDK.TT.Force && credential.Code=="test-code","default bridge requests account login");
         Console.WriteLine("DOUYIN_DOCUMENTED_CONTRACT_TESTS_PASS (test stub only; official SDK compile still required)");
+#else
+        // Compile the real bridge, but do not invoke native Unity APIs outside a Player.
+        new DouyinCredentialProvider().Dispose();
+        Console.WriteLine("DOUYIN_OFFICIAL_BINARY_CONTRACT_TESTS_PASS (injected callbacks; no device login)");
+#endif
     }
 }

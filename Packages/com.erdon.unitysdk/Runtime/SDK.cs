@@ -68,20 +68,27 @@ namespace ErDon.UnitySDK
         static bool busy;
         static Action cancelLogin;
         static Action checkTimeout;
+        static bool changingLifecycle;
         [ThreadStatic] static bool writingLog;
         public static void Initialize(SdkConfig settings, IAuth provider,
             Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            Shutdown();
-            config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, LogCallback = settings.LogCallback };
-            auth = provider; dispatch = mainThreadDispatch; fallback = engineLog;
-            Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
+            if (provider != null && ReferenceEquals(provider, auth))
+                throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
+            changingLifecycle = true;
+            try {
+                ResetCore();
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, LogCallback = settings.LogCallback };
+                auth = provider; dispatch = mainThreadDispatch; fallback = engineLog;
+                Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
+            } finally { changingLifecycle = false; }
         }
         static void EnsureNotLogging()
         {
             if (writingLog) throw new InvalidOperationException("SDK operations cannot be invoked from the log sink");
+            if (changingLifecycle) throw new InvalidOperationException("SDK operations cannot be invoked while initializing or disposing providers");
         }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
         static void Log(SdkLogLevel level, string api, string call, string stage, string parameters, string result)
@@ -115,12 +122,15 @@ namespace ErDon.UnitySDK
             var post = dispatch;
             var timer = Stopwatch.StartNew();
             Action<LoginResult> done = result => {
+                if (epoch != generation) return;
                 if (Interlocked.Exchange(ref completed, 1) != 0) return;
                 post(() => {
                     if (epoch != generation) return;
                     busy = false; cancelLogin = null;
                     checkTimeout = null;
                     result = result ?? LoginResult.Fail("AUTH.UNKNOWN", "Provider returned no result");
+                    if (result.Success && string.IsNullOrWhiteSpace(result.Session))
+                        result = LoginResult.Fail("AUTH.INVALID_SESSION", "Provider returned an empty game session").WithServerCallId(result.ServerCallId);
                     // Never log session credentials or arbitrary provider messages.
                     Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.Login", call, "Complete", "{}",
                         (result.Success ? "Success" : result.Error.Code) + " durationMs=" + timer.ElapsedMilliseconds
@@ -163,11 +173,25 @@ namespace ErDon.UnitySDK
         public static void Shutdown()
         {
             EnsureNotLogging();
+            changingLifecycle = true;
+            try { ResetCore(); } finally { changingLifecycle = false; }
+        }
+        static void ResetCore()
+        {
             generation++; busy = false; cancelLogin = null;
             checkTimeout = null;
-            if (config != null) Log(SdkLogLevel.Info, "SDK.Shutdown", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
-            var old = auth; auth = null; config = null;
-            if (old != null) { try { old.Dispose(); } catch { } }
+            var old = auth; auth = null; dispatch = null;
+            string call = Guid.NewGuid().ToString("N");
+            bool failed = false;
+            if (old != null) {
+                try { old.Dispose(); }
+                catch {
+                    failed = true;
+                    Log(SdkLogLevel.Error, "SDK.Shutdown", call, "Dispose", "{}", "SDK.DISPOSE_FAILED");
+                }
+            }
+            if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
+            config = null;
         }
     }
 }

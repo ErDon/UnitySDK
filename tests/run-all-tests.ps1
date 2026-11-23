@@ -3,6 +3,10 @@ Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\LifecycleTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\tests\LifecycleTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Lifecycle compile failed'}
+    & .\.tests\LifecycleTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Lifecycle tests failed'}
     & $compiler /nologo /out:.tests\SessionResponseTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.transport.http\Runtime\SessionResponsePolicy.cs .\tests\SessionResponseTests.cs
     if($LASTEXITCODE -ne 0){throw 'Response policy compile failed'}
     & .\.tests\SessionResponseTests.exe

@@ -24,3 +24,13 @@ LogCallback 接收级别和 SDK 格式化的完整字符串；不提供则 Unity
 
 上述测试不代替真机、支付或实际发布验证。
 
+## 初始化与释放边界
+
+SDK 拥有传入 IAuth 的生命周期，重新初始化或 Shutdown 会释放旧 provider。重新初始化必须创建新的 provider；复用仍在使用的同一个实例会抛 ArgumentException，旧实例保持有效。已释放实例不得再次传入。
+
+初始化和释放期间，provider 不得重入 SDK 操作；这样的调用抛 InvalidOperationException，避免旧 provider 修改新实例状态。普通登录结果回调可以重新初始化并开始新的登录。日志回调仍只能输出，不能重入 SDK。
+
+Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重复 Shutdown 不会重复释放 provider。Dispose 抛异常时，SDK 继续清理并输出格式化 SDK.DISPOSE_FAILED，不输出异常原文。新的初始化仍可成功。任何 provider 返回空游戏 session 都会转换为 AUTH.INVALID_SESSION。
+
+上述边界由 tests/run-all-tests.ps1 中的生命周期测试覆盖。SDK 公共操作仍要求主线程调用，不承诺并发 Initialize/Shutdown。
+

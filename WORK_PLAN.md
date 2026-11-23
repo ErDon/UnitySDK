@@ -234,3 +234,9 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 新增 run-douyin-tests.ps1，直接引用官方 DLL 编译登录适配器，测试中排除同名替身；注入回调覆盖匿名拒绝、空凭证、重复回调、释放及脱敏。官方 DLL 契约与全部公共回归通过。另建独立 DouyinCompileProject 验证完整官方插件集成。未验证真机、初始化及真实后端兑换，真实构建仍阻断。
 
 完整官方插件和适配层在 Unity 2022.3.14f1c1 独立工程编译加载通过，douyin-verify.log 输出 DOUYIN_UNITY_COMPILE_PASS，退出码 0。首次启动的命令行 extraScriptingDefines 没有生成适配程序集；改为显式设置测试工程 Standalone 宏，再重开验证 Type.GetType 成功，避免把未参与编译误记为通过。
+
+### 抖音存储适配
+
+新增 DouyinStorage，以官方 TTSDK 6.9.7 的 TT.PlayerPrefs 实现 IStorage；保持游戏/环境作用域、格式标记、Save 后回读、幂等删除与安全错误映射。模块关闭时不创建实例，Dispose 不删除持久数据。文档说明账号隔离和回读不代表重启持久性。
+
+官方 DLL 编译及注入存储行为测试通过；独立 Unity 工程 douyin-storage-verify.log 输出 DOUYIN_UNITY_COMPILE_PASS 并以 0 退出，检查确认 IStorage 实现已加载。真机宿主配额和重启持久性未验证。

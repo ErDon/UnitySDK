@@ -14,4 +14,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Douyin official binary compile failed'}
     & $UnityMono .\.tests\douyin\DouyinCredentialTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin official binary contract tests failed'}
+    & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\douyin\DouyinStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinStorage.cs .\tests\DouyinStorageTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Douyin storage compile failed'}
+    & $UnityMono .\.tests\douyin\DouyinStorageTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Douyin storage tests failed'}
 } finally {Pop-Location}

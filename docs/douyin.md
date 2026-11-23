@@ -37,3 +37,22 @@ server/src/douyin.mjs 根据[官方小游戏 code2Session 文档](https://develo
 五项模拟响应测试和全部服务端回归通过，不代表真实 code 兑换成功。真实凭证、平台授权及 Unity HTTPS 链路仍待联调。
 
 完整工程证据：独立 Unity 2022.3.14f1c1 工程导入官方 BGDT/TTSDK，补齐内置模块及 UGUI，启用 ERDON_PLATFORM_DOUYIN 后成功生成并加载 ErDon.UnitySDK.Douyin.dll；日志 douyin-verify.log 输出 DOUYIN_UNITY_COMPILE_PASS，退出码 0。可把 tests/DouyinCompileCheck.cs.txt 复制为测试工程 Assets/Editor/DouyinCompileCheck.cs，先执行 Configure，重开 Unity 后执行 Verify。这里只验证 Editor 编译加载，不等于 WebGL 导出或真机可用。
+
+## 字符串存储
+
+`DouyinStorage(gameId, environment)` 实现 IStorage，使用本次官方包的 TT.PlayerPrefs（ttsdk.xml 中的 TTPlayerPrefs 文档与 DLL 入口已核对）。初始化官方运行时成功后，在工厂的 CreateStorage 中返回它：
+
+```csharp
+public IStorage CreateStorage()
+{
+    return new ErDon.UnitySDK.Douyin.DouyinStorage("my-game", "production");
+}
+```
+
+通过 SDK.InitializeWithFactory / UnitySdkHost 的对应初始化入口装配，并设置 StorageEnabled=true。业务层随后只调用 SDK.SetStorageSync、SDK.GetStorageSync、SDK.RemoveStorageSync，见 [存储接口示例](storage.md)。关闭模块时工厂不创建它。
+
+物理 key 包含转义后的 gameId/environment，避免同设备多个游戏、测试与生产环境串档。这里只隔离游戏/环境，不自动隔离玩家账号；有账号隔离需求的游戏应使用包含稳定游戏用户 ID 的逻辑 key。不在本地存储会话密钥或支付凭据。
+
+写入/删除调用 Save 后回读检查；静默写失败返回 STORAGE.WRITE_FAILED，删除未生效返回 STORAGE.REMOVE_FAILED。缺失 key 返回 STORAGE.NOT_FOUND，已存在却返回 null 为 STORAGE.READ_FAILED，非 SDK 字符串格式为 STORAGE.FORMAT_MISMATCH。异常统一 STORAGE.PROVIDER_FAILED，不回传含数据的异常正文。Dispose 不删除存档。回读成功不证明断电重启后的持久性。
+
+run-douyin-tests.ps1 已覆盖真实 DLL 入口编译和注入存储行为，包括空字符串、Unicode、作用域分隔符冲突、静默失败、格式异常、重复删除和生命周期；真机容量、宿主配额及重启持久性仍待验证。

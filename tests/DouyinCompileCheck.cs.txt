@@ -8,6 +8,8 @@ public static class DouyinCompileCheck {
  public static void Verify() {
   var t=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinCredentialProvider, ErDon.UnitySDK.Douyin");
   if(t==null) throw new System.Exception("Douyin adapter not loaded");
+  var storage=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinStorage, ErDon.UnitySDK.Douyin");
+  if(storage==null || !typeof(ErDon.UnitySDK.IStorage).IsAssignableFrom(storage)) throw new System.Exception("Douyin storage not loaded");
   Debug.Log("DOUYIN_UNITY_COMPILE_PASS");
  }
 }

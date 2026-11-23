@@ -507,7 +507,7 @@ namespace ErDon.UnitySDK
             if (shareCheck != null) shareCheck();
             var adCheck = checkAdTimeout;
             if (adCheck != null) adCheck();
-            TickNetwork();
+            TickNetwork(); TickAnalytics();
             var payCheck = checkPayTimeout;
             if (payCheck != null) payCheck();
         }
@@ -554,7 +554,7 @@ namespace ErDon.UnitySDK
         }
         static void ResetCore()
         {
-            generation++; ResetNetworkCalls(); busy = false; cancelLogin = null;
+            generation++; ResetNetworkCalls(); ResetAnalyticsCalls(); busy = false; cancelLogin = null;
             sharing = false; cancelShare = null; checkShareTimeout = null;
             showingAd = false; cancelAd = null; checkAdTimeout = null;
             paying = false; cancelPay = null; checkPayTimeout = null;

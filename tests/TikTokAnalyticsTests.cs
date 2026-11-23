@@ -42,6 +42,14 @@ class TikTokAnalyticsTests
         Check(callbacks == 5 && result.Dispatched, "success survives later invocation exception");
         immediate.ReportEvent(null, value => result = value);
         Check(result.Error.Code == "ANALYTICS.INVALID_ARGUMENT", "null rejected");
+        var factory = new TikTokProviderFactory("game", "test");
+        var a = factory.CreateAnalytics(); var b = factory.CreateAnalytics();
+        Check(a is IAsyncAnalytics && !object.ReferenceEquals(a, b), "fresh async capability from factory");
+        Check(a.ReportEvent(item).Error.Code == "ANALYTICS.ASYNC_REQUIRED", "sync call must not pretend success");
+        a.Dispose(); b.Dispose();
+        var config = new SdkRuntimeConfiguration { platform = "TikTok", gameId = "game", appId = "app", login = false, analytics = true };
+        SDK.InitializeWithFactory(config.ToSdkConfig(), factory, action => action(), (level, text) => {});
+        SDK.Shutdown();
         Console.WriteLine("TIKTOK_ANALYTICS_TESTS_PASS (binary signatures, JSON and injected callbacks; not device ingestion)");
     }
 }

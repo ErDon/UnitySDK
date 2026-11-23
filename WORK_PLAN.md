@@ -62,7 +62,8 @@
 - [x] 微信数据上报适配、按需工厂与配置映射；官方程序集编译、官方序列化与注入行为测试。
 - [x] 抖音数据上报适配、保留字段保护、工厂与配置映射；官方 DLL 编译和注入行为测试。
 - [x] TikTok 数据上报异步底层适配；Runtime/Editor DLL 编译、参数序列化与回调生命周期测试。
-- [ ] 异步上报聚合/超时与 TikTok 工厂配置接入、Mock 面板和三平台完整示例。
+- [x] 异步上报聚合、独立取消/超时、主线程派发与 TikTok 工厂配置；公共及双 DLL 回归。
+- [ ] 数据上报 Mock 面板、Unity Play Mode 与三平台真机/入库验收。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
 ## 第五阶段：支付与订单（公共链路完成，真实支付待办）
@@ -99,6 +100,10 @@
 公共回归入口为 `tests/run-all-tests.ps1`；平台测试与版本边界见 [兼容矩阵](compatibility/README.md)。Unity 检查模板在 `tests/*Checks.cs.txt`，具体执行结果见下面对应记录。还未完成的真机、真实支付和正式构建不会标为已完成。
 
 ## 2026-11-23 执行记录
+
+### 异步上报聚合增量
+
+新增 SDK.ReportEvent(event, callback, timeoutMilliseconds) 跨平台入口，微信/抖音返回派发结果，TikTok 等待平台回调；单次独立取消/默认15秒超时、结果快照、主线程派发恢复与 Shutdown 清理。TikTok 工厂现按需创建异步能力，运行时 JSON 允许 analytics=true；旧同步重载在 TikTok 返回 ASYNC_REQUIRED，不虚报成功。公共异步测试和 TikTok Runtime/Editor DLL 工厂/行为测试通过，文档补跨平台示例。Mock 面板与 Unity Play Mode/真机仍待验收。
 
 ### 抖音数据上报适配增量
 

@@ -36,7 +36,7 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("真实平台构建依赖与产物验收尚未完成；当前不允许真实平台构建。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (analytics && platform != DistributionPlatform.WeChat && platform != DistributionPlatform.Douyin)
+            if (analytics && platform != DistributionPlatform.WeChat && platform != DistributionPlatform.Douyin && platform != DistributionPlatform.TikTok)
                 issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享、广告、网络和支付示例。");
             return issues;
         }
@@ -71,7 +71,7 @@ namespace ErDon.UnitySDK.Editor
             settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（可选通信工厂）", settings.network);
-            settings.analytics = EditorGUILayout.Toggle("数据上报（微信、抖音）", settings.analytics);
+            settings.analytics = EditorGUILayout.Toggle("数据上报（三平台，Mock 待接入）", settings.analytics);
             if (EditorGUI.EndChangeCheck()) settings.SaveSettings();
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);

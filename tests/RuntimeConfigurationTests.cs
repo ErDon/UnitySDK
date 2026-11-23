@@ -10,7 +10,7 @@ class RuntimeConfigurationTests {
   Check(data.Environment=="test","test environment");data.production=true;Check(data.Environment=="production","production environment");
   data.platform="Mock";Check(data.Validate().Contains("CONFIG.PRODUCTION_MOCK"),"production mock rejected");
   data.platform="WeChat";data.schemaVersion=2;Check(data.Validate().Contains("CONFIG.SCHEMA_UNSUPPORTED"),"future schema rejected");
-  data.schemaVersion=1;data.platform="TikTok";data.analytics=true;
+  data.schemaVersion=1;data.platform="Mock";data.production=false;data.analytics=true;
   bool rejected=false;try{data.ToSdkConfig();}catch(InvalidOperationException){rejected=true;}Check(rejected,"unimplemented not silently dropped");
   data.analytics=false;data.platform="AndroidChannel";Check(data.Validate().Contains("CONFIG.PLATFORM_UNSUPPORTED"),"native channel remains extension only");
   data.platform="Douyin";data.appId=" ";Check(data.Validate().Contains("CONFIG.APP_ID_REQUIRED"),"app required");
@@ -25,6 +25,7 @@ class RuntimeConfigurationTests {
   data.platform="TikTok";Check(data.ToSdkConfig().NetworkEnabled,"TikTok network mapping");
   data.platform="WeChat";data.analytics=true;Check(data.ToSdkConfig().AnalyticsEnabled,"WeChat analytics mapping");
   data.platform="Douyin";Check(data.ToSdkConfig().AnalyticsEnabled,"Douyin analytics mapping");
+  data.platform="TikTok";Check(data.ToSdkConfig().AnalyticsEnabled,"TikTok analytics mapping");
   data.platform="Mock";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"Mock analytics not yet available");
   Console.WriteLine("PASS: portable configuration mapping, snapshot independence and unsupported configuration rejection");
  }

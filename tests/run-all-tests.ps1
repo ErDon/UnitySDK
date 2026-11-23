@@ -17,6 +17,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Analytics facade compile failed'}
     & .\.tests\AnalyticsFacadeTests.exe
     if($LASTEXITCODE -ne 0){throw 'Analytics facade tests failed'}
+    & $compiler /nologo /out:.tests\AnalyticsAsyncTests.exe $registryCore .\tests\AnalyticsAsyncTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Async analytics compile failed'}
+    & .\.tests\AnalyticsAsyncTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Async analytics tests failed'}
     & $compiler /nologo /out:.tests\NetworkFacadeTests.exe $registryCore .\tests\NetworkFacadeTests.cs
     if($LASTEXITCODE -ne 0){throw 'Network facade compile failed'}
     & .\.tests\NetworkFacadeTests.exe

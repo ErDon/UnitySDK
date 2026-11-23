@@ -6,7 +6,7 @@ using TTSDK.UNBridgeLib.LitJson;
 namespace ErDon.UnitySDK.TikTok
 {
     /// <summary>Completion-aware adapter; initialize the official runtime before reporting.</summary>
-    public sealed class TikTokAnalytics : IAsyncAnalytics
+    public sealed class TikTokAnalytics : IAnalytics, IAsyncAnalytics
     {
         readonly Action<ReportEventParam> report;
         readonly object gate = new object();
@@ -18,6 +18,11 @@ namespace ErDon.UnitySDK.TikTok
         {
             if (report == null) throw new ArgumentNullException("report");
             this.report = report;
+        }
+
+        public AnalyticsResult ReportEvent(AnalyticsEvent analyticsEvent)
+        {
+            return AnalyticsResult.Fail("ANALYTICS.ASYNC_REQUIRED", "TikTok analytics requires the callback overload of SDK.ReportEvent");
         }
 
         public IAnalyticsOperation ReportEvent(AnalyticsEvent analyticsEvent, Action<AnalyticsResult> callback)

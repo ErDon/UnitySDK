@@ -1,12 +1,12 @@
-# 数据上报（公共聚合与微信、抖音适配已实现）
+# 数据上报（公共聚合与三平台适配已实现）
 
-当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信和抖音工厂已提供适配，相应运行时 JSON 可设置 analytics=true；面板标记支持微信、抖音。TikTok 异步底层已实现，但聚合/工厂尚未接通；TikTok 和 Mock 配置仍拒绝启用。真实构建仍须完成整体产物验收。
+当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。三平台工厂已提供适配，相应运行时 JSON 可设置 analytics=true。TikTok 必须使用回调重载，等待平台结果；Mock 上报配置仍拒绝启用。真实构建仍须完成整体产物验收。
 
-## TikTok 异步能力（聚合待接入）
+## TikTok 异步能力
 
 本地 1.1.6-Release 的 Runtime 与 Editor DLL 都提供 `TT.ReportEvent(ReportEventParam)`，字段为 eventName、JsonData params 及无参数 success/fail/complete 回调。成功回调只代表平台报告成功，不能证明后台报表入库。两套 DLL 的桥接失败与超时都转为同一个 fail 回调，丢弃 ErrorInfo；适配器返回 ANALYTICS.PLATFORM_FAILED，原因明确为平台拒绝或桥接超时，不编造原始错误码。
 
-`TikTokAnalytics` 实现 `IAsyncAnalytics.ReportEvent(event, callback)`，返回 `IAnalyticsOperation`。首个 success/fail/complete 信号决定结果；单独 complete 返回 ANALYTICS.INVALID_RESULT。Cancel 只取消本地观察并返回 ANALYTICS.CANCELLED，不撤销已发送事件；Dispose 抑制未完成操作的回调。没有平台返回时保持等待，聚合层的超时策略尚待接入。调用和释放需在 Unity 主线程执行。此接口当前供平台适配使用，上层统一的异步 SDK.ReportEvent 入口尚未开放。
+`TikTokAnalytics` 实现 `IAsyncAnalytics.ReportEvent(event, callback)`，返回 `IAnalyticsOperation`。首个 success/fail/complete 信号决定结果；单独 complete 返回 ANALYTICS.INVALID_RESULT。Cancel 只取消本地观察并返回 ANALYTICS.CANCELLED，不撤销已发送事件；Dispose 抑制未完成操作的回调。底层没有平台返回时保持等待；SDK 聚合层默认 15 秒超时，并取消底层的本地观察。调用、取消、Tick 和释放需在 Unity 主线程执行。统一入口使用下述回调重载。
 
 参数逐项构造官方 JsonData，空参数用 JsonType.Object，避免被编码为 null 或字符串。测试同时引用本地 TTSDK DLL 和其 LitJson/TTLitJson.dll，覆盖成功/失败/重复/迟到回调、complete 单独触发、同步抛异常、本地取消、释放、空参数及字段映射。运行 `tests/run-tiktok-tests.ps1`。本地插件存在定制修改；此验证不代表干净官方插件集成或真机验收。
 
@@ -35,9 +35,9 @@ if (!result.Dispatched)
 
 ## 调用与生命周期
 
-这是同步接口，需与其他 SDK 生命周期调用一起在 Unity 主线程执行。平台实现不得重入 SDK。模块关闭时工厂不会创建上报实例；初始化失败只释放本次新建的实例，保留之前正常工作的 SDK。SDK 取得实例所有权，关闭时释放一次，即使实例同时实现存储等其他能力也不重复释放。
+不带回调的重载是同步接口，只适用于微信和抖音；TikTok 返回 ANALYTICS.ASYNC_REQUIRED 且不发送事件。跨平台业务应统一使用回调重载。调用需与其他 SDK 生命周期调用一起在 Unity 主线程执行。平台实现不得重入 SDK。模块关闭时工厂不会创建上报实例；初始化失败只释放本次新建的实例，保留之前正常工作的 SDK。SDK 取得实例所有权，关闭时释放一次，即使实例同时实现存储等其他能力也不重复释放。
 
-日志由 SDK 统一输出，包含时间、接口名、调用 ID、阶段和结果。事件名称、参数名称及参数值不直接写入日志，仅输出参数数量及脱敏标记。没有单独的网络送达回调或超时：同步接口返回只能观察本地调用结果。
+日志由 SDK 统一输出，包含时间、接口名、调用 ID、阶段和结果。事件名称、参数名称及参数值不直接写入日志，仅输出参数数量及脱敏标记。同步接口返回只能观察本地调用结果。回调重载观察平台可提供的完成信号，但两种形式都不是后台入库证明。
 
 | 错误码 | 原因与处理 |
 | --- | --- |
@@ -69,3 +69,21 @@ WeChatAnalytics 使用 `WX.ReportEvent<Dictionary<string,object>>`。本地 WX.d
 本地官方 DLL 中 `TTAPIImpl.ReportAnalytics<T>` 先设置内部字段 `cp_event_key_name`，再逐项构造 `TTSDK.UNBridgeLib.LitJson.JsonData(value)`。因此适配器拒绝业务参数使用该名称，返回 `ANALYTICS.RESERVED_PARAMETER`，避免覆盖事件名。官方实现自身可能输出事件名；SDK 自己的日志脱敏不代表第三方插件日志也已脱敏，应按官方插件配置管理其日志。
 
 初始化 platform=Douyin、analytics=true，由 DouyinProviderFactory 按需创建。同步异常返回 ANALYTICS.PROVIDER_FAILED，释放后返回 SDK.DISPOSED。不自动重试、不确认后台入库。`tests/run-douyin-tests.ps1` 包含实际 DLL 编译、官方 JsonData 标量构造/序列化、参数映射、保留字段拒绝和释放检查；真机送达尚未验证。
+
+## 跨平台统一回调入口
+
+```csharp
+IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
+    if (result.Dispatched)
+        UnityEngine.Debug.Log("上报调用完成，CallId=" + result.CallId);
+    else
+        UnityEngine.Debug.Log(result.Error.Code + ": " + result.Error.Reason);
+}, timeoutMilliseconds: 15000);
+// 如业务不再需要等待：operation.Cancel();
+```
+
+微信、抖音在同步接口正常返回后派发结果；TikTok 等待其 success/fail 回调。支持多次并发，每次拥有独立 ID、取消和超时；超时范围 1–120000 毫秒，默认15000。由 SDK.Tick（UnitySdkHost 自动驱动）检查本地超时，超时返回 ANALYTICS.TIMEOUT，取消返回 ANALYTICS.CANCELLED。取消不撤销平台事件，也不触发自动重试。
+
+有效调用的回调经初始化时的主线程派发器投递；派发器抛异常时由后续 Tick 恢复。初始化/模块/参数预检失败会在当前调用线程直接返回回调，因此调用本身也必须位于主线程。重复或迟到平台结果被抑制，Shutdown 丢弃排队结果并取消未完成观察。回调异常进入 SDK 格式化日志。平台实现返回 null 结果/句柄分别映射 ANALYTICS.INVALID_RESULT/ANALYTICS.INVALID_OPERATION。
+
+`tests/AnalyticsAsyncTests.cs` 验证并发独立结果、取消、超时、快照、同步平台兼容、派发恢复和关闭后的回调抑制。TikTok 双 DLL 测试另验证工厂和运行时配置。真实 Unity Play Mode、TikTok 干净插件和真机上报仍待验证。

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "platform": "Douyin",
+  "artifact": {
+    "path": "plugin-config.js",
+    "bytes": 529,
+    "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2"
+  },
+  "reference": {
+    "path": "Editor/Tool/ttsdk_tools.dll",
+    "bytes": 1024512,
+    "sha256": "341f2ea171281dbda3faec80ba50b3bc972ad42d8295f5f6f2d1e55a21fa58e7",
+    "inventorySha256": "5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0",
+    "matchesInventory": true
+  },
+  "comparison": {
+    "artifactDecoding": "utf-8",
+    "referenceEncoding": "utf-16-le",
+    "completeTextMatch": true,
+    "normalization": "none",
+    "offset": 912800,
+    "matchedBytes": 1038
+  },
+  "isolation": "not-assessed",
+  "limitation": "The complete exported text is present in the installed Douyin tool DLL. This explains why a TikTok-only file hash match is not proof of foreign SDK inclusion. It does not prove the executed generation path or complete export isolation."
+}

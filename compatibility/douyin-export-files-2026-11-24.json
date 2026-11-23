@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "platform": "Douyin",
+  "baselines": [
+    {
+      "platform": "WeChat",
+      "packageName": "com.qq.weixin.minigame",
+      "packageVersion": "0.1.1",
+      "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79"
+    },
+    {
+      "platform": "Douyin",
+      "packageName": "com.bytedance.starksdk",
+      "packageVersion": "6.9.7",
+      "inventorySha256": "5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0"
+    },
+    {
+      "platform": "TikTok",
+      "packageName": "com.bytedance.starksdk",
+      "packageVersion": "1.1.6-Release",
+      "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962"
+    }
+  ],
+  "files": [
+    {
+      "path": "data-package/bfd66251d11b259f.webgl.data.unityweb.bin",
+      "bytes": 4010480,
+      "sha256": "b41434d917b40b9e1d2c1265c6f0de2a488ec61c1725e4aa734af57ac9bef5b0",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "data-package/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution"
+    },
+    {
+      "path": "game.js",
+      "bytes": 4196,
+      "sha256": "0f2341d748d0a769d8387c0344697f3e13ebdf0181dbb530b8de7e09440cc626",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "game.json",
+      "bytes": 719,
+      "sha256": "1be8747216b64b4f17d8d5d4fe8152fdb31bfcb87a827b2fd1c943deba10dd50",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "images/background.png",
+      "bytes": 38642,
+      "sha256": "ec37b6e03810688a88276cb616ad4dc12907416820301c693b7f779534561e97",
+      "matchingPlatforms": [
+        "Douyin"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "images/unity_logo.png",
+      "bytes": 9664,
+      "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6",
+      "matchingPlatforms": [
+        "Douyin",
+        "TikTok"
+      ],
+      "classification": "target-or-shared-exact-match"
+    },
+    {
+      "path": "plugin-config.js",
+      "bytes": 529,
+      "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2",
+      "matchingPlatforms": [
+        "TikTok"
+      ],
+      "classification": "foreign-only-exact-match"
+    },
+    {
+      "path": "project.config.json",
+      "bytes": 360,
+      "sha256": "1e3d48c056937f92ff365f73c621023e7014a0b1bd662fea5f83717d34b9bc70",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "unity-namespace.js",
+      "bytes": 496,
+      "sha256": "720633c5ac54f94128fbaa28372087704c0350b1a3ba20f5d8d567e9eeab70f6",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "wasmcode/f884b7b621810711.webgl.wasm.code.unityweb.wasm",
+      "bytes": 26424235,
+      "sha256": "5addf6c3621e940573b3b709ec1b8fd03345725149a190c4f114ac5359acaca0",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "wasmcode/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution"
+    },
+    {
+      "path": "webgl-wasm-split.js",
+      "bytes": 689,
+      "sha256": "fe29276a1f973cd65e8bd1410cdb94e4eae36bfbcda2e94af86544d7b334b864",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    },
+    {
+      "path": "webgl.framework.js",
+      "bytes": 743428,
+      "sha256": "66fcda88193fa07f936c307dc83edcfe469847483ddeb71eb26dbd565af582e4",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review"
+    }
+  ],
+  "fileCount": 13,
+  "totalBytes": 31233438,
+  "foreignOnlyMatchCount": 1,
+  "isolation": "not-assessed",
+  "authenticityVerified": false,
+  "limitation": "Exact bytes only. Renaming is detected; transformed, merged or compressed code requires separate review. Shared or unmatched bytes do not prove isolation."
+}

@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 微信/抖音最终导出文件核对及共享模板追踪
+
+对既有微信官方提交转换输出（minigame + webgl）核对 84 文件、抖音 6.9.7 转换输出核对 13 文件，保存逐文件大小/哈希/匹配报告。微信没有仅匹配外平台文件；抖音 plugin-config.js 529 字节仅匹配 TikTok 文件基线，保持该原始结果。
+
+追踪发现抖音 ttsdk_tools.dll 偏移 912800 包含导出模板完整文本的 UTF-16LE 表示（1038 字节，无文本规范化），并核验该 DLL 与既有抖音基线的哈希/长度一致。独立 JSON 保存双方哈希、偏移、编码和限制。该证据排除了“仅凭 TikTok 文件哈希命中即可认定混包”的推断，但不证明实际生成路径或整个 JS/Wasm 隔离。最终产物项继续待验收，进度 66/78。
+
 ### WebGL 构建能力面板验收完成
 
 独立 UnityProject 从 Windows 目标切换到 WebGL，导入编译完成后应用按钮可用。分享关闭、其他六项开启时点击应用，Library/Bee/artifacts/2000b0aE.dag 中核心、Editor、HTTP 和测试程序集的 rsp 实际出现 -define:ERDON_EXCLUDE_SHARE；Play Mode 中按钮禁用，退出后恢复。重新勾选分享并点击应用，02:33 更新的 ErDon.UnitySDK.Editor.rsp 不再包含该宏（SHARE_EXCLUSION_REMOVED）。panel-visual.log 记录编译后的程序集重载，无 error CS；最终面板恢复可用。此次仅编译目标切换和宏应用，没有执行 Player 打包。

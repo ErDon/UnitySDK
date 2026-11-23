@@ -101,6 +101,10 @@ python tools/inspect-export-files.py --root '<小游戏导出目录>' --platform
 
 ## 压缩产物中的标识核对
 
+微信与抖音的文件检查已补充：[微信导出 84 文件](../compatibility/wechat-export-files-2026-11-24.json)、[抖音导出 13 文件](../compatibility/douyin-export-files-2026-11-24.json)。微信范围包括同一次转换输出的 minigame 和 webgl 目录，基线采用官方提交转换副本的完整 651 文件清单（packageVersion 0.1.1）；不是此前本地 0.1.23 基线。两份报告均记录基线哈希，不与后来重建的链接产物混用。
+
+抖音报告有一项 foreign-only-exact-match：529 字节的 plugin-config.js 与 TikTok DefaultTemplate 文件相同，而抖音包没有独立的同名模板文件。进一步核对发现，导出文件按 UTF-8 解码后、不作任何规范化、完整转为 UTF-16LE 的 1038 字节，在抖音 Editor/Tool/ttsdk_tools.dll 偏移 912800 处完全匹配；该 DLL 哈希和长度与抖音完整基线一致。详见 [模板内容证据](../compatibility/douyin-plugin-config-review-2026-11-24.json)。这说明抖音工具也携带同一模板文本，不能仅凭 TikTok 文件哈希命中断言混包；仍未证明实际执行的生成路径或完整最终隔离，原始报告不改为通过。
+
 `tools/inspect-content-markers.py` 对已解压文件及参考文件记录 SHA-256、字节数和指定 ASCII 标识在 ASCII/UTF-16LE 下的出现次数与前 20 个偏移。它不输出周围业务内容，不修改输入；报告不能覆盖输入。运行 `python tests/test_content_markers.py` 检查编码、偏移、计数上限和无匹配行为。
 
 ```powershell

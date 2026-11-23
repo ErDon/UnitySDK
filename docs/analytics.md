@@ -1,6 +1,14 @@
 # 数据上报（公共聚合与微信、抖音适配已实现）
 
-当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信和抖音工厂已提供适配，相应运行时 JSON 可设置 analytics=true；面板标记支持微信、抖音。TikTok 和 Mock 上报尚未接通，对应配置仍拒绝启用。真实构建仍须完成整体产物验收。
+当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。微信和抖音工厂已提供适配，相应运行时 JSON 可设置 analytics=true；面板标记支持微信、抖音。TikTok 异步底层已实现，但聚合/工厂尚未接通；TikTok 和 Mock 配置仍拒绝启用。真实构建仍须完成整体产物验收。
+
+## TikTok 异步能力（聚合待接入）
+
+本地 1.1.6-Release 的 Runtime 与 Editor DLL 都提供 `TT.ReportEvent(ReportEventParam)`，字段为 eventName、JsonData params 及无参数 success/fail/complete 回调。成功回调只代表平台报告成功，不能证明后台报表入库。两套 DLL 的桥接失败与超时都转为同一个 fail 回调，丢弃 ErrorInfo；适配器返回 ANALYTICS.PLATFORM_FAILED，原因明确为平台拒绝或桥接超时，不编造原始错误码。
+
+`TikTokAnalytics` 实现 `IAsyncAnalytics.ReportEvent(event, callback)`，返回 `IAnalyticsOperation`。首个 success/fail/complete 信号决定结果；单独 complete 返回 ANALYTICS.INVALID_RESULT。Cancel 只取消本地观察并返回 ANALYTICS.CANCELLED，不撤销已发送事件；Dispose 抑制未完成操作的回调。没有平台返回时保持等待，聚合层的超时策略尚待接入。调用和释放需在 Unity 主线程执行。此接口当前供平台适配使用，上层统一的异步 SDK.ReportEvent 入口尚未开放。
+
+参数逐项构造官方 JsonData，空参数用 JsonType.Object，避免被编码为 null 或字符串。测试同时引用本地 TTSDK DLL 和其 LitJson/TTLitJson.dll，覆盖成功/失败/重复/迟到回调、complete 单独触发、同步抛异常、本地取消、释放、空参数及字段映射。运行 `tests/run-tiktok-tests.ps1`。本地插件存在定制修改；此验证不代表干净官方插件集成或真机验收。
 
 ## 参数与结果
 

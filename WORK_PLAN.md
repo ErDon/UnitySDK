@@ -61,7 +61,8 @@
 - [x] SDK.ReportEvent 聚合、配置开关、按需工厂、所有权、错误关联与日志；公共回归和接口说明。
 - [x] 微信数据上报适配、按需工厂与配置映射；官方程序集编译、官方序列化与注入行为测试。
 - [x] 抖音数据上报适配、保留字段保护、工厂与配置映射；官方 DLL 编译和注入行为测试。
-- [ ] TikTok 数据上报适配、Mock 配置面板与三平台文档/失败示例。
+- [x] TikTok 数据上报异步底层适配；Runtime/Editor DLL 编译、参数序列化与回调生命周期测试。
+- [ ] 异步上报聚合/超时与 TikTok 工厂配置接入、Mock 面板和三平台完整示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
 ## 第五阶段：支付与订单（公共链路完成，真实支付待办）
@@ -102,6 +103,8 @@
 ### 抖音数据上报适配增量
 
 核对官方 6.9.7 ReportAnalytics 泛型接口和 JsonData 转换路径，实现 DouyinAnalytics 与按需工厂，开放抖音 analytics 配置。发现官方桥接内部字段 cp_event_key_name 会被同名业务参数覆盖，因此适配层拒绝该参数。实际 DLL 编译、官方 JsonData 序列化、注入参数映射/异常/释放与平台回归通过；未进行真机入库验证。TikTok API 为不同的 ReportEventParam 形式，仍待单独适配。
+
+TikTok 后续增量：核对本地 1.1.6-Release 两套 DLL 的 ReportEventParam、桥接实现及回调转发。与微信/抖音不同，该接口支持异步 success/fail/complete；新增 IAsyncAnalytics/IAnalyticsOperation 和 TikTokAnalytics 底层实现，等待平台结果、首个信号胜出、支持本地取消与释放抑制、空参数明确编码为对象。两套 DLL 的编译/JSON/注入行为测试通过。fail 回调不携带错误码，平台超时同样转发 fail，不伪造更细的原因。现有同步聚合入口尚未接通此异步能力，TikTok analytics 配置仍阻断；下一步补异步聚合和本地超时。干净官方插件与真机验证仍待办。
 
 ### 数据上报契约增量
 

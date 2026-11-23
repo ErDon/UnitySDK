@@ -82,4 +82,16 @@ namespace ErDon.UnitySDK
     {
         IAnalytics CreateAnalytics();
     }
+
+    /// <summary>Optional completion-aware platform capability. Completion is not proof of report ingestion.</summary>
+    public interface IAsyncAnalytics : IDisposable
+    {
+        IAnalyticsOperation ReportEvent(AnalyticsEvent analyticsEvent, Action<AnalyticsResult> callback);
+    }
+
+    public interface IAnalyticsOperation
+    {
+        // Cancels local observation only, not an already dispatched platform event.
+        void Cancel();
+    }
 }

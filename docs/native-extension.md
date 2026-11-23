@@ -12,6 +12,29 @@
 
 登录建议复用 IPlatformCredentialProvider + VerifiedAuth + ISessionExchange：渠道临时凭证经服务端验证后才生成游戏会话。广告 Completed 是客户端结果；支付必须经订单服务验证并达到 Fulfilled，不能凭收银台成功回调发货。接口实现不依赖具体游戏的角色、UI、热更新或异步框架。
 
+## 扩展接口对照
+
+这些接口供渠道适配层实现，游戏业务仍调用 SDK 聚合入口。下表中的 Dispose 负责释放包装器、监听和在途观察，不代表退出平台账号、退款或删除存储。
+
+| 契约 | 方法/属性与责任 | 详细说明 |
+| --- | --- | --- |
+| IPlatformRuntime | Platform、IsReady、Initialize(callback)、Dispose；初始化成功必须已经就绪 | [启动与所有权](startup.md) |
+| IPlatformSdkProviderFactory / ISdkProviderFactory | Platform、CreateAuth(dispatch)、CreateStorage；只创建新实例 | [工厂示例](configuration.md) |
+| IShareProviderFactory / IRewardedAdsProviderFactory | CreateShare / CreateRewardedAds；仅在相应模块开启时创建 | [分享](share.md)、[广告](rewarded-ads.md) |
+| IPayProviderFactory | CreatePay(dispatch)；将订单服务和收银台桥接组合为 IPay | [支付编排](payment-pipeline.md) |
+| INetworkProviderFactory / IAnalyticsProviderFactory | CreateNetwork / CreateAnalytics；未安装相应通信或渠道实现时不返回假成功 | [网络](network.md)、[上报](analytics.md) |
+| IPlatformCredentialProvider / ISessionExchange | GetCredential / Exchange；分别取得一次性凭证、兑换游戏会话 | [登录](authentication.md) |
+| IAuth | Login(callback)、Dispose；成功结果应为已验证的游戏会话 | [登录](authentication.md) |
+| IStorage | Set、Get、Remove、Dispose；字符串存储，区分不存在与空值 | [存储](storage.md) |
+| IShare | Share(request, callback)、Dispose；只承诺平台接受发起请求 | [分享](share.md) |
+| IRewardedAds | Show(request, callback)、Dispose；完整观看与提前关闭必须区分 | [广告](rewarded-ads.md) |
+| IPay / IPaymentLauncher | Pay / Launch；聚合支付结果与渠道收银台结果不能混用 | [支付编排](payment-pipeline.md) |
+| IOrderClient | Create、Get、Confirm、Dispose；保留购买幂等编号，发货状态由服务端决定 | [订单](orders.md) |
+| INetwork / INetworkOperation | Send 返回独立取消句柄，provider 可 Dispose；Cancel 不撤销服务器动作 | [网络](network.md) |
+| IAnalytics / IAsyncAnalytics / IAnalyticsOperation | 同步或异步 ReportEvent；异步返回独立 Cancel 句柄，完成不证明后台入库 | [上报](analytics.md) |
+
+能力工厂没有统一 Dispose 方法：工厂只持有创建配置，成功返回的能力对象由 SDK 管理；尚未返回给 SDK 的中间对象发生异常时由工厂自行回收。同一官方全局运行时可能服务多个能力，各包装器不能在 Dispose 时擅自销毁其他能力仍在使用的全局对象。不要通过返回同一个旧 provider 来复用上一轮 SDK 生命周期。
+
 ## 当前能用的启动路径
 
 当前 `SdkRuntimeConfiguration` 及面板仅支持 Mock、微信、抖音、TikTok。即使调用 SdkPlatformRegistry.Register 注册自定义名字，也不会绕过配置校验；AndroidChannel/IOSChannel 面板选项不是可发布适配。不要把原生渠道伪装成微信以绕过校验。
@@ -19,6 +42,8 @@
 扩展开发可使用已存在的手动启动入口，不修改公共配置白名单：
 
 ```csharp
+using ErDon.UnitySDK;
+
 // vendorRuntime/vendorFactory 由渠道包实现，不是此仓库自带对象。
 var config = new SdkConfig {
     Platform = "Android.ExampleChannel",

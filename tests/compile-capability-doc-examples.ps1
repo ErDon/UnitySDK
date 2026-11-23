@@ -16,7 +16,7 @@ try {
         if (!(Test-Path -LiteralPath $inputFile -PathType Leaf)) { throw "Missing compilation input: $inputFile" }
     }
     $output = New-Item -ItemType Directory -Force '.tests/documentation-examples'
-    foreach ($name in @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline', 'api-reference', 'configuration')) {
+    foreach ($name in @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline', 'api-reference', 'configuration', 'startup', 'native-extension')) {
         $markdown = Get-Content -Raw -Encoding UTF8 "docs/$name.md"
         $matches = [regex]::Matches($markdown, '(?s)```csharp\r?\n(.*?)\r?\n```')
         if (!$matches.Count) { throw "Missing C# examples: $name" }
@@ -32,6 +32,11 @@ try {
             $parameters = if ($name -eq 'payment-pipeline') { 'ErDon.UnitySDK.IOrderClient orderClient, ErDon.UnitySDK.IPaymentLauncher platformLauncher, System.Action<System.Action> mainThreadPost, string gameSession, string savedPurchaseRequestId' } else { '' }
             $source = Join-Path $output.FullName "$name-$index.cs"
             $fields = ''
+            if ($name -eq 'startup') {
+                $parameters = 'ErDon.UnitySDK.SdkConfig config, ErDon.UnitySDK.IPlatformRuntime runtime, ErDon.UnitySDK.IPlatformSdkProviderFactory factory'
+                if ($index -eq 1) { $parameters += ', System.Action<System.Action> postToMainThread, System.Action<ErDon.UnitySDK.SdkLogLevel, string> engineLog, System.Action<ErDon.UnitySDK.StartupResult> onReady' }
+            }
+            if ($name -eq 'native-extension') { $parameters = 'ErDon.UnitySDK.IPlatformRuntime vendorRuntime, ErDon.UnitySDK.IPlatformSdkProviderFactory vendorFactory' }
             if ($name -eq 'configuration') {
                 if ($index -in @(2, 3)) { $parameters = 'UnityEngine.TextAsset configAsset' }
                 if ($index -eq 4) { $fields = 'ErDon.UnitySDK.INetwork network; void OnDestroy() { network?.Dispose(); }' }

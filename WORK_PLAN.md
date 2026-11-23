@@ -63,7 +63,8 @@
 - [x] 抖音数据上报适配、保留字段保护、工厂与配置映射；官方 DLL 编译和注入行为测试。
 - [x] TikTok 数据上报异步底层适配；Runtime/Editor DLL 编译、参数序列化与回调生命周期测试。
 - [x] 异步上报聚合、独立取消/超时、主线程派发与 TikTok 工厂配置；公共及双 DLL 回归。
-- [ ] 数据上报 Mock 面板、Unity Play Mode 与三平台真机/入库验收。
+- [x] 数据上报 Mock 配置/预览和 Unity Play Mode 成功、失败、超时、取消、关闭/迟到回调检查。
+- [ ] 数据上报三平台真机与后台入库验收；面板视觉交互仍待整体验收。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
 ## 第五阶段：支付与订单（公共链路完成，真实支付待办）
@@ -102,6 +103,8 @@
 ## 2026-11-23 执行记录
 
 ### 异步上报聚合增量
+
+Mock 与 Unity 增量：新增 EditorMockAnalytics 和面板结果选择/ReportEvent/取消按钮，Mock analytics JSON 和按需工厂已开放；UnitySdkHost 直接初始化增加可选 analyticsProvider。公共回归通过，隔离 Unity 工程输出 SDK_ANALYTICS_PLAY_PASS，覆盖成功、失败、Update 超时、取消、模块关闭及关闭后排队回调抑制。首次导入出现文件导入次序导致的临时类型缺失，后续重编译并完成测试；重开同工程执行 Editor 检查输出 SDK_EDITOR_CHECKS_PASS，未出现 C# 编译错误。面板视觉交互与真机入库不视为通过。
 
 新增 SDK.ReportEvent(event, callback, timeoutMilliseconds) 跨平台入口，微信/抖音返回派发结果，TikTok 等待平台回调；单次独立取消/默认15秒超时、结果快照、主线程派发恢复与 Shutdown 清理。TikTok 工厂现按需创建异步能力，运行时 JSON 允许 analytics=true；旧同步重载在 TikTok 返回 ASYNC_REQUIRED，不虚报成功。公共异步测试和 TikTok Runtime/Editor DLL 工厂/行为测试通过，文档补跨平台示例。Mock 面板与 Unity Play Mode/真机仍待验收。
 

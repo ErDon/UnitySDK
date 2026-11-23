@@ -1,6 +1,6 @@
 # 数据上报（公共聚合与三平台适配已实现）
 
-当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。三平台工厂已提供适配，相应运行时 JSON 可设置 analytics=true。TikTok 必须使用回调重载，等待平台结果；Mock 上报配置仍拒绝启用。真实构建仍须完成整体产物验收。
+当前已提供 `SDK.ReportEvent`、`AnalyticsEvent`、`AnalyticsResult`、`IAnalytics` 和可选工厂接口。手动初始化可通过 `SdkConfig.AnalyticsEnabled` 启用，并传入 `analyticsProvider` 或实现 `IAnalyticsProviderFactory`。三平台工厂已提供适配，相应运行时 JSON 可设置 analytics=true。TikTok 必须使用回调重载，等待平台结果；Mock 配置已接通 Editor 预览。真实构建仍须完成整体产物验收。
 
 ## TikTok 异步能力
 
@@ -86,4 +86,12 @@ IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
 
 有效调用的回调经初始化时的主线程派发器投递；派发器抛异常时由后续 Tick 恢复。初始化/模块/参数预检失败会在当前调用线程直接返回回调，因此调用本身也必须位于主线程。重复或迟到平台结果被抑制，Shutdown 丢弃排队结果并取消未完成观察。回调异常进入 SDK 格式化日志。平台实现返回 null 结果/句柄分别映射 ANALYTICS.INVALID_RESULT/ANALYTICS.INVALID_OPERATION。
 
-`tests/AnalyticsAsyncTests.cs` 验证并发独立结果、取消、超时、快照、同步平台兼容、派发恢复和关闭后的回调抑制。TikTok 双 DLL 测试另验证工厂和运行时配置。真实 Unity Play Mode、TikTok 干净插件和真机上报仍待验证。
+`tests/AnalyticsAsyncTests.cs` 验证并发独立结果、取消、超时、快照、同步平台兼容、派发恢复和关闭后的回调抑制。TikTok 双 DLL 测试另验证工厂和运行时配置。Unity Mock Play Mode 已验证，TikTok 干净插件和真机上报仍待验证。
+
+## Editor Mock 面板
+
+在 SDK 配置面板勾选数据上报、选择 Mock 平台并进入 Play Mode。选择“上报模拟结果”后重新初始化 Mock，再点击 ReportEvent（不发送数据）。Dispatched 返回模拟调用完成，Failed 返回 ANALYTICS.PLATFORM_FAILED，Timeout 保持等待直到面板调用的 1 秒本地超时；也可点击“取消最近一次上报”。未勾选时调用返回 MODULE.DISABLED。
+
+Mock 位于 Editor 程序集，不发送统计请求。改变模拟结果后需要重新初始化才能生效；改变配置开关也不修改已经初始化的 SDK 快照。真实平台运行时，这组 Mock 业务按钮保持禁用。面板按钮逻辑和 Play Mode 验证不同于视觉交互验收，后者仍需单独检查。
+
+隔离工程可复制 `tests/AnalyticsPlayChecks.cs.txt` 到 Assets/Editor/AnalyticsPlayChecks.cs，通过 AnalyticsPlayChecks.Run 启动行为测试。测试包含真实 UnitySdkHost 的 Update 派发和超时驱动、模块关闭及关闭后排队结果抑制。

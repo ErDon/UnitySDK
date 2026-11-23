@@ -36,8 +36,6 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("真实平台构建依赖与产物验收尚未完成；当前不允许真实平台构建。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (analytics && platform != DistributionPlatform.WeChat && platform != DistributionPlatform.Douyin && platform != DistributionPlatform.TikTok)
-                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录、存储、分享、广告、网络和支付示例。");
             return issues;
         }
     }
@@ -48,6 +46,8 @@ namespace ErDon.UnitySDK.Editor
         MockPaymentOutcome paymentOutcome;
         MockRewardedAdOutcome adOutcome;
         MockNetworkOutcome networkOutcome;
+        MockAnalyticsOutcome analyticsOutcome;
+        IAnalyticsOperation lastAnalyticsOperation;
         INetworkOperation lastNetworkOperation;
         string lastResult = "尚未调用";
         string storageKey = "preview.key", storageValue = "preview-value";
@@ -71,7 +71,7 @@ namespace ErDon.UnitySDK.Editor
             settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（可选通信工厂）", settings.network);
-            settings.analytics = EditorGUILayout.Toggle("数据上报（三平台，Mock 待接入）", settings.analytics);
+            settings.analytics = EditorGUILayout.Toggle("数据上报", settings.analytics);
             if (EditorGUI.EndChangeCheck()) settings.SaveSettings();
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
@@ -119,12 +119,13 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("Mock 调试（仅 Play Mode）", EditorStyles.boldLabel);
             outcome = (MockLoginOutcome)EditorGUILayout.EnumPopup("模拟结果", outcome);
             paymentOutcome = (MockPaymentOutcome)EditorGUILayout.EnumPopup("支付模拟结果", paymentOutcome);
+            analyticsOutcome = (MockAnalyticsOutcome)EditorGUILayout.EnumPopup("上报模拟结果", analyticsOutcome);
             networkOutcome = (MockNetworkOutcome)EditorGUILayout.EnumPopup("网络模拟结果", networkOutcome);
             adOutcome = (MockRewardedAdOutcome)EditorGUILayout.EnumPopup("广告模拟结果", adOutcome);
             EditorGUILayout.HelpBox("每次初始化读取当前配置；修改模块开关后重新初始化。超时模拟使用 1 秒；其他调用使用默认超时。", MessageType.Info);
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying || settings.Validate().Count != 0)) {
                 if (GUILayout.Button("按配置初始化 Mock")) {
-                    try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome, ads: adOutcome, network: networkOutcome); lastResult = "Mock 已初始化"; }
+                    try { EditorSdkBootstrap.Initialize(outcome, payment: paymentOutcome, ads: adOutcome, network: networkOutcome, analytics: analyticsOutcome); lastResult = "Mock 已初始化"; }
                     catch (Exception ex) { lastResult = ex.Message; }
                 }
                 using (new EditorGUI.DisabledScope(SDK.ActivePlatform != "Mock")) {
@@ -134,6 +135,12 @@ namespace ErDon.UnitySDK.Editor
                         Repaint();
                     });
                 }
+                if (GUILayout.Button("ReportEvent（不发送数据）"))
+                    lastAnalyticsOperation = SDK.ReportEvent(new AnalyticsEvent("preview_event"), result => {
+                        lastResult = result.Dispatched ? "模拟上报调用完成（不代表入库）" : result.Error.Code + ": " + result.Error.Reason;
+                        Repaint();
+                    }, 1000);
+                if (GUILayout.Button("取消最近一次上报") && lastAnalyticsOperation != null) lastAnalyticsOperation.Cancel();
                 if (GUILayout.Button("取消最近一次网络请求") && lastNetworkOperation != null) lastNetworkOperation.Cancel();
                 if (GUILayout.Button("调用 SDK.ShowRewardedAd（不展示真实广告）")) {
                     SDK.ShowRewardedAd(new RewardedAdRequest("mock-ad-unit"), result => {

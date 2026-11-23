@@ -88,3 +88,9 @@ Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白�
 新增可独立测试的 SessionResponsePolicy；HTTP 层将已登记的服务端错误码/HTTP 状态映射成具体原因及重试建议，未知正文不回显。LoginResult/SdkError 保留经过 UUID 格式校验的 ServerCallId，SDK 完成日志同时包含客户端 CallId 与服务端编号。新增 HTTP 交换参数检查。
 
 验证：核心、响应策略、登录编排和隔离回归全部通过。Unity 2022.3 独立工程实际编译并输出 SDK_EDITOR_CHECKS_PASS，正常退出码 0。此轮未做 HTTPS 网络联调；只完成安全错误映射与两端编号关联，不宣称完整 tracing 已实现。
+
+### 会话持久化增量
+
+新增 SqliteAuthStore，实现持久会话、撤销、过期清理和事务化 code claim；独立于 AuthService，可通过 SDK_AUTH_DB 显式选择。Node 基线更新为已验证的 24.20.0。四项持久化测试通过，包括四个 worker 的独立数据库连接竞争，以及关闭/重开后的身份与撤销校验。修复测试清理顺序，确保先关闭连接再移除临时数据库。
+
+SQLite 适用于同机持久化，不宣称实现多机共享存储；同步 API 性能、备份恢复、真实平台及部署验收仍待完成。

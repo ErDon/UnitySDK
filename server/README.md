@@ -1,6 +1,6 @@
 # 公共登录参考服务（0.1 开发版）
 
-Node.js 22+，无 npm 第三方依赖。选择 Node 是为提供可独立运行的参考后端；协议不要求游戏使用 Node，自有后端可实现同一 HTTPS 协议。
+Node.js 24.20.0+（本机验证版本 24.20.0），无 npm 第三方依赖。选择 Node 是为提供可独立运行的参考后端；协议不要求游戏使用 Node，自有后端可实现同一 HTTPS 协议。
 
 已实现按受信 game/app/environment/platform 绑定验证请求、微信 code 验证器、随机游戏会话、过期/撤销、code 并发重放拦截、HTTP 请求/上游响应大小限制及 SDK 格式化脱敏日志。没有真实微信凭据联调；内存存储、示例启动器不用于生产。
 
@@ -64,4 +64,21 @@ async function verify(binding, temporaryCode) {
 
 日志由组件生成包含 time/interface/callId/logId/stage/params/result 的 JSON 行；可提供 `log(line)` 输出回调。参数整体脱敏，日志回调异常不影响登录结果。客户端 CallId 和服务端 callId 当前独立生成；客户端保留 ServerCallId 并写入完成日志以关联两端。Unity HTTP 适配只映射已登记的错误码/状态组合，未知错误归为 AUTH.SERVER_REJECTED，不输出任意服务端错误正文。完整 trace 传播仍待实现。
 
-发布前还需共享存储实现、部署级限流、HTTPS/域名配置、真实平台校验、跨端错误诊断、Unity 联调及运维验收。支付、事件与发货接口不在此增量内，仍属于总体计划待办。
+发布前还需部署级限流、HTTPS/域名配置、真实平台校验、Unity 联调及运维验收；多机部署还需共享存储。支付、事件与发货接口仍属于总体计划待办。
+
+## SQLite 持久化选项
+
+`SqliteAuthStore` 使用 Node 内置 node:sqlite（同步 API），实现同一存储契约。WAL、FULL 同步提交、写事务保护 claim 的检查/插入；会话只保存令牌摘要、身份和绑定。初始化识别自身 schema 版本，未知版本拒绝启动，不自动破坏性迁移。
+
+本地启动前可设置：
+
+```powershell
+New-Item -ItemType Directory -Force ./data | Out-Null
+$env:SDK_AUTH_DB = Join-Path (Get-Location) 'data/auth.sqlite'
+```
+
+未设置 SDK_AUTH_DB 时仍使用内存存储。设置后数据库目录必须已存在并可写，重启会保留未过期会话及 code claim。`server/data/` 已加入 gitignore。数据库含平台身份信息，应限制文件访问并采用 SQLite 支持的备份方式；不能仅复制仍在写入的主文件而遗漏 WAL。
+
+此实现支持同机多个数据库连接竞争同一文件，不将 WAL 文件放在网络共享盘。多台服务器部署应实现 Redis/SQL 等共享存储；同步 SQLite 会阻塞 Node 事件循环，当前尚无高负载性能验收。过期清理在操作时执行，schema 升级、备份恢复与容量策略仍需部署验收。
+
+持久化测试覆盖关闭/重开、作用域、撤销、过期释放容量、关闭后的失败、四个 worker 独立连接并发 claim 和未知 schema 拒绝。它们不代表生产部署验收。

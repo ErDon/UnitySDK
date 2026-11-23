@@ -10,11 +10,11 @@ try {
     New-Item -ItemType Directory -Force '.tests\douyin' | Out-Null
     Copy-Item -LiteralPath $dll -Destination '.tests\douyin'
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-    & $compiler /nologo /define:OFFICIAL_DOUYIN "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\douyin\DouyinCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinCredentialProvider.cs .\tests\DouyinCredentialTests.cs
+    & $compiler /nologo /define:OFFICIAL_DOUYIN "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\douyin\DouyinCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinCredentialProvider.cs .\tests\DouyinCredentialTests.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
     if($LASTEXITCODE -ne 0){throw 'Douyin official binary compile failed'}
     & $UnityMono .\.tests\douyin\DouyinCredentialTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin official binary contract tests failed'}
-    & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\douyin\DouyinStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinStorage.cs .\tests\DouyinStorageTests.cs
+    & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\douyin\DouyinStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinStorage.cs .\tests\DouyinStorageTests.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
     if($LASTEXITCODE -ne 0){throw 'Douyin storage compile failed'}
     & $UnityMono .\.tests\douyin\DouyinStorageTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin storage tests failed'}
@@ -24,7 +24,7 @@ try {
     if(!(Test-Path -LiteralPath $unityCompiler)){throw 'Unity Mono C# compiler missing; required by official TTLitJson sources'}
     & $UnityMono $unityCompiler /nologo /target:library /out:.tests\douyin\TTLitJson.dll $jsonSources
     if($LASTEXITCODE -ne 0){throw 'Official TTLitJson compile failed'}
-    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinShare.cs .\tests\DouyinShareTests.cs
+    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinShare.cs .\tests\DouyinShareTests.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
     if($LASTEXITCODE -ne 0){throw 'Douyin share compile failed'}
     & $UnityMono .\.tests\douyin\DouyinShareTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin share tests failed'}

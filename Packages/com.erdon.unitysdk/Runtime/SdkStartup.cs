@@ -34,7 +34,7 @@ namespace ErDon.UnitySDK
             if(timeoutMilliseconds<=0)throw new ArgumentOutOfRangeException("timeoutMilliseconds");
             if(config.Platform!=runtime.Platform||config.Platform!=factory.Platform)throw new InvalidOperationException("CONFIG.PLATFORM_MISMATCH");
             this.config=new SdkConfig{Platform=config.Platform,LoginEnabled=config.LoginEnabled,StorageEnabled=config.StorageEnabled,
-                ShareEnabled=config.ShareEnabled,PayEnabled=config.PayEnabled,LogCallback=config.LogCallback};
+                ShareEnabled=config.ShareEnabled,PayEnabled=config.PayEnabled,RewardedAdsEnabled=config.RewardedAdsEnabled,LogCallback=config.LogCallback};
             this.runtime=runtime;this.factory=factory;this.dispatch=dispatch;this.engineLog=engineLog;this.callback=callback;
             timeout=timeoutMilliseconds;thread=Thread.CurrentThread.ManagedThreadId;
         }

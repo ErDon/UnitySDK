@@ -1,6 +1,6 @@
 # 激励广告（底层适配开发中）
 
-新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。此阶段尚未接 SDK 聚合入口、模块工厂、面板预览和统一超时，因此配置中的激励广告仍保持未实现阻断，不应作为已完成业务能力接入。
+新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板预览和运行时 JSON 的广告开关仍待接入，因此面板校验暂时继续阻断广告配置。
 
 抖音 6.9.7 使用 TT.CreateRewardedVideoAd(CreateRewardedVideoAdParam)，关闭 Multiton，再订阅 OnLoad/OnError/OnClose 后 Load。加载完成调用一次 Show；关闭时根据官方 complete 布尔值返回 Completed。Error 只有数字码进入 PlatformCode，自由文本不回传。随包 ttsdk.xml 明确 IsComplete 表示播放完成；不把所有 OnClose 都视为完整观看。
 
@@ -19,4 +19,22 @@ RewardedAdResult.Success 表示调用正常关闭，Completed 表示客户端报
 | ADS.PROVIDER_EXCEPTION | 创建、订阅或加载调用异常 |
 | SDK.DISPOSED | provider 已释放 |
 
-当前底层不提供等待超时；统一超时/取消将在聚合层接入。释放不能保证已展示的官方 UI 立即关闭。tests/run-douyin-tests.ps1 验证真实入口编译及注入广告生命周期，尚未验证真机填充、广告位授权、展示、奖励回执或平台配额。
+底层不独立计时；SDK.ShowRewardedAd 提供统一超时/取消。释放不能保证已展示的官方 UI 立即关闭。tests/run-douyin-tests.ps1 验证真实入口编译及注入广告生命周期，尚未验证真机填充、广告位授权、展示、奖励回执或平台配额。
+
+## 聚合调用
+
+```csharp
+// 初始化前 config.RewardedAdsEnabled = true；使用支持 IRewardedAdsProviderFactory 的工厂。
+SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
+    if (!result.Success) {
+        UnityEngine.Debug.LogWarning(result.Error.Code + " callId=" + result.CallId);
+        return;
+    }
+    if (result.Completed) { /* 客户端报告看完，按游戏的奖励验证规则继续处理 */ }
+    else { /* 提前关闭，不认定完整观看 */ }
+}, timeoutMilliseconds: 120000);
+```
+
+关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 DouyinProviderFactory 已支持；微信/TikTok 工厂暂未支持广告，开启会明确拒绝初始化。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
+
+结果含 CallId/TraceId，错误 Stage=RewardedAd、Operation=SDK.ShowRewardedAd。日志不输出广告位内容，完整观看和提前关闭分别记录 Completed/ClosedEarly。与支付/分享的并发状态独立；旧回调和重复终态不会覆盖新调用。此处仍不提供服务端奖励验证或重复领奖保护。

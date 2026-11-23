@@ -44,12 +44,12 @@ namespace ErDon.UnitySDK
             host.ReplaceStartup(null);
             SDK.InitializeWithFactory(config, factory, a => host.queue.Enqueue(a), WriteLog);
         }
-        public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null)
+        public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null)
         {
             SDK.CheckHostLifecycleEntry();
             var host = GetOrCreate();
             host.ReplaceStartup(null);
-            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider, shareProvider, payProvider);
+            SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider, shareProvider, payProvider, adsProvider);
         }
         static UnitySdkHost GetOrCreate()
         {

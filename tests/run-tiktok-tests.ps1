@@ -12,15 +12,15 @@ try {
     foreach($binary in @('ttsdk.dll','ttsdk-editor.dll')) {
         $dll=Join-Path $OfficialPluginPath ('TTSDK\'+$binary)
         Copy-Item -LiteralPath $dll -Destination '.tests\tiktok'
-        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokShare.cs .\tests\TikTokShareTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokShare.cs .\tests\TikTokShareTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
         if($LASTEXITCODE -ne 0){throw "TikTok share compile failed: $binary"}
         & $UnityMono .\.tests\tiktok\TikTokShareTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok share tests failed: $binary"}
-        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokCredentialProvider.cs .\tests\TikTokCredentialTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokCredentialProvider.cs .\tests\TikTokCredentialTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
         if($LASTEXITCODE -ne 0){throw "TikTok compile failed: $binary"}
         & .\.tests\tiktok\TikTokCredentialTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok tests failed: $binary"}
-        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokStorage.cs .\tests\TikTokStorageTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokStorageTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk.tiktok\Runtime\TikTokStorage.cs .\tests\TikTokStorageTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs
         if($LASTEXITCODE -ne 0){throw "TikTok storage compile failed: $binary"}
         & .\.tests\tiktok\TikTokStorageTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok storage tests failed: $binary"}

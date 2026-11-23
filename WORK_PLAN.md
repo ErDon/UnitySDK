@@ -41,7 +41,8 @@
 - [x] 分享与存储统一接口、模块开关、错误处理、日志及接口示例。
 - [x] 微信/抖音/TikTok 分享与存储适配的官方入口编译和注入行为测试。
 - [x] 激励广告底层接口和抖音单视频适配；官方 DLL 编译及注入生命周期测试。
-- [ ] 激励广告聚合入口、超时/取消、配置预览、微信/TikTok 实现与真机验证。
+- [x] 激励广告聚合入口、开关、超时/取消、日志关联与抖音按需工厂。
+- [ ] 激励广告配置预览、微信/TikTok 实现与真机验证。
 - [ ] 通用网络能力、数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -403,3 +404,10 @@ UnitySdkHost 新增 BeginStartup / CancelStartup / Shutdown，Update 驱动启�
 
 新增 IRewardedAds/结果契约、DouyinRewardedAds 与行为测试，官方 DLL 测试通过。顶部清单勾选该底层子项；聚合开关、面板、超时取消、其他平台和真机仍未勾选，现有配置广告阻断保持。
 Unity 初次刷新存在旧文件缓存的临时类型错误；重开后 douyin-ads-confirm.log 无 C# 错误，输出 DOUYIN_ADS_UNITY_COMPILE_PASS，退出码 0。
+
+### 激励广告聚合入口
+
+新增 SDK.ShowRewardedAd / CancelRewardedAd、RewardedAdsEnabled、IRewardedAdsProviderFactory，抖音工厂按需创建。纳入初始化快照、所有权释放、异常回收和独立并发状态，结果快照带 CallId/TraceId。默认 120 秒超时，取消仅结束本地等待，不声称关闭平台 UI。
+
+RewardedFacadeTests 和公共回归通过，覆盖禁用零创建、成功/提前关闭、并发、取消/超时、旧结果、释放与脱敏；抖音官方 DLL 回归通过。更新各显式编译脚本的核心依赖。面板与运行时 JSON 尚未开放广告勾选，顶部对应子项仍待办。
+隔离 Unity 再次验证：ads-facade-confirm.log 无 C# 编译错误，输出 SDK_EDITOR_CHECKS_PASS，正常退出码 0；公共回归全套再次通过。

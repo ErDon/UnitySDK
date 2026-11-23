@@ -98,6 +98,7 @@ namespace ErDon.UnitySDK
     {
         IShare CreateShare();
     }
+    public interface IRewardedAdsProviderFactory { IRewardedAds CreateRewardedAds(); }
     public interface IPayProviderFactory { IPay CreatePay(Action<Action> mainThreadDispatch); }
     public sealed class SdkConfig
     {
@@ -106,6 +107,7 @@ namespace ErDon.UnitySDK
         public bool StorageEnabled;
         public bool ShareEnabled;
         public bool PayEnabled;
+        public bool RewardedAdsEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
     public interface ISdkProviderFactory
@@ -124,6 +126,9 @@ namespace ErDon.UnitySDK
         static IAuth auth;
         static IStorage storage;
         static IShare share;
+        static IRewardedAds ads;
+        static bool showingAd;
+        static Action cancelAd, checkAdTimeout;
         static IPay pay;
         static bool paying;
         static Action cancelPay, checkPayTimeout;
@@ -145,11 +150,12 @@ namespace ErDon.UnitySDK
             EnsureNotLogging();
             if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
-                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, LogCallback = settings.LogCallback };
+                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, LogCallback = settings.LogCallback };
             IAuth createdAuth = null;
             IStorage createdStorage = null;
             IShare createdShare = null;
             IPay createdPay = null;
+            IRewardedAds createdAds = null;
             changingLifecycle = true;
             try {
                 var platformFactory = factory as IPlatformSdkProviderFactory;
@@ -176,6 +182,12 @@ namespace ErDon.UnitySDK
                     if (IsOwned(createdShare))
                         throw new InvalidOperationException("Factory must return a fresh provider");
                 }
+                if (snapshot.RewardedAdsEnabled) {
+                    var adsFactory = factory as IRewardedAdsProviderFactory;
+                    if (adsFactory == null || (createdAds = adsFactory.CreateRewardedAds()) == null)
+                        throw new InvalidOperationException("Enabled rewarded ads has no provider");
+                    if (IsOwned(createdAds)) throw new InvalidOperationException("Factory must return a fresh provider");
+                }
                 if (snapshot.PayEnabled) {
                     var payFactory = factory as IPayProviderFactory;
                     if (payFactory == null || (createdPay = payFactory.CreatePay(mainThreadDispatch)) == null)
@@ -188,29 +200,30 @@ namespace ErDon.UnitySDK
                 if (!ReferenceEquals(createdStorage, createdAuth)) DisposeUnowned(createdStorage);
                 if (!ReferenceEquals(createdShare, createdAuth) && !ReferenceEquals(createdShare, createdStorage)) DisposeUnowned(createdShare);
                 if (!ReferenceEquals(createdPay, createdAuth) && !ReferenceEquals(createdPay, createdStorage) && !ReferenceEquals(createdPay, createdShare)) DisposeUnowned(createdPay);
+                if (!ReferenceEquals(createdAds, createdAuth) && !ReferenceEquals(createdAds, createdStorage) && !ReferenceEquals(createdAds, createdShare) && !ReferenceEquals(createdAds, createdPay)) DisposeUnowned(createdAds);
                 throw;
             } finally { changingLifecycle = false; }
-            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare, createdPay);
+            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare, createdPay, createdAds);
         }
         static bool IsOwned(IDisposable provider)
-        { return provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share) || ReferenceEquals(provider, pay)); }
+        { return provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share) || ReferenceEquals(provider, pay) || ReferenceEquals(provider, ads)); }
         static void DisposeUnowned(IDisposable provider)
         {
             if (provider == null || IsOwned(provider)) return;
             try { provider.Dispose(); } catch { /* Preserve the original factory failure. */ }
         }
         public static void Initialize(SdkConfig settings, IAuth provider,
-            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null)
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider))
+            if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider) || IsOwned(adsProvider))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
             changingLifecycle = true;
             try {
                 ResetCore();
-                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, LogCallback = settings.LogCallback };
-                auth = provider; storage = storageProvider; share = shareProvider; pay = payProvider; dispatch = mainThreadDispatch; fallback = engineLog;
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, LogCallback = settings.LogCallback };
+                auth = provider; storage = storageProvider; share = shareProvider; pay = payProvider; ads = adsProvider; dispatch = mainThreadDispatch; fallback = engineLog;
                 Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             } finally { changingLifecycle = false; }
         }
@@ -349,6 +362,50 @@ namespace ErDon.UnitySDK
             var cancel = cancelShare;
             if (cancel != null) cancel();
         }
+        public static void ShowRewardedAd(RewardedAdRequest request, Action<RewardedAdResult> callback, int timeoutMilliseconds = 120000)
+        {
+            EnsureNotLogging();
+            if (callback == null) throw new ArgumentNullException("callback");
+            if (timeoutMilliseconds <= 0) throw new ArgumentOutOfRangeException("timeoutMilliseconds");
+            var call = Guid.NewGuid().ToString("N");
+            Log(SdkLogLevel.Info, "SDK.ShowRewardedAd", call, "Start", "{\"content\":\"[REDACTED]\"}", "Pending");
+            string invalid = config == null ? "SDK.NOT_INITIALIZED" : !config.RewardedAdsEnabled ? "MODULE.DISABLED" :
+                ads == null ? "CAPABILITY.NOT_SUPPORTED" : request == null || string.IsNullOrWhiteSpace(request.AdUnitId) ? "ADS.INVALID_ARGUMENT" :
+                showingAd ? "ADS.IN_PROGRESS" : null;
+            if (invalid != null) { FinishAd(callback, RewardedAdResult.Fail(invalid, invalid), call); return; }
+            showingAd = true;
+            int epoch = generation, completed = 0;
+            var post = dispatch;
+            var timer = Stopwatch.StartNew();
+            Action<RewardedAdResult> done = result => {
+                if (epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return;
+                result = result == null ? null : result.Snapshot();
+                PostCompletion(post, epoch, call, "SDK.ShowRewardedAd", () => {
+                    if (epoch != generation) return;
+                    showingAd = false; cancelAd = null; checkAdTimeout = null;
+                    FinishAd(callback, result ?? RewardedAdResult.Fail("ADS.INVALID_RESULT", "Ad provider returned no result"), call);
+                });
+            };
+            cancelAd = () => done(RewardedAdResult.Fail("ADS.CANCELLED", "Caller cancelled local ad wait"));
+            checkAdTimeout = () => { if (timer.ElapsedMilliseconds >= timeoutMilliseconds) done(RewardedAdResult.Fail("ADS.TIMEOUT", "Ad display timed out")); };
+            try { ads.Show(request, done); }
+            catch { done(RewardedAdResult.Fail("ADS.PROVIDER_FAILED", "Ad provider failed")); }
+        }
+        static void FinishAd(Action<RewardedAdResult> callback, RewardedAdResult result, string call)
+        {
+            result = result.Snapshot();
+            result.CallId = call;
+            if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = "SDK.ShowRewardedAd"; result.Error.Stage = "RewardedAd"; }
+            Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, "SDK.ShowRewardedAd", call, "Complete", "{}", result.Success ? (result.Completed ? "Completed" : "ClosedEarly") : result.Error.Code);
+            try { callback(result); }
+            catch { Log(SdkLogLevel.Error, "SDK.ShowRewardedAd", call, "Callback", "{}", "CALLBACK.EXCEPTION"); }
+        }
+        public static void CancelRewardedAd()
+        {
+            EnsureNotLogging();
+            var cancel = cancelAd;
+            if (cancel != null) cancel();
+        }
         public static void Pay(PaymentRequest request, Action<PaymentResult> callback, int timeoutMilliseconds = 60000)
         {
             EnsureNotLogging();
@@ -422,6 +479,8 @@ namespace ErDon.UnitySDK
             if (check != null) check();
             var shareCheck = checkShareTimeout;
             if (shareCheck != null) shareCheck();
+            var adCheck = checkAdTimeout;
+            if (adCheck != null) adCheck();
             var payCheck = checkPayTimeout;
             if (payCheck != null) payCheck();
         }
@@ -470,9 +529,10 @@ namespace ErDon.UnitySDK
         {
             generation++; busy = false; cancelLogin = null;
             sharing = false; cancelShare = null; checkShareTimeout = null;
+            showingAd = false; cancelAd = null; checkAdTimeout = null;
             paying = false; cancelPay = null; checkPayTimeout = null;
             checkTimeout = null;
-            var old = auth; var oldStorage = storage; var oldShare = share; var oldPay = pay; auth = null; storage = null; share = null; pay = null; dispatch = null;
+            var old = auth; var oldStorage = storage; var oldShare = share; var oldPay = pay; var oldAds = ads; ads = null; auth = null; storage = null; share = null; pay = null; dispatch = null;
             string call = Guid.NewGuid().ToString("N");
             bool failed = false;
             if (old != null) {
@@ -493,6 +553,9 @@ namespace ErDon.UnitySDK
             if (oldPay != null && !ReferenceEquals(oldPay, old) && !ReferenceEquals(oldPay, oldStorage) && !ReferenceEquals(oldPay, oldShare)) {
                 try { oldPay.Dispose(); }
                 catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposePayment", "{}", "SDK.DISPOSE_FAILED"); }
+            }
+            if (oldAds != null && !ReferenceEquals(oldAds,old) && !ReferenceEquals(oldAds,oldStorage) && !ReferenceEquals(oldAds,oldShare) && !ReferenceEquals(oldAds,oldPay)) {
+                try { oldAds.Dispose(); } catch { failed=true; Log(SdkLogLevel.Error,"SDK.Shutdown",call,"DisposeAds","{}","SDK.DISPOSE_FAILED"); }
             }
             if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
             config = null;

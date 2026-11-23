@@ -6,6 +6,16 @@ using UnityEditor;
 using UnityEngine;
 // Run only in an isolated project with official TikTok 1.1.6 Release installed.
 public static class TikTokDevelopmentConversion {
+ const string ResourcePath="Assets/StreamingAssets/erdon-sdk-probe.txt";
+ const string ResourceText="UnitySDK StreamingAssets export probe v1\n";
+ public static void ConfigureWithResource() {
+  if(File.Exists(ResourcePath) && File.ReadAllText(ResourcePath)!=ResourceText)
+   throw new Exception("Existing resource probe differs; will not overwrite it");
+  Configure();
+  Directory.CreateDirectory(Path.GetDirectoryName(ResourcePath));
+  File.WriteAllText(ResourcePath,ResourceText,new System.Text.UTF8Encoding(false));
+  AssetDatabase.Refresh();
+ }
  public static void Configure() {
   var sdk=SdkProjectSettings.instance;
   if(sdk.platform!=DistributionPlatform.TikTok || sdk.production || sdk.Validate(true).Count!=0)
@@ -39,6 +49,25 @@ public static class TikTokDevelopmentConversion {
   foreach(var name in new[]{"game.js","game.json","project.config.json"})
    if(!File.Exists(Path.Combine(artifacts,name))||new FileInfo(Path.Combine(artifacts,name)).Length==0)
     throw new Exception("Missing or empty artifact: "+name);
+  var config=JsonUtility.FromJson<GameConfig>(File.ReadAllText(Path.Combine(artifacts,"game.json")));
+  if(config==null || config.subpackages==null)throw new Exception("Missing subpackages");
+  var roots=new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+  foreach(var part in config.subpackages) {
+   if(part==null || string.IsNullOrEmpty(part.root) || Path.IsPathRooted(part.root))throw new Exception("Invalid subpackage root");
+   var path=Path.GetFullPath(Path.Combine(artifacts,part.root));
+   if(!path.StartsWith(artifacts+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase) || !Directory.Exists(path))
+    throw new Exception("Missing or escaping subpackage root: "+part.root);
+   if(!roots.Add(part.root.TrimEnd('/','\\')))throw new Exception("Duplicate subpackage root");
+  }
+  if(!roots.Contains("wasmcode")||!roots.Contains("data-package"))throw new Exception("Required subpackages missing");
+  if(File.Exists(ResourcePath)) {
+   var resource=Path.Combine(artifacts,"StreamingAssets","erdon-sdk-probe.txt");
+   if(!roots.Contains("StreamingAssets") || !File.Exists(resource) || File.ReadAllText(resource)!=ResourceText)
+    throw new Exception("StreamingAssets resource missing or changed");
+   Debug.Log("SDK_TIKTOK_STREAMING_RESOURCE_PASS");
+  }
   Debug.Log("SDK_TIKTOK_CONVERSION_FILES_PASS output="+artifacts);
  }
+ [Serializable] class GameConfig { public Subpackage[] subpackages; }
+ [Serializable] class Subpackage { public string root; }
 }

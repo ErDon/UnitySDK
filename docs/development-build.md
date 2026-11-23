@@ -80,4 +80,6 @@ $env:PYTHONIOENCODING = "utf-8"
 
 官方 1.1.6 的 StarkBuilder 类为 internal，不能直接在业务或测试脚本引用；第二步使用官方提供给 Unity 的命令行入口。配置阶段固定 Development，关闭 bulk memory，使用占位 App ID，并选择工程外同级的新目录 `TikTokConversion-UTC时间戳`，检查父级不含重解析点。仅限隔离工程，此脚本会保存官方构建配置和场景列表。不能跳过第二步，仅凭 Verify 文件存在就认定本轮构建成功；必须同时检查第二步成功日志和退出码，再验证 JSON、分包和链接后注册。所有步骤均不上传。
 
-本次 1.1.6 官方导出成功退出 0，Verify 亦通过。两个 JSON 可解析，wasmcode/data-package 目录包含非空压缩 Wasm 和数据文件，链接后 TikTok 注册检查通过。当前空工程没有 StreamingAssets 内容，实际 game.json 仅列出这两个分包；官方文档示例的 StreamingAssets 第三个分包需在带实际资源的工程继续验证。文件生成不代表客户端可启动或全部平台功能通过。
+本次 1.1.6 官方导出成功退出 0，Verify 亦通过。两个 JSON 可解析，wasmcode/data-package 目录包含非空压缩 Wasm 和数据文件，链接后 TikTok 注册检查通过。当前空工程没有 StreamingAssets 内容，实际 game.json 仅列出这两个分包；后续带标记资源的构建已生成 StreamingAssets 第三个分包，Verify 内容一致性检查通过；设备端下载与读取仍待验证。文件生成不代表客户端可启动或全部平台功能通过。
+
+要验证资源分包，将第一步替换为 `TikTokDevelopmentConversion.ConfigureWithResource`。它在隔离工程生成固定内容的 `Assets/StreamingAssets/erdon-sdk-probe.txt`，遇到同名不同内容的文件会拒绝覆盖。Verify 会解析 game.json、检查分包目录及重复根目录，并在源测试资源存在时要求 StreamingAssets 分包及同内容目标文件；源工程无测试资源时仍可验证无资源构建。测试只证明文件打包保留，不证明设备端读取成功。

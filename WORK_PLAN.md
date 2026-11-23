@@ -655,3 +655,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### TikTok 官方小游戏导出（2026-11-23）
 
 完整官方 1.1.6 中 StarkBuilder 是 internal；改用其 Unity 命令行入口 BuildWebGLFromCommandLine，不修改官方 DLL。配置和构建分进程执行，非生产 Development、关闭 bulk memory、占位 App ID，输出在工程外新目录 .tests/TikTokConversion-20261123-141124。tiktok-conversion-official.log 包含 Build Finished Success、build success: True、退出码 0；独立 Verify 输出 SDK_TIKTOK_CONVERSION_FILES_PASS 并退出 0。JSON 可解析，wasmcode/data-package 引用目录存在且包含非空压缩 Wasm/数据文件；本轮链接后注册检查通过。空测试工程没有 StreamingAssets 内容，实际只生成两个分包，与文档示例的三个分包有差异；后续需用真实资源工程验证该路径。尚未通过客户端启动、最终平台隔离与真机功能验收。
+
+### TikTok StreamingAssets 分包验证（2026-11-23）
+
+新增 ConfigureWithResource 和分包结构/内容检查。隔离工程加入固定文本文件后，官方导出在 tiktok-resource-build.log 输出 build success: True 并退出 0，输出 .tests/TikTokConversion-20261123-141938。game.json 现在包含 wasmcode、data-package、StreamingAssets 三个分包；独立验证输出 SDK_TIKTOK_STREAMING_RESOURCE_PASS 和 SDK_TIKTOK_CONVERSION_FILES_PASS，退出 0。之前空工程缺少第三分包并非本次资源丢失：有实际文件时会生成。此证据仅覆盖构建资源保留，不代表设备端读取、下载或全部资源裁剪通过；整体最终产物隔离项继续未勾选。

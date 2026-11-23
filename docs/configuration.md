@@ -93,3 +93,33 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 真实平台的支付、网络和上报仍未实现时会被预检拒绝。官方 SDK 在 Editor 的能力可能受限，失败或超时不能当作真机结果；面板启动不会自动开启广告或收银台。构建检查仍阻断未验收的真实平台产物。
 
 Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面板下拉框不会改变当前运行平台，必须重新初始化；当前平台标识为只读诊断值，Shutdown 后返回 null。此保护避免切回 Mock 配置后把测试参数发给仍在运行的真实 provider。
+
+## 通用网络底层接口（聚合接入待完成）
+
+新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前尚未接 SDK 聚合日志、配置工厂和面板，因此 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
+
+```csharp
+// 在 MonoBehaviour 内调用；字段保留 provider，并在 OnDestroy 中 Dispose。
+network = new UnityNetwork(this); // network 字段类型为 INetwork
+var request = new NetworkRequest("https://your-api.example.com/game/config");
+var operation = network.Send(request, result => {
+    if (!result.Success) {
+        UnityEngine.Debug.LogWarning(result.Error.Code);
+        return;
+    }
+    if (!result.IsHttpSuccess) {
+        // 请求已收到响应，例如 401/404/500；按业务处理状态码，不自动重试支付等写请求。
+        UnityEngine.Debug.LogWarning("HTTP " + result.StatusCode);
+        return;
+    }
+    var text = System.Text.Encoding.UTF8.GetString(result.Body);
+    // 按业务解析 text；不要把敏感响应直接输出到日志。
+});
+// 如需取消：operation.Cancel();
+```
+
+请求仅接受 HTTPS，无 URL 内嵌账号密码或 fragment；支持 GET/POST/PUT/PATCH/DELETE/HEAD/OPTIONS，GET/HEAD 不带请求体。请求体最多 1 MiB，超时 1–120 秒，响应上限默认 1 MiB、最大 16 MiB。Headers/Body 在创建和读取时复制，外部修改不改变在途内容；头名须合法，值不可含换行或 NUL。平台限制的请求头仍可能在发送时被拒绝。请求不跟随重定向。
+
+Success 表示拿到了 HTTP 响应；4xx/5xx 仍是 Success=true，IsHttpSuccess 仅对 2xx 为 true。错误包括 NETWORK.UNAVAILABLE（连接失败或超时，当前底层不区分）、NETWORK.RESPONSE_TOO_LARGE、NETWORK.INVALID_RESPONSE、NETWORK.CANCELLED、NETWORK.HOST_UNAVAILABLE、NETWORK.PROVIDER_FAILED 和 SDK.DISPOSED。不返回 Unity 原始网络错误文本。
+
+Cancel 结束底层请求并回调一次取消结果；Dispose 中止所有请求且抑制回调。调用均需主线程，并在宿主销毁前释放 provider。请求停止后不可假定服务端没有执行操作；需要业务幂等键。底层目前没有重试、证书绕过或服务端响应业务校验。流式接收限制已测试，Unity 编译通过；真实 HTTPS、平台网络桥接、取消并发和宿主销毁联调仍待验收。

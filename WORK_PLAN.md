@@ -49,7 +49,9 @@
 - [x] 微信激励广告接口、按需工厂与配置映射；官方程序集编译和注入行为测试。
 - [x] TikTok 激励广告接口、工厂及配置映射；Runtime/Editor DLL 编译与注入行为测试。
 - [ ] 三平台激励广告真机验证及 TikTok 干净官方插件集成。
-- [ ] 通用网络能力、数据上报能力与逐接口文档/失败示例。
+- [x] 网络请求/响应契约、数据快照和接收大小限制测试；Unity HTTP 底层实现编译。
+- [ ] 通用网络聚合/配置/日志接入及真实请求、取消和平台验证。
+- [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
 ## 第五阶段：支付与订单（公共链路完成，真实支付待办）
@@ -471,3 +473,9 @@ Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所�
 
 新增 SDK.ActivePlatform 只读诊断，Mock 业务按钮仅在实际运行 Mock 时开放，防止切换面板配置后调用旧的真实 provider。公共回归与 editor-platform-startup.log 的 SDK_STARTUP_PLAY_PASS 通过，覆盖面板调用路径及缺后端预检；使用注入平台 runtime/factory，不代替真机。界面视觉交互验收仍待办。
 最终 editor-platform-confirm.log 无 C# 编译错误，输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 通用网络底层契约与 Unity HTTP 实现
+
+增加 INetwork/INetworkOperation、不可变请求快照和 HTTP 状态响应模型；HTTP 4xx/5xx 与连接失败分开。UnityNetwork 支持取消、释放抑制回调、不重定向、响应分块大小限制；不把 Unity 原始错误文本带出。暂未开放配置 network 开关，聚合日志和平台网络接入仍待完成。
+
+新增 NetworkContractTests 覆盖 URL/方法/头校验、请求及结果快照、HTTP 状态语义和流式超限；公共回归通过。隔离 Unity network-provider.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0。真实 HTTPS 和请求生命周期联调尚未完成，不能用编译替代。配置文档补底层示例和所有已定义错误。

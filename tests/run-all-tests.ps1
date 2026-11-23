@@ -4,6 +4,10 @@ try {
     & ./tests/run-inventory-tests.ps1
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+    & $compiler /nologo /out:.tests\NetworkContractTests.exe .\Packages\com.erdon.unitysdk\Runtime\Network.cs .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs .\Packages\com.erdon.unitysdk.transport.http\Runtime\BoundedResponseBuffer.cs .\tests\NetworkContractTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Network contract compile failed'}
+    & .\.tests\NetworkContractTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Network contract tests failed'}
     $registryCore=@(Get-ChildItem 'Packages/com.erdon.unitysdk/Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
     & $compiler /nologo /out:.tests\PlatformRegistryTests.exe $registryCore .\tests\PlatformRegistryTests.cs
     if($LASTEXITCODE -ne 0){throw 'Platform registry compile failed'}

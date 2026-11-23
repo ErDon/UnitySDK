@@ -129,6 +129,10 @@
 
 ## 2026-11-24 执行记录
 
+### 平台未注册拒绝与原生配置边界
+
+独立 UnityProject 为微信填写 panel-test-placeholder（仅满足本地非空校验，不是真实 App ID），进入 Play Mode 点击平台启动，实际结果为 CONFIG.PLATFORM_NOT_REGISTERED，并显示安装适配包/官方 SDK、启用对应平台宏的说明。该拒绝发生于注册表查询阶段、平台运行时创建之前，无官方 API 调用。退出 Play 后切换 iOS Channel，面板显示 CONFIG.PLATFORM_UNSUPPORTED；随后恢复 Mock，配置错误消失。面板验收清单的平台配置/缺注册交互已勾选；仍待 WebGL 构建能力选择按钮操作，整体仍为 65/78。
+
 ### 窄面板长错误验收与平台配置原因说明
 
 482×623 浮动面板中初始化关闭分享的 Mock 并调用，MODULE.DISABLED 的中文原因和 CallId 换行，滚动到底后完整可读；panel-visual.log 于 02:13:05 记录 f0550bc223324219b0525ddcd93f50b9 成对 Start/Complete。窄窗口验收子项已勾选。

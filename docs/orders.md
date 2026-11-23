@@ -1,6 +1,6 @@
 # 服务端订单与发货（开发中）
 
-server/src/orders.mjs 提供 OrderService 与 MemoryOrderStore。当前是可执行的服务组件，不是可上线支付服务；尚无支付 HTTP 路由、平台下单/验签/查单实现、持久化订单、退款或对账。不会从客户端 paid=true 直接发货。
+server/src/orders.mjs 提供 OrderService 与 MemoryOrderStore。当前是可执行的服务组件，不是可上线支付服务；尚无支付 HTTP 路由、平台下单/验签/查单实现、生产持久化验收、退款或对账。不会从客户端 paid=true 直接发货。
 
 ## 装配
 
@@ -41,3 +41,22 @@ MemoryOrderStore 有默认一万订单容量上限，满后返回 SERVER.CAPACIT
 主要错误：PAY.INVALID_REQUEST、PAY.PRODUCT_NOT_FOUND、PAY.ORDER_NOT_FOUND、PAY.IDEMPOTENCY_CONFLICT、PAY.NOT_PAID、PAY.VERIFICATION_FAILED、PAY.VERIFICATION_MISMATCH、PAY.TRANSACTION_REUSED、PAY.TRANSACTION_CONFLICT、PAY.DELIVERY_IN_PROGRESS、PAY.DELIVERY_FAILED。当前没有自动重试后台；游戏发货 worker 应按错误及幂等键安排重试，不能重发未验证支付的订单。
 
 测试使用模拟支付验证器及真实 AuthService 组合，覆盖客户端篡价、账号/环境隔离、会话撤销、重复下单、并发确认、交易复用、发货响应丢失和容量边界。真实平台、数据库事务和端到端支付仍未验收。
+
+
+## SQLite 持久化实现
+
+server/src/sqlite-orders.mjs 提供 SqliteOrderStore，可替换 MemoryOrderStore 传入同一个 OrderService。Node 24.20.0 基线，使用内置 node:sqlite；需要已存在、可写的本地目录。
+
+```javascript
+import { SqliteOrderStore } from '../server/src/sqlite-orders.mjs';
+const store = new SqliteOrderStore('./data/orders.sqlite', { capacity: 10000 });
+// 将 store 传给 OrderService；完成所有工作后 store.close()。
+```
+
+订单与 requestKey 使用同一事务插入。交易号使用唯一索引，BEGIN IMMEDIATE 将校验归属与标记 Paid 放在同一写事务中；Paid 是持久待发货集合。重启后扫描 pendingDelivery，再使用同一个 orderId 作为 deliveryKey 重试。标记 Fulfilled 不删除交易号占用或幂等键，防止旧请求被再次消费。
+
+WAL + FULL 同步提交；数据库表有状态与交易号一致性约束。schema 版本当前为 1，未知版本拒绝启动，不擅自迁移。关闭后访问或底层存储失败返回 SERVER.STORAGE_UNAVAILABLE，不输出 SQL、路径或账号正文。容量满不清除已结算订单，需后续受控归档策略。
+
+当前支持同机数据库连接，不支持网络文件系统或多机共享 WAL。同步 SQLite 会阻塞 Node 事件循环；高负载性能、备份恢复和故障注入尚未验收。订单数据库含账号信息，应限制权限；备份须按 SQLite 的在线备份/WAL 规则进行。游戏端持久去重仍必不可少，此存储不将远端发货变成跨服务事务。
+
+5 项 SQLite 订单测试验证数据库重开、幂等状态、回滚、容量、四个独立 worker 抢同一交易号、未知 schema 拒绝以及发货响应丢失后重启恢复。未验证真实支付平台。

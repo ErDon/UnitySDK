@@ -103,4 +103,4 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 ## 订单组件
 
-新增 OrderService 与 MemoryOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。尚未接支付 HTTP 路由或真实平台验签，内存订单仅用于开发。
+新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。尚未接支付 HTTP 路由或真实平台验签，内存订单仅用于开发。

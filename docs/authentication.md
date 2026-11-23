@@ -19,3 +19,5 @@ UnitySessionExchange 使用 HTTPS，不跟随重定向，不记录请求凭证�
 当前已实现客户端编排、HTTP 传输、微信/TikTok 凭证适配，以及 [Node 参考服务](../server/README.md) 的验证器/会话/HTTP 组件。服务端测试使用模拟平台响应及内存存储；真实平台校验、生产会话持久化与 Unity HTTPS 联调尚未完成。HTTP 响应使用最多 65536 字节的固定缓冲区，在接收分块时拒绝越界并返回 NETWORK.RESPONSE_TOO_LARGE，优先于通用传输错误。该限制约束客户端保留的正文，不承诺精确限制底层网络收包量，也不能替代服务端限流。
 
 HTTPS 实现单独位于可选 UPM 包 com.erdon.unitysdk.transport.http；核心只保留 ISessionExchange 接口，不强制引入 UnityWebRequest。自有后端协议不同可自行实现 ISessionExchange。安装传输包时同时安装本仓库核心包；两者版本应一致。
+
+调用 Exchange 时，宿主 GameObject 未激活、组件被禁用或宿主已销毁，会立即返回 NETWORK.HOST_UNAVAILABLE，不启动请求。已经 Dispose 的客户端优先返回 SDK.DISPOSED。此检查仅覆盖发起前状态；请求发出后仍需由游戏在宿主停止/销毁前 Dispose 或调用 UnitySdkHost.Shutdown，不能依赖协程自动完成回调。

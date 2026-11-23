@@ -127,6 +127,11 @@
 
 ## 2026-11-24 执行记录
 
+### 登录与订单 HTTP 宿主失效即时失败
+
+独立 Unity Play Mode 的 HttpHostPlayChecks 先复现 inactive GameObject 下 Exchange 不回调，日志 http-host-before.log 出现协程启动失败和 SDK_HTTP_HOST_PLAY_FAIL。新增发起前 host==null/isActiveAndEnabled 检查，Exchange 与订单 Create/Get/Confirm 对有效请求立即回调 NETWORK.HOST_UNAVAILABLE。相同测试复跑 http-host-after.log 出现 SDK_HTTP_HOST_PLAY_PASS，覆盖对象未激活、组件禁用、对象销毁，且每个接口恰好回调一次，已 Dispose 时仍优先 SDK.DISPOSED。测试无需远程网络。接入文档明确发起前拒绝与在途宿主关闭的区别，后者仍需调用 Dispose/Shutdown；不据此宣称完成后端 HTTPS 联调。
+
+
 ### 登录和订单响应接收限额
 
 发现 UnitySessionExchange/UnityOrderClient 原先使用 DownloadHandlerBuffer，在完整接收后才检查 64 KiB，无法限制接收时的正文内存。改为共用 BoundedJsonDownload：固定 65536 字节缓冲、逐块接收、越界前拒绝写入，超限优先返回 NETWORK.RESPONSE_TOO_LARGE。该助手独立于可选 Network 模块，登录仍能在网络/支付编译关闭时使用。独立 Unity 执行实际 DownloadHandlerScript 的注入分块测试，通过跨字节 UTF-8、恰好限额、末尾溢出、超大首块及非法分块检查，日志 SDK_BOUNDED_JSON_DOWNLOAD_PASS。首次导入新源码曾短暂报找不到新类型，后续编译和测试完成；不声称整个编辑器日志零错误。网络/支付排除模式的完整 HTTP 源码编译及公共 run-all-tests 回归均通过；此项不替代真实后端 HTTPS 与真机联调。

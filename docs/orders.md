@@ -112,3 +112,5 @@ purchaseRequestId 应在一次购买开始时生成并保存，网络不确定�
 结果策略核对订单 UUID、期望订单/商品、非空商品、正整数金额（不超过 JS 安全整数）、币种形状及三个已知状态。未知状态、矛盾响应、换单响应均为 PAY.INVALID_RESPONSE。服务端错误仅映射已登记 HTTP/错误码组合，其他返回 PAY.SERVER_REJECTED；429 提供 RetryAfterSeconds（仅接受正整数），401 会话错误提示重新登录。ServerCallId 只保留标准 UUID。
 
 协议单元测试覆盖状态、换单、金额与错误字段；Unity 编译验证不等于 HTTPS 实机联调。SDK.Pay 聚合已接入，真实平台支付仍是后续工作。
+
+Create/Get/Confirm 的有效请求在发起前检查宿主：对象未激活、组件禁用或对象已销毁时立即返回 NETWORK.HOST_UNAVAILABLE；已释放客户端优先返回 SDK.DISPOSED。请求发出后宿主停用的情况仍由调用方先 Dispose 处理，本检查不承诺为已停止的协程补发结果。

@@ -29,6 +29,9 @@ namespace ErDon.UnitySDK
             if(credential==null || string.IsNullOrWhiteSpace(credential.Code) || string.IsNullOrWhiteSpace(credential.Platform)) {
                 callback(LoginResult.Fail("AUTH.INVALID_CREDENTIAL","Session exchange requires a platform credential"));return;
             }
+            if(host==null || !host.isActiveAndEnabled) {
+                callback(LoginResult.Fail("NETWORK.HOST_UNAVAILABLE","Session exchange host is inactive or destroyed"));return;
+            }
             host.StartCoroutine(Send(credential,callback));
         }
         IEnumerator Send(PlatformCredential credential, Action<LoginResult> callback)

@@ -49,6 +49,7 @@ namespace ErDon.UnitySDK
         void Start(string session,string method,string url,string body,string orderId,string productId,Action<OrderResult> callback)
         {
             if(body!=null&&Encoding.UTF8.GetByteCount(body)>8192){callback(OrderResult.Fail("REQUEST.TOO_LARGE","Order request exceeds size limit"));return;}
+            if(host==null || !host.isActiveAndEnabled){callback(OrderResult.Fail("NETWORK.HOST_UNAVAILABLE","Order client host is inactive or destroyed"));return;}
             host.StartCoroutine(Send(session,method,url,body,orderId,productId,callback));
         }
         IEnumerator Send(string session,string method,string url,string body,string orderId,string productId,Action<OrderResult> callback)

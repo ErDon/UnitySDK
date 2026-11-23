@@ -6,7 +6,8 @@ param(
 $ErrorActionPreference='Stop'
 function Read-Inventory([string]$path) {
     $data=Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-    if($data.schemaVersion -ne 1 -or !$data.platform -or !$data.packageName -or !$data.packageVersion -or $null -eq $data.files){throw 'Invalid SDK inventory header'}
+    if($data.schemaVersion -notin @(1,2) -or !$data.platform -or !$data.packageName -or !$data.packageVersion -or $null -eq $data.files){throw 'Invalid SDK inventory header'}
+    if($data.schemaVersion -eq 2 -and $data.coverage -ne 'all-files'){throw 'Unsupported inventory coverage'}
     $index=@{}
     foreach($file in $data.files) {
         $name=[string]$file.path
@@ -20,6 +21,7 @@ function Read-Inventory([string]$path) {
 $before=Read-Inventory $BeforePath
 $after=Read-Inventory $AfterPath
 if($before.Data.platform -cne $after.Data.platform -or $before.Data.packageName -cne $after.Data.packageName){throw 'Cannot compare different platform or package identities'}
+if($before.Data.schemaVersion -ne $after.Data.schemaVersion){throw 'Inventory coverage differs; recapture both versions with the same exporter'}
 function Get-ReviewArea([string]$name) {
     switch ([IO.Path]::GetExtension($name).ToLowerInvariant()) {
         '.dll' {return 'binary-api-and-runtime'}
@@ -27,7 +29,10 @@ function Get-ReviewArea([string]$name) {
         '.meta' {return 'import-settings-and-guid'}
         '.asmdef' {return 'assembly-and-platform-isolation'}
         '.jslib' {return 'javascript-bridge'}
-        default {return 'package-metadata'}
+        '.js' {return 'javascript-runtime'}
+        '.wasm' {return 'wasm-runtime'}
+        '.json' {return 'package-or-runtime-configuration'}
+        default {return 'resources-and-toolchain'}
     }
 }
 $changes=@(foreach($key in @(@($before.Index.Keys)+@($after.Index.Keys) | Sort-Object -Unique)) {
@@ -41,7 +46,8 @@ $report=[ordered]@{
     versionChanged=($before.Data.packageVersion -cne $after.Data.packageVersion)
     changedFileCount=$changes.Count;changes=$changes
     compatibility='not-assessed';authenticityVerified=$false
-    coverage='Selected inventory files only; identical hashes do not establish platform compatibility.'
+    coverage=$(if($after.Data.schemaVersion -eq 2){'all-files'}else{'legacy-selected-files'})
+    limitation='File hashes do not establish platform compatibility or official authenticity.'
 }
 $destination=[IO.Path]::GetFullPath($OutputPath)
 if($destination -ieq (Resolve-Path -LiteralPath $BeforePath).Path -or $destination -ieq (Resolve-Path -LiteralPath $AfterPath).Path){throw 'Report must not overwrite an input inventory'}

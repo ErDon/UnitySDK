@@ -29,5 +29,16 @@ try {
     if(!$rejected){throw 'Cross-platform comparison accepted'}
     $rejected=$false;try{& ./tools/compare-sdk-inventory.ps1 "$dir/before.json" "$dir/before.json" "$dir/before.json"}catch{$rejected=$true}
     if(!$rejected){throw 'Input overwrite accepted'}
+    $package="$dir/package";New-Item -ItemType Directory -Force $package | Out-Null
+    '{"name":"test.sdk","version":"1.0.0"}' | Set-Content "$package/package.json"
+    foreach($name in @('runtime.js','runtime.wasm','config.json','resource.bin','sdk.dll.meta')) {Set-Content "$package/$name" 'fixture'}
+    & ./tools/export-sdk-inventory.ps1 -Platform WeChat -PackageRoot $package -OutputPath "$dir/full.json"
+    $full=Get-Content "$dir/full.json" -Raw | ConvertFrom-Json
+    if($full.schemaVersion -ne 2 -or $full.coverage -ne 'all-files' -or $full.files.Count -ne 6){throw 'Full inventory omitted runtime resources'}
+    & ./tools/compare-sdk-inventory.ps1 "$dir/full.json" "$dir/full.json" "$dir/report.json"
+    $rejected=$false;try{& ./tools/compare-sdk-inventory.ps1 "$dir/before.json" "$dir/full.json" "$dir/report.json"}catch{$rejected=$true}
+    if(!$rejected){throw 'Mixed coverage comparison accepted'}
+    $rejected=$false;try{& ./tools/export-sdk-inventory.ps1 -Platform WeChat -PackageRoot $package -OutputPath "$package/report.json"}catch{$rejected=$true}
+    if(!$rejected){throw 'Self-including export accepted'}
     Write-Output 'PASS: inventory changes, unchanged baseline, invalid paths/hashes/duplicates, platform identity and input preservation'
 } finally {Pop-Location}

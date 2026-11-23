@@ -10,6 +10,7 @@ namespace ErDon.UnitySDK.Editor
         {
             var settings = SdkProjectSettings.instance;
             var errors = settings.Validate();
+            errors.AddRange(PlatformDependencyCatalog.CheckPlayerAssemblies(settings.platform.ToString()));
             if (settings.platform == DistributionPlatform.Mock)
                 errors.Add("Mock 仅支持 Editor 示例，不能打入 Player。");
             if (errors.Count != 0)

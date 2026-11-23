@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | Unity 核心/Editor/HTTP | SDK 0.1.0，Unity 2022.3.14f1c1 | 独立工程编译、Editor 检查、登录与存储 Play Mode 测试 | 域重载关闭、多游戏及目标平台构建 |
 | 微信 | com.qq.weixin.minigame 0.1.23 | 登录真实 DTO 契约；存储/分享引用本机已有 Wx.dll 编译入口（分享编译存在其他类型 CS1684 警告） | 干净官方工程编译、初始化、后端与真机 |
-| TikTok | 1.1.6-Release | Runtime/Editor DLL 登录与存储入口编译，注入行为测试 | 干净官方插件集成、真机与后端联调；本机插件含旧项目宏 |
+| TikTok | 1.1.6-Release | Runtime/Editor DLL 登录、存储、分享入口编译，注入行为测试 | 干净官方插件集成、真机与后端联调；本机插件含旧项目宏 |
 | 抖音 | TTSDK 版本未确定 | 官方文档形状的登录替身测试 | 官方 SDK 安装/版本锁定、编译、后端联调及真机 |
 | BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入成功、界面打开 | 面板持续 Loading，尚未取得 TTSDK 列表或登录入口 |
 | 公共服务端 | 0.1.0，Node 24.20.0 | 22 项测试：模拟微信/抖音/TikTok 上游、真实 loopback HTTP、SQLite 重开与并发连接 | 官方接口调用、Unity HTTPS、部署、备份与性能 |

@@ -1,6 +1,6 @@
 # 分享能力
 
-上层调用 SDK.Share，下层实现 IShare。当前提供公共流程、Editor Mock 和微信分享调用适配；微信仍待干净包编译及真机验收，抖音/TikTok 分享适配尚待实现。不能把 Mock 当作已接入平台。
+上层调用 SDK.Share，下层实现 IShare。当前提供公共流程、Editor Mock 、微信和 TikTok 分享调用适配；微信仍待干净包编译，两个平台均待真机验收，抖音分享适配尚待实现。不能把 Mock 当作已接入平台。
 
 ## 调用
 
@@ -41,6 +41,7 @@ SDK.CancelShare() 只结束本地等待，不保证平台分享面板关闭或�
 | SHARE.CANCELLED | 调用者取消本地等待，不等于用户取消发送 |
 | SHARE.TIMEOUT | 平台未在等待期限内完成调用，不推断发送结果 |
 | SHARE.INVALID_RESULT | provider 返回空结果，检查适配实现 |
+| SHARE.PLATFORM_REJECTED | 平台拒绝分享，查看结构化 PlatformCode，不推断具体原因 |
 | SHARE.PROVIDER_FAILED | provider 抛异常，检查适配初始化与运行环境 |
 
 失败包含 Operation=SDK.Share、Stage=ShareDispatch、CallId；TraceId 当前同 CallId。不自动重试分享，防止重复弹出面板或重复发送。

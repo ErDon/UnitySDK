@@ -52,3 +52,16 @@ new ErDon.UnitySDK.TikTok.TikTokCredentialProvider()
 写入后回读不一致返回 STORAGE.WRITE_FAILED；键存在但读取 null 返回 STORAGE.READ_FAILED；格式不兼容返回 STORAGE.FORMAT_MISMATCH；删除后键仍存在返回 STORAGE.REMOVE_FAILED。底层抛异常转换为 STORAGE.PROVIDER_FAILED，不泄露原文。键不存在返回 STORAGE.NOT_FOUND，空字符串仍是合法值。
 
 上述 run-tiktok-tests.ps1 同时编译两套官方 DLL 的存储入口并运行注入行为测试。真实 PlayerPrefs、Save 落盘、配额、宿主退出及设备重启仍需真机验证；回读成功不能作为磁盘持久化证明。当前平台构建仍不放行。
+
+
+## 分享
+
+TikTokShare 实现 IShare，在 TT.InitSDK 成功后创建，通过 shareProvider 或 IShareProviderFactory.CreateShare 交给 SDK，启用 ShareEnabled。通用示例见 [分享能力](share.md)。
+
+根据 [官方 Sharing 文档](https://developers.tiktok.com/docs/en/unity-sdk-sharing) 与本地 1.1.6-Release DLL，Title/ImageUrl/Query 映射到 ShareAppMessageParam 同名字段，等待官方 Success/Fail；不把调用函数返回或 Complete 当作成功。平台 Success 映射为 Dispatched，仍不证明好友收到。失败返回 SHARE.PLATFORM_REJECTED 并保留 ErrorInfo.ErrorCode 的数字字符串，ErrMsg 不传播；未知码不推断取消或地区原因。公共层负责等待超时、取消和主线程派发。
+
+当前通用请求不提供 TikTok 专属 Subtitle、TemplateType、Path 配置，这些保留官方参数默认值。需要这些扩展的项目暂不宣称支持对应模板；须按平台文档补充显式能力后接入。
+
+测试脚本 run-tiktok-tests.ps1 分别对 Runtime/Editor DLL 编译并运行注入测试，覆盖参数、成功/失败顺序、结构化错误、空错误、释放与异常。ErrorInfo 由官方内部创建，测试使用未初始化对象仅构造回调数据，不运行真实宿主。分享回调类型依赖 netstandard 2.1，使用 -UnityMono 指定 Unity 自带 Mono；旧 .NET Framework 运行器不能完整加载该类型。默认路径以本机 Unity 2022.3.14f1c1 为基线，可按安装路径覆盖。
+
+两套 DLL 均输出 TIKTOK_SHARE_TESTS_PASS，原登录/存储和公共回归亦通过。没有真实 TikTok 容器或设备分享证据，发布仍不放行。

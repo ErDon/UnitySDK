@@ -54,6 +54,10 @@ namespace ErDon.UnitySDK.Editor
             if (settings.analytics) enabled.Add("数据上报");
             EditorGUILayout.LabelField("启用模块", enabled.Count == 0 ? "无" : string.Join("、", enabled.ToArray()), EditorStyles.wordWrappedLabel);
             EditorGUILayout.HelpBox("预览显示下一次初始化使用的配置；修改开关后需重新初始化。关闭模块不会创建对应能力实例。", MessageType.Info);
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlaying || EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL)) {
+                if (GUILayout.Button("应用构建能力选择（触发重编译）")) settings.ApplyCapabilityDefines();
+            }
+            EditorGUILayout.HelpBox("构建能力选择移除未勾选的登录、存储、分享、广告、上报适配实现；Editor 保留预览。支付、网络和官方 SDK 内部代码另行验证。", MessageType.Info);
             EditorGUILayout.HelpBox("官方依赖需按目标平台独立安装。此预览不是依赖安装检查或构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);

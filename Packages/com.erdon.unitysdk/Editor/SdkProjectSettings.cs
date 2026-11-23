@@ -18,6 +18,31 @@ namespace ErDon.UnitySDK.Editor
         public bool analytics;
         public string gameId = "";
         public string appId = "";
+        public void ApplyCapabilityDefines()
+        {
+            var group = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
+            if (group != BuildTargetGroup.WebGL) throw new InvalidOperationException("Switch to WebGL before applying capability selection");
+            var defines = new List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(group).Split(';'));
+            string[] symbols = { "ERDON_EXCLUDE_LOGIN", "ERDON_EXCLUDE_STORAGE", "ERDON_EXCLUDE_SHARE", "ERDON_EXCLUDE_ADS", "ERDON_EXCLUDE_ANALYTICS" };
+            bool[] enabled = { login, storage, share, rewardedAds, analytics };
+            for (int i = 0; i < symbols.Length; i++) {
+                defines.RemoveAll(x => x == symbols[i] || string.IsNullOrWhiteSpace(x));
+                if (!enabled[i]) defines.Add(symbols[i]);
+            }
+            SaveSettings();
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(group, string.Join(";", defines.ToArray()));
+        }
+        public List<string> ValidateCapabilityDefines(string symbols)
+        {
+            var issues = new List<string>();
+            var defined = new HashSet<string>((symbols ?? "").Split(';'));
+            string[] names = { "LOGIN", "STORAGE", "SHARE", "ADS", "ANALYTICS" };
+            bool[] enabled = { login, storage, share, rewardedAds, analytics };
+            for (int i = 0; i < names.Length; i++)
+                if (enabled[i] && defined.Contains("ERDON_EXCLUDE_" + names[i]))
+                    issues.Add("CONFIG.MODULE_NOT_COMPILED: " + names[i] + "；请重新应用构建能力选择。");
+            return issues;
+        }
         public void SaveSettings() { Save(true); }
         public SdkRuntimeConfiguration CreateRuntimeConfiguration()
         {

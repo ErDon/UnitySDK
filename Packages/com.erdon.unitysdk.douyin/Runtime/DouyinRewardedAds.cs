@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_ADS || UNITY_EDITOR
 using System;
 using System.Globalization;
 using TTSDK;
@@ -65,3 +66,5 @@ namespace ErDon.UnitySDK.Douyin
         public void Dispose(){if(disposed)return;disposed=true;var release=cleanup;if(release!=null)release();}
     }
 }
+
+#endif

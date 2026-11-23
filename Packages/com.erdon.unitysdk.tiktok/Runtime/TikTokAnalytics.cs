@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_ANALYTICS || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using TTSDK;
@@ -76,3 +77,5 @@ namespace ErDon.UnitySDK.TikTok
         }
     }
 }
+
+#endif

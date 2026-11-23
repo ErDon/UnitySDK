@@ -21,16 +21,44 @@ namespace ErDon.UnitySDK.TikTok
         }
         public IAuth CreateAuth(Action<Action> mainThreadDispatch)
         {
+#if ERDON_EXCLUDE_LOGIN && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: LOGIN");
+#else
             if (mainThreadDispatch == null) throw new ArgumentNullException("mainThreadDispatch");
             if (createSessionExchange == null) throw new InvalidOperationException("TikTok login requires a backend session exchange factory");
             var exchange = createSessionExchange();
             if (exchange == null) throw new InvalidOperationException("Session exchange factory returned null");
             try { return new VerifiedAuth(new TikTokCredentialProvider(), exchange, mainThreadDispatch); }
             catch { try { exchange.Dispose(); } catch { } throw; }
+#endif
         }
-        public IAnalytics CreateAnalytics() { return new TikTokAnalytics(); }
-        public IStorage CreateStorage() { return new TikTokStorage(gameId, environment); }
-        public IRewardedAds CreateRewardedAds() { return new TikTokRewardedAds(); }
-        public IShare CreateShare() { return new TikTokShare(); }
+        public IAnalytics CreateAnalytics() {
+#if ERDON_EXCLUDE_ANALYTICS && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: ANALYTICS");
+#else
+            return new TikTokAnalytics();
+#endif
+        }
+        public IStorage CreateStorage() {
+#if ERDON_EXCLUDE_STORAGE && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: STORAGE");
+#else
+            return new TikTokStorage(gameId, environment);
+#endif
+        }
+        public IRewardedAds CreateRewardedAds() {
+#if ERDON_EXCLUDE_ADS && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: ADS");
+#else
+            return new TikTokRewardedAds();
+#endif
+        }
+        public IShare CreateShare() {
+#if ERDON_EXCLUDE_SHARE && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: SHARE");
+#else
+            return new TikTokShare();
+#endif
+        }
     }
 }

@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_ANALYTICS || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using TTSDK;
@@ -39,3 +40,5 @@ namespace ErDon.UnitySDK.Douyin
         public void Dispose() { disposed = true; }
     }
 }
+
+#endif

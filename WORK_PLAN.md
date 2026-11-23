@@ -664,3 +664,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 模块裁剪缺口复核（2026-11-23）
 
 直接读取实际 TikTok 资源构建的 ManagedStripped 元数据，关闭登录时 TikTokCredentialProvider 与 VerifiedAuth 仍包含构造器和登录方法。运行时不创建能力的测试不能作为模块代码裁剪证据。为避免隐藏这一验收缺口，在第二阶段新增独立未完成项；已完成项保持 62，总项增加到 78。同步清除配置/平台隔离文档中“真实适配未实现”“所有 Player 均阻止”“TikTok 注册未验证”的旧状态。
+
+### 能力编译裁剪首轮实现（2026-11-23）
+
+三平台登录/存储/分享/广告/上报实现增加 Player 条件编译，工厂不再引用被排除实现。面板提供应用构建能力选择按钮，保留其他宏；构建前检查勾选与排除符号冲突，运行时 JSON/SDK.Initialize/InitializeWithFactory 拒绝未编译能力并保留旧实例。Editor 不裁剪以供预览。run-compiled-module-tests.ps1 验证 TikTok 五类类型缺失及工厂/配置拒绝；三平台默认回归和核心测试通过。实际 tiktok-modules-build.log 构建成功退出 0，链接后 TikTokCredentialProvider 消失，TikTokStorage 和自动注册保留。网络/支付/公共核心与官方内部代码仍待处理，其他平台及模块组合的实际构建验证待补，因此模块裁剪整体不打勾。

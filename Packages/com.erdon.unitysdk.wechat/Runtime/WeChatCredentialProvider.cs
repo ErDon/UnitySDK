@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_LOGIN || UNITY_EDITOR
 using System;
 using System.Globalization;
 using System.Threading;
@@ -53,3 +54,5 @@ namespace ErDon.UnitySDK.WeChat
         public void Dispose() { disposed = true; }
     }
 }
+
+#endif

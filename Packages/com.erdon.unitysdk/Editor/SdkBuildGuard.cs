@@ -15,6 +15,8 @@ namespace ErDon.UnitySDK.Editor
             var developmentBuild = report != null && (report.summary.options & BuildOptions.Development) != 0;
             var errors = settings.Validate(developmentBuild);
             errors.AddRange(CheckDefines(settings.platform.ToString()));
+            errors.AddRange(settings.ValidateCapabilityDefines(PlayerSettings.GetScriptingDefineSymbolsForGroup(
+                BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));
             errors.AddRange(PlatformIsolationPolicy.CheckTargetAdapter(settings.platform.ToString(),
                 PlatformDependencyCatalog.ReadInstalled(),
                 CompilationPipeline.GetAssemblies(AssembliesType.Player).Select(x => x.name)));

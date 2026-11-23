@@ -18,6 +18,10 @@ namespace ErDon.UnitySDK
             if (platform != "Mock" && platform != "WeChat" && platform != "Douyin" && platform != "TikTok") issues.Add("CONFIG.PLATFORM_UNSUPPORTED");
             if (production && platform == "Mock") issues.Add("CONFIG.PRODUCTION_MOCK");
             if (platform != "Mock" && string.IsNullOrWhiteSpace(appId)) issues.Add("CONFIG.APP_ID_REQUIRED");
+            try {
+                SdkCompiledModules.Validate(new SdkConfig { LoginEnabled=login, StorageEnabled=storage,
+                    ShareEnabled=share, RewardedAdsEnabled=rewardedAds, AnalyticsEnabled=analytics });
+            } catch (InvalidOperationException ex) { issues.Add(ex.Message); }
             return issues;
         }
         public SdkConfig ToSdkConfig(Action<SdkLogLevel,string> logCallback = null)

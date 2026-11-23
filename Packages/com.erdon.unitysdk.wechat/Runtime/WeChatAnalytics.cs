@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_ANALYTICS || UNITY_EDITOR
 using System;
 using System.Collections.Generic;
 using WeChatWASM;
@@ -51,3 +52,5 @@ namespace ErDon.UnitySDK.WeChat
         public void Dispose() { disposed = true; }
     }
 }
+
+#endif

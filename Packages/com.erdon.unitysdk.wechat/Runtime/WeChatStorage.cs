@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_STORAGE || UNITY_EDITOR
 using System;
 using WeChatWASM;
 
@@ -66,3 +67,5 @@ namespace ErDon.UnitySDK.WeChat
         public void Dispose() { disposed=true; } // Do not erase persisted player data.
     }
 }
+
+#endif

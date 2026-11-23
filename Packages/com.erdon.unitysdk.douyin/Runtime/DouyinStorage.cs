@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_STORAGE || UNITY_EDITOR
 using System;
 using TTSDK;
 
@@ -76,3 +77,5 @@ namespace ErDon.UnitySDK.Douyin
     }
 }
 
+
+#endif

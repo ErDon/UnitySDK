@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_SHARE || UNITY_EDITOR
 using System;
 using System.Globalization;
 using System.Threading;
@@ -41,3 +42,5 @@ namespace ErDon.UnitySDK.TikTok
         public void Dispose() { disposed = true; }
     }
 }
+
+#endif

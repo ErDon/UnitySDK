@@ -1,3 +1,4 @@
+#if !ERDON_EXCLUDE_STORAGE || UNITY_EDITOR
 using System;
 using TTSDK;
 
@@ -75,3 +76,5 @@ namespace ErDon.UnitySDK.TikTok
         public void Dispose() { disposed=true; } // Do not erase persisted player data.
     }
 }
+
+#endif

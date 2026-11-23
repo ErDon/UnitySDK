@@ -5,6 +5,28 @@ using System.Threading;
 
 namespace ErDon.UnitySDK
 {
+    public static class SdkCompiledModules
+    {
+        public static void Validate(SdkConfig config)
+        {
+            if (config == null) throw new ArgumentNullException("config");
+#if ERDON_EXCLUDE_LOGIN && !UNITY_EDITOR
+            if (config.LoginEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: LOGIN");
+#endif
+#if ERDON_EXCLUDE_STORAGE && !UNITY_EDITOR
+            if (config.StorageEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: STORAGE");
+#endif
+#if ERDON_EXCLUDE_SHARE && !UNITY_EDITOR
+            if (config.ShareEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: SHARE");
+#endif
+#if ERDON_EXCLUDE_ADS && !UNITY_EDITOR
+            if (config.RewardedAdsEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: ADS");
+#endif
+#if ERDON_EXCLUDE_ANALYTICS && !UNITY_EDITOR
+            if (config.AnalyticsEnabled) throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: ANALYTICS");
+#endif
+        }
+    }
     public enum RetryPolicy { Unknown, Never, UserAction, Delayed }
     public enum SdkLogLevel { Info, Warning, Error }
     public sealed class SdkError
@@ -154,6 +176,7 @@ namespace ErDon.UnitySDK
         {
             EnsureNotLogging();
             if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
+            SdkCompiledModules.Validate(settings);
             var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
                 StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, NetworkEnabled = settings.NetworkEnabled, AnalyticsEnabled = settings.AnalyticsEnabled, LogCallback = settings.LogCallback };
             IAuth createdAuth = null;
@@ -237,6 +260,7 @@ namespace ErDon.UnitySDK
             Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null, INetwork networkProvider = null, IAnalytics analyticsProvider = null)
         {
             EnsureNotLogging();
+            SdkCompiledModules.Validate(settings);
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider) || IsOwned(adsProvider) || IsOwned(networkProvider) || IsOwned(analyticsProvider))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");

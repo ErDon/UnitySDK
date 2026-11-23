@@ -1,0 +1,44 @@
+using System;
+using System.IO;
+using ErDon.UnitySDK.Editor;
+using TTSDK.Tool;
+using UnityEditor;
+using UnityEngine;
+// Run only in an isolated project with official TikTok 1.1.6 Release installed.
+public static class TikTokDevelopmentConversion {
+ public static void Configure() {
+  var sdk=SdkProjectSettings.instance;
+  if(sdk.platform!=DistributionPlatform.TikTok || sdk.production || sdk.Validate(true).Count!=0)
+   throw new Exception("Configure a non-production TikTok test project first");
+  if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("WebGL required");
+  const string scene="Assets/DevelopmentBuildProbe.unity";
+  if(!File.Exists(scene))throw new Exception("Run MiniGameDevelopmentBuild.Build first");
+  EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(scene,true)};
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+  var parent=Directory.GetParent(root).FullName;
+  var output=Path.Combine(parent,"TikTokConversion-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
+  // The official exporter requires a physical output outside the project.
+  for(var dir=new DirectoryInfo(parent);dir!=null;dir=dir.Parent)
+   if((dir.Attributes & FileAttributes.ReparsePoint)!=0)throw new Exception("Output parent cannot be a link");
+  if(Directory.Exists(output)||File.Exists(output))throw new Exception("Output already exists");
+  var settings=StarkBuilderSettings.LoadSettings();
+  settings.OutputDir=output;settings.appId="build-only-placeholder";
+  settings.wasmSubFramework=WasmSubFramework.WebGL;
+  settings.buildOptions=BuildOptions.Development;settings.isDevBuild=true;
+  settings.enableBulkMemory=false;settings.clearStreamingAssets=false;
+  settings.isWebGL2=true;settings.Save();
+  Debug.Log("SDK_TIKTOK_CONVERSION_CONFIGURED output="+output);
+ }
+ public static void Verify() {
+  var root=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+  var parent=Directory.GetParent(root).FullName;
+  var output=Path.GetFullPath(StarkBuilderSettings.LoadSettings().OutputDir);
+  if(Path.GetDirectoryName(output)!=parent || !Path.GetFileName(output).StartsWith("TikTokConversion-",StringComparison.Ordinal))
+   throw new Exception("Unexpected verification directory");
+  var artifacts=Path.Combine(output,"tt-minigame");
+  foreach(var name in new[]{"game.js","game.json","project.config.json"})
+   if(!File.Exists(Path.Combine(artifacts,name))||new FileInfo(Path.Combine(artifacts,name)).Length==0)
+    throw new Exception("Missing or empty artifact: "+name);
+  Debug.Log("SDK_TIKTOK_CONVERSION_FILES_PASS output="+artifacts);
+ }
+}

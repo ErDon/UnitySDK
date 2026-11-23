@@ -69,3 +69,15 @@ $env:PYTHONIOENCODING = "utf-8"
 将 `tests/DouyinDevelopmentConversion.cs.txt` 复制到隔离工程的 `Assets/Editor/DouyinDevelopmentConversion.cs`。先完成 ConfigureDouyin 及普通开发构建，再以同样的 UTF-8 环境运行 `-buildTarget WebGL -executeMethod DouyinDevelopmentConversion.Run`。探针面向已验证的 TTSDK 6.9.7 公开导出 API，使用新包体格式及 Development，输出到新建的 `Builds/DouyinConversion-UTC时间戳/tt-minigame`。不调用发布、上传或登录接口；占位 App ID 必须在实际联调前替换为自己的应用配置。
 
 本机官方导出已成功，game.js、game.json、project.config.json 和 Wasm 已生成，两个 JSON 可解析，链接后的 Douyin 注册检查通过。此结果仍不能代表开发者工具/真机运行通过，也不能替代完整平台产物隔离审计。
+
+### TikTok 官方命令行导出探针
+
+将 `tests/TikTokDevelopmentConversion.cs.txt` 放到独立 TikTok 工程的 `Assets/Editor/TikTokDevelopmentConversion.cs`。先完成 ConfigureTikTok 和普通开发构建，再依次运行三个独立 Unity 进程（每个进程结束后才启动下一个），都使用 `-batchmode -nographics -quit -projectPath <隔离工程> -buildTarget WebGL` 和独立 `-logFile`：
+
+1. `-executeMethod TikTokDevelopmentConversion.Configure`
+2. `-executeMethod TTSDK.Tool.StarkBuilder.BuildWebGLFromCommandLine`
+3. `-executeMethod TikTokDevelopmentConversion.Verify`
+
+官方 1.1.6 的 StarkBuilder 类为 internal，不能直接在业务或测试脚本引用；第二步使用官方提供给 Unity 的命令行入口。配置阶段固定 Development，关闭 bulk memory，使用占位 App ID，并选择工程外同级的新目录 `TikTokConversion-UTC时间戳`，检查父级不含重解析点。仅限隔离工程，此脚本会保存官方构建配置和场景列表。不能跳过第二步，仅凭 Verify 文件存在就认定本轮构建成功；必须同时检查第二步成功日志和退出码，再验证 JSON、分包和链接后注册。所有步骤均不上传。
+
+本次 1.1.6 官方导出成功退出 0，Verify 亦通过。两个 JSON 可解析，wasmcode/data-package 目录包含非空压缩 Wasm 和数据文件，链接后 TikTok 注册检查通过。当前空工程没有 StreamingAssets 内容，实际 game.json 仅列出这两个分包；官方文档示例的 StreamingAssets 第三个分包需在带实际资源的工程继续验证。文件生成不代表客户端可启动或全部平台功能通过。

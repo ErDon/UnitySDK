@@ -47,7 +47,7 @@
 - [x] Player 程序集/预编译引用和 BuildReport 资源检查；已知官方目录混装检测及目标适配器存在性检查。
 - [x] 运行时配置选择平台、自动注册与按需装配入口；公共预检测试及微信/抖音自动注册检查。
 - [x] 面板平台启动/取消/关闭按钮及后端工厂注入；Play Mode 逻辑回归。
-- [x] TikTok 干净官方 1.1.6 工程注册、WebGL 开发构建依赖装配及链接后注册保留验证；官方小游戏导出与真机另行验收。
+- [x] TikTok 干净官方 1.1.6 工程注册、开发构建与官方小游戏导出、链接后注册保留验证；最终隔离与真机另行验收。
 - [ ] 面板交互与导出操作的视觉验收。
 - [x] 微信本地 0.1.23 隔离 WebGL Development Build，配置跨进程恢复及现有 BuildReport 审计通过；不含小游戏转换/真机。
 - [x] 微信官方固定提交 915d4bf 的开发构建与小游戏转换，输出文件及 JSON 检查通过；不含最终隔离和真机。
@@ -651,3 +651,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### TikTok 干净官方插件工程与构建（2026-11-23）
 
 从官方 Unity 构建文档的 CDN 链接下载完整 1.1.6 Release unitypackage，来源与 SHA-256 记录在 docs/tiktok.md。Runtime/Editor 各七组接口和注入行为测试通过；全新 TikTokBuildProject 采用原始完整插件，未复制旧游戏的导入宏。ConfigureTikTok 初次导入退出 0；tiktok-development-build.log 输出 SDK_DEVELOPMENT_WEBGL_BUILD_PASS，BuildReport 为 Succeeded errors=0，退出 0；本轮 ManagedStripped 注册入口检查通过。空场景 Play Mode 输出 SDK_PLATFORM_REGISTRATION_PASS: TikTok，仅解析工厂而不调用平台 API。官方小游戏导出、最终产物审计与真机仍待验收。
+
+### TikTok 官方小游戏导出（2026-11-23）
+
+完整官方 1.1.6 中 StarkBuilder 是 internal；改用其 Unity 命令行入口 BuildWebGLFromCommandLine，不修改官方 DLL。配置和构建分进程执行，非生产 Development、关闭 bulk memory、占位 App ID，输出在工程外新目录 .tests/TikTokConversion-20261123-141124。tiktok-conversion-official.log 包含 Build Finished Success、build success: True、退出码 0；独立 Verify 输出 SDK_TIKTOK_CONVERSION_FILES_PASS 并退出 0。JSON 可解析，wasmcode/data-package 引用目录存在且包含非空压缩 Wasm/数据文件；本轮链接后注册检查通过。空测试工程没有 StreamingAssets 内容，实际只生成两个分包，与文档示例的三个分包有差异；后续需用真实资源工程验证该路径。尚未通过客户端启动、最终平台隔离与真机功能验收。

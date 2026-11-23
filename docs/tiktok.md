@@ -25,7 +25,7 @@
 | TTSDK/ttsdk.dll | `35a7dbb619b812d58abf6e33bb3cb05d9e7f77ad0bb1131c898b78d4f38d947d` |
 | TTSDK/ttsdk-editor.dll | `3c9ca4a76ea625d6445f25daaa3679ac9b5bba69ea69e0e35759b21351c645f1` |
 
-对这份完整包运行 run-tiktok-tests.ps1，Runtime/Editor 两套 DLL 的七组签名和注入行为测试均通过。新建 TikTokBuildProject 使用完整原始插件，未移入旧游戏宏或修改其导入配置，Unity 2022.3.14f1c1 初次导入和 ConfigureTikTok 正常退出。随后 WebGL Development Build 得到 Succeeded errors=0，链接后 TikTok 适配器及注册方法检查通过；空场景 Play Mode 注册解析也通过，未调用平台 API。真实平台初始化、功能、小游戏导出和最终包体隔离必须分别验证，不能由上述测试代替。
+对这份完整包运行 run-tiktok-tests.ps1，Runtime/Editor 两套 DLL 的七组签名和注入行为测试均通过。新建 TikTokBuildProject 使用完整原始插件，未移入旧游戏宏或修改其导入配置，Unity 2022.3.14f1c1 初次导入和 ConfigureTikTok 正常退出。随后 WebGL Development Build 得到 Succeeded errors=0，链接后 TikTok 适配器及注册方法检查通过；空场景 Play Mode 注册解析也通过，未调用平台 API。官方命令行小游戏导出也已成功退出 0，生成文件检查与 JSON 解析通过；操作和分包验证边界见 [开发构建](development-build.md)。真实平台初始化、功能和最终包体隔离必须分别验证，不能由上述测试代替。
 
 ## 用法
 

@@ -170,7 +170,11 @@ namespace ErDon.UnitySDK.Editor
                 storageKey = EditorGUILayout.TextField("Key", storageKey);
                 storageValue = EditorGUILayout.TextField("Value", storageValue);
                 if (GUILayout.Button("写入 SDK.SetStorageSync")) ShowStorage(SDK.SetStorageSync(storageKey, storageValue));
-                if (GUILayout.Button("读取 SDK.GetStorageSync")) ShowStorage(SDK.GetStorageSync(storageKey));
+                if (GUILayout.Button("读取 SDK.GetStorageSync")) {
+                    // Release the IMGUI text editor buffer before replacing Value with the stored result.
+                    GUI.FocusControl(null);
+                    ShowStorage(SDK.GetStorageSync(storageKey));
+                }
                 if (GUILayout.Button("删除 SDK.RemoveStorageSync")) ShowStorage(SDK.RemoveStorageSync(storageKey));
                 if (GUILayout.Button("释放 SDK")) { UnitySdkHost.Shutdown(); lastResult = "已释放"; }
                 }

@@ -6,13 +6,13 @@
 
 ## 进度总览
 
-已完成并按列明范围验证 **61 / 77 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
+已完成并按列明范围验证 **62 / 77 个子项**，待完成或验收 **15 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
 | --- | ---: | ---: |
 | 设计基线与仓库骨架 | 1 | 0 |
 | 第一阶段：聚合核心与生命周期 | 11 | 1 |
-| 第二阶段：配置面板、装配与裁剪 | 10 | 3 |
+| 第二阶段：配置面板、装配与裁剪 | 11 | 2 |
 | 第三阶段：微信登录与服务端 | 4 | 1 |
 | 第四阶段：广告、分享、存储、网络与上报 | 22 | 4 |
 | 第五阶段：支付与订单 | 4 | 2 |
@@ -47,7 +47,7 @@
 - [x] Player 程序集/预编译引用和 BuildReport 资源检查；已知官方目录混装检测及目标适配器存在性检查。
 - [x] 运行时配置选择平台、自动注册与按需装配入口；公共预检测试及微信/抖音自动注册检查。
 - [x] 面板平台启动/取消/关闭按钮及后端工厂注入；Play Mode 逻辑回归。
-- [ ] TikTok 注册工程验证与完整构建依赖装配。
+- [x] TikTok 干净官方 1.1.6 工程注册、WebGL 开发构建依赖装配及链接后注册保留验证；官方小游戏导出与真机另行验收。
 - [ ] 面板交互与导出操作的视觉验收。
 - [x] 微信本地 0.1.23 隔离 WebGL Development Build，配置跨进程恢复及现有 BuildReport 审计通过；不含小游戏转换/真机。
 - [x] 微信官方固定提交 915d4bf 的开发构建与小游戏转换，输出文件及 JSON 检查通过；不含最终隔离和真机。
@@ -647,3 +647,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 抖音官方小游戏导出（2026-11-23）
 
 通过 TTSDK 6.9.7 公开 DouyinBuilder.BuildWebGL(StarkBuilderSettings) 导出新包体，固定 WebGL + Development、占位 App ID、独立新目录，不上传。douyin-conversion.log 显示 Build Finished Success、SDK_DOUYIN_CONVERSION_FILES_PASS、退出码 0。输出位于 DouyinBuildProject/Builds/DouyinConversion-20261123-135336/tt-minigame，game.json 与 project.config.json 可解析，Wasm 非空；本轮 ManagedStripped 注册检查通过。尚未证明开发者工具启动、真机接口及全部最终产物的平台隔离。
+
+### TikTok 干净官方插件工程与构建（2026-11-23）
+
+从官方 Unity 构建文档的 CDN 链接下载完整 1.1.6 Release unitypackage，来源与 SHA-256 记录在 docs/tiktok.md。Runtime/Editor 各七组接口和注入行为测试通过；全新 TikTokBuildProject 采用原始完整插件，未复制旧游戏的导入宏。ConfigureTikTok 初次导入退出 0；tiktok-development-build.log 输出 SDK_DEVELOPMENT_WEBGL_BUILD_PASS，BuildReport 为 Succeeded errors=0，退出 0；本轮 ManagedStripped 注册入口检查通过。空场景 Play Mode 输出 SDK_PLATFORM_REGISTRATION_PASS: TikTok，仅解析工厂而不调用平台 API。官方小游戏导出、最终产物审计与真机仍待验收。

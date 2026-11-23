@@ -13,6 +13,20 @@
 - 本机旧游戏插件的导入设置含 `RS_TIKTOK`，这属于旧项目配置，不是本 SDK 依赖。请使用官方干净插件，不复制旧游戏的宏和导入设置。
 - 必须等 `TT.InitSDK` 成功（返回 0）后再初始化本登录组合并调用登录。Editor Mock code 不是真实凭证。
 
+## 干净官方包验证记录（2026-11-23）
+
+已从上面的官方 Unity 构建文档所链接的 [1.1.6 Release 安装包](https://sf16-sg.tiktokcdn.com/obj/eden-sg/wv_k4aa/ljhwZthlaukjlkulzlp/mini_games/unity/com.tiktok.minigame%401.1.6-Release.unitypackage) 下载完整包。包内 name 同样为 com.bytedance.starksdk，不能据此将其当作抖音包，也不能用 version 字段单独认证来源。
+
+本次下载的 SHA-256（用于复现该基线，不是官方签名）：
+
+| 文件 | SHA-256 |
+| --- | --- |
+| 完整 unitypackage | `9d7154f1e89180fc6b9e76704362d72b37e9c78a5d59257b26f24700ffcc4f35` |
+| TTSDK/ttsdk.dll | `35a7dbb619b812d58abf6e33bb3cb05d9e7f77ad0bb1131c898b78d4f38d947d` |
+| TTSDK/ttsdk-editor.dll | `3c9ca4a76ea625d6445f25daaa3679ac9b5bba69ea69e0e35759b21351c645f1` |
+
+对这份完整包运行 run-tiktok-tests.ps1，Runtime/Editor 两套 DLL 的七组签名和注入行为测试均通过。新建 TikTokBuildProject 使用完整原始插件，未移入旧游戏宏或修改其导入配置，Unity 2022.3.14f1c1 初次导入和 ConfigureTikTok 正常退出。随后 WebGL Development Build 得到 Succeeded errors=0，链接后 TikTok 适配器及注册方法检查通过；空场景 Play Mode 注册解析也通过，未调用平台 API。真实平台初始化、功能、小游戏导出和最终包体隔离必须分别验证，不能由上述测试代替。
+
 ## 用法
 
 初始化层按 [微信组合示例](wechat.md) 的方式组合，只替换 provider 为：

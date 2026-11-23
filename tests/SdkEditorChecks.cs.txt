@@ -15,6 +15,15 @@ public static class SdkEditorChecks {
   s.production=false;s.rewardedAds=true;
   if(s.Validate().Count==0) throw new Exception("unimplemented ads allowed");
   s.rewardedAds=false;s.payments=false;s.platform=DistributionPlatform.WeChat;s.appId="test-app";
+  s.storage=true;s.share=true;
+  var exported=s.CreateRuntimeConfiguration();
+  var roundTrip=JsonUtility.FromJson<ErDon.UnitySDK.SdkRuntimeConfiguration>(JsonUtility.ToJson(exported));
+  if(roundTrip.gameId!="test-game" || roundTrip.appId!="test-app" || roundTrip.platform!="WeChat"
+      || !roundTrip.ToSdkConfig().StorageEnabled || !roundTrip.ToSdkConfig().ShareEnabled)
+      throw new Exception("Runtime configuration JSON mapping failed");
+  Debug.Log("SDK_RUNTIME_CONFIG_PASS");
+  exported.gameId="changed";
+  if(s.gameId!="test-game") throw new Exception("Export mutated project settings");
   if(s.Validate().Count==0) throw new Exception("missing adapter allowed");
   bool blocked=false;try {new SdkBuildGuard().OnPreprocessBuild(null);}catch(BuildFailedException){blocked=true;}
   if(!blocked) throw new Exception("build not blocked");

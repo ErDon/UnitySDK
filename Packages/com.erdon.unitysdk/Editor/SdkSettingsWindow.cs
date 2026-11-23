@@ -21,13 +21,19 @@ namespace ErDon.UnitySDK.Editor
         public string gameId = "";
         public string appId = "";
         public void SaveSettings() { Save(true); }
+        public SdkRuntimeConfiguration CreateRuntimeConfiguration()
+        {
+            return new SdkRuntimeConfiguration { platform = platform.ToString(), production = production,
+                gameId = gameId, appId = appId, login = login, storage = storage, share = share,
+                payments = payments, rewardedAds = rewardedAds, network = network, analytics = analytics };
+        }
         public List<string> Validate()
         {
             var issues = new List<string>();
             if (string.IsNullOrWhiteSpace(gameId)) issues.Add("缺少游戏标识 Game ID。");
             if (production && platform == DistributionPlatform.Mock) issues.Add("生产环境禁止 Mock。");
             if (platform != DistributionPlatform.Mock) {
-                issues.Add("目标平台适配包尚未实现；当前不能生成真实平台接入。");
+                issues.Add("真实平台自动初始化与构建装配尚未完成；当前不允许真实平台构建。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
             if (rewardedAds || network || analytics)
@@ -67,15 +73,22 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("核心包", "com.erdon.unitysdk 0.1.0");
-            EditorGUILayout.LabelField("平台实现", settings.platform == DistributionPlatform.Mock ? "Editor 示例；非真实服务" : "未安装 / 未实现");
+            EditorGUILayout.LabelField("平台实现", settings.platform == DistributionPlatform.Mock ? "Editor 示例；非真实服务" : "适配需独立安装；自动装配待完成");
             EditorGUILayout.LabelField("登录开关", settings.login ? "Mock 初始化时启用" : "Mock 初始化时关闭");
-            EditorGUILayout.HelpBox("没有引入微信、抖音、TikTok 或 Android/iOS 官方包。此预览不是构建产物裁剪证明。", MessageType.Info);
+            EditorGUILayout.HelpBox("官方依赖需按目标平台独立安装。此预览不是依赖安装检查或构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);
             if (GUILayout.Button("检查并保存配置")) {
                 settings.SaveSettings();
                 var issues = settings.Validate();
                 EditorUtility.DisplayDialog("SDK 配置检查", issues.Count == 0 ? "配置检查通过；仅适用于当前 Editor 示例范围。" : string.Join("\n", issues), "确定");
+            }
+            if (GUILayout.Button("导出运行时配置 JSON（不会初始化平台）")) {
+                var path = EditorUtility.SaveFilePanel("导出 SDK 配置", "", "erdon-sdk-config", "json");
+                if (!string.IsNullOrEmpty(path)) {
+                    System.IO.File.WriteAllText(path, JsonUtility.ToJson(settings.CreateRuntimeConfiguration(), true));
+                    lastResult = "配置已导出；需要在平台初始化成功后加载，构建校验仍然生效。";
+                }
             }
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Mock 调试（仅 Play Mode）", EditorStyles.boldLabel);

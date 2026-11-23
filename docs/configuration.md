@@ -39,3 +39,20 @@ sealed class GameSdkFactory : ISdkProviderFactory
 调用 UnitySdkHost.InitializeWithFactory(config, new GameSdkFactory(authFactory, storageFactory))。关闭的能力对应函数可为空，因为不会被调用。工厂不要预先创建 provider，否则无法达到关闭模块不创建对象的效果。Editor 预览已走此入口。tests/FactoryTests.cs 覆盖开关、失败回收、旧实例保护、重入拒绝及共享对象只释放一次。
 
 此入口负责运行时装配，不等于官方包、JS 或资源已从构建产物裁剪；自动配置生成及真实平台包体核验仍待完成。
+
+## 导出与读取运行时配置
+
+面板的“导出运行时配置 JSON”把 Game ID、App ID、平台、生产标记及全部能力开关导出为 SdkRuntimeConfiguration，不包含 AppSecret、登录凭证或回调。文件由游戏自行纳入资源管理，不自动放入 Resources 或构建产物。导出的数据可以包含未完成的配置，运行前必须 Validate/ToSdkConfig，后者发现错误即抛异常。
+
+```csharp
+// configAsset 是游戏加载的 TextAsset；不要把平台密钥放入此文件。
+var data = UnityEngine.JsonUtility.FromJson<ErDon.UnitySDK.SdkRuntimeConfiguration>(configAsset.text);
+if (data == null) throw new System.InvalidOperationException("Missing SDK configuration");
+var config = data.ToSdkConfig();
+// 在相应官方 SDK 初始化成功后，用 data.gameId、data.appId、data.Environment
+// 创建目标平台工厂，然后调用 UnitySdkHost.InitializeWithFactory(config, factory)。
+```
+
+Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，广告/网络/上报仍被拒绝；真实平台支付在工厂装配时仍被拒绝。数据校验通过不代表官方依赖、启动或构建已验收。
+
+当前仍需游戏在官方初始化完成后装配，面板自动启动尚未完成；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。

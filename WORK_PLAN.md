@@ -292,3 +292,10 @@ TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过�
 检查微信初始化：本地 WX.InitSDK 接收 Action<int>，但源码/XML 未解释整数语义；官方 GitHub 仓库查询返回 403，网页搜索未返回结果。未臆造成功码，平台初始化接入仍待继续核对。
 
 独立推进升级验证：export-sdk-inventory 升级 v2 全文件哈希，避免漏掉 JS/Wasm/配置及资源；比较器兼容同版本 v1 输入但拒绝 v1/v2 混比，报告标明覆盖范围。禁止导出到包内部。新增资源覆盖、混范围拒绝和自包含保护测试通过；微信本地包实际导出 497 文件并比较通过（旧选取快照 334 文件）。
+
+### 配置面板到运行时数据
+
+新增引擎无关 SdkRuntimeConfiguration，包含版本、公开应用身份、环境及模块开关，可验证并转换为独立 SdkConfig。面板增加 JSON 导出入口；不自动安装 SDK、不包含密钥、不放宽构建阻断。更新已过时的平台提示。
+
+公共回归新增字段映射、快照独立、未知版本/平台、生产 Mock、未实现能力拒绝测试并通过。Unity 检查增加配置转换与 JsonUtility 往返验证。自动平台启动装配和界面导出视觉验收仍未完成。
+首次资源导入阶段出现临时类型未找到信息；重开后的 runtime-config-confirm.log 无 C# 错误，输出 SDK_RUNTIME_CONFIG_PASS 与 SDK_EDITOR_CHECKS_PASS，退出码 0。

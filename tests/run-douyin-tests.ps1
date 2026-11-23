@@ -38,4 +38,8 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Douyin runtime compile failed'}
     & $UnityMono .\.tests\douyin\DouyinRuntimeTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin runtime tests failed'}
+    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinAdsTests.exe $coreSources $platformSources .\tests\DouyinAdsTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Douyin ads compile failed'}
+    & $UnityMono .\.tests\douyin\DouyinAdsTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Douyin ads tests failed'}
 } finally {Pop-Location}

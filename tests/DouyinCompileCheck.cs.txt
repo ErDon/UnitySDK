@@ -17,5 +17,8 @@ public static class DouyinCompileCheck {
   var runtime=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinRuntime, ErDon.UnitySDK.Douyin");
   if(runtime==null || !typeof(ErDon.UnitySDK.IPlatformRuntime).IsAssignableFrom(runtime)) throw new System.Exception("Douyin runtime not loaded");
   Debug.Log("DOUYIN_RUNTIME_UNITY_COMPILE_PASS");
+  var ads=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinRewardedAds, ErDon.UnitySDK.Douyin");
+  if(ads==null || !typeof(ErDon.UnitySDK.IRewardedAds).IsAssignableFrom(ads))throw new System.Exception("Douyin ads not loaded");
+  Debug.Log("DOUYIN_ADS_UNITY_COMPILE_PASS");
  }
 }

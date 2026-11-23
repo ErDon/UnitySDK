@@ -49,6 +49,8 @@ SessionResponsePolicy 只接受已知状态码/错误码组合，不回传任意
 ## 上层处理示例
 
 ```csharp
+using ErDon.UnitySDK;
+
 SDK.Login(result => {
     if (result.Success) {
         // 将 result.Session 交给游戏会话管理，不打印到日志。
@@ -70,6 +72,23 @@ SDK.Login(result => {
 ```
 
 该片段在 SDK 已初始化后调用。不能将每种失败都自动重试；尤其临时凭证、支付和上报可能产生重复操作。WithRetry 允许适配器设置策略，但调用它不会安排重试任务。
+
+## 同步异常与业务失败的边界
+
+调用方需要分别处理接入错误和业务结果。下面对应聚合入口的当前行为，不覆盖自定义 provider 的所有实现：
+
+| 情况 | 交付方式 | 接入方处理 |
+| --- | --- | --- |
+| Login/Share/ShowRewardedAd/Pay/Request/异步 ReportEvent 的 callback 为 null | 直接抛 ArgumentNullException | 修复调用代码；没有结果回调 |
+| Login/Share/ShowRewardedAd/Pay 的超时不大于零 | 直接抛 ArgumentOutOfRangeException | 调用前校验；异步 ReportEvent 还要求不超过 120000 毫秒 |
+| 从日志回调、能力初始化/释放或受保护的同步 provider 调用中重入 SDK | 直接抛 InvalidOperationException | 调整调用顺序，不在这些回调里执行 SDK 操作 |
+| 未初始化、模块关闭、能力缺失 | 业务结果中的 SDK.NOT_INITIALIZED、MODULE.DISABLED、CAPABILITY.NOT_SUPPORTED | 按结果处理；不应只依赖 try/catch |
+| Share/Request/异步 ReportEvent 的请求对象为 null | 通过结果返回对应 INVALID_ARGUMENT；前置状态错误优先 | 修复参数；构造请求对象自身也可能先抛参数异常 |
+| 游戏提供的完成回调自己抛异常 | SDK 记录 CALLBACK.EXCEPTION，不重新调用回调 | 排查游戏回调；不能据此重新执行付款等操作 |
+
+前置拒绝可能在调用返回前同步执行完成回调。应先设置等待 UI，再调用 SDK；不要在调用之后无条件把界面改回“等待”。网络和上报的回调也不能假设返回的 operation 已赋值。关闭 SDK 后旧业务回调会被抑制，生命周期负责人自行清理 UI。
+
+同步参数/重入异常发生时，不能依赖 SDK 已生成 CallId 或成对日志。初始化配置异常的处理见下节；不要把异常统一翻译成“平台登录失败”，也不要打印可能含敏感信息的任意异常正文。
 
 ## 启动、配置与生命周期
 

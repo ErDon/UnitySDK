@@ -19,7 +19,7 @@ try {
         if (!(Test-Path -LiteralPath $inputFile -PathType Leaf)) { throw "Missing compilation input: $inputFile" }
     }
     $output = New-Item -ItemType Directory -Force '.tests/documentation-examples'
-    $documents = @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline', 'api-reference', 'configuration', 'startup', 'native-extension')
+    $documents = @('share', 'storage', 'rewarded-ads', 'analytics', 'authentication', 'network', 'payment-pipeline', 'api-reference', 'configuration', 'startup', 'native-extension', 'errors')
     $platformReferences = @()
     foreach ($platformDoc in @(@('wechat', $WeChatAssembly), @('douyin', $DouyinAssembly), @('tiktok', $TikTokAssembly))) {
         if (!$platformDoc[1]) { continue }

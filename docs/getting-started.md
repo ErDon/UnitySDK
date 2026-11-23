@@ -62,6 +62,6 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 ./tests/compile-capability-doc-examples.ps1 -CoreAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.dll' -HttpAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.Transport.Http.dll'
 ```
 
-默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档、接口索引、配置、启动及原生扩展文档的全部 C# 代码块（当前 21 段），失败立即停止；不会运行这些调用或访问平台。完整工厂类型直接编译，调用片段包入 MonoBehaviour 方法；配置资源作为 TextAsset 参数传入，底层网络示例补入文中要求的 provider 字段及 OnDestroy 释放方法。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
+默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档、接口索引、配置、启动、原生扩展及错误处理文档的全部 C# 代码块（当前 22 段），失败立即停止；不会运行这些调用或访问平台。完整工厂类型直接编译，调用片段包入 MonoBehaviour 方法；配置资源作为 TextAsset 参数传入，底层网络示例补入文中要求的 provider 字段及 OnDestroy 释放方法。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
 
-平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共 21 段，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。三平台合计新增 10 段已分别通过编译，全部独立示例共 31 段。
+平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共 22 段，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。三平台合计新增 10 段已分别通过编译，全部独立示例共 32 段。

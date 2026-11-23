@@ -92,3 +92,11 @@ $env:SDK_AUTH_DB = Join-Path (Get-Location) 'data/auth.sqlite'
 createAuthHandler 可注入 limiter，其 take(source) 返回或异步返回 {allowed, retryAfterSeconds}。默认 MemoryRateLimiter 使用进程随机盐 HMAC 生成来源键，不存储原始 IP；最大一万个来源键，容量耗尽返回 SERVER.CAPACITY。计数只存在本进程，重启清空。
 
 不信任客户端 X-Forwarded-For。反向代理后的连接会共享代理地址额度；部署时应在受信网关实施客户端限流，并配置适配的服务端 limiter，不能直接信任转发头。多实例需共享限流实现；此参考实现不替代部署验收。
+
+## TikTok 身份校验
+
+createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs/en/minis-oauth) 使用固定 HTTPS token 接口、表单 POST，传 client_key/client_secret/code/grant_type；不传网页 OAuth 的 redirect_uri/code_verifier。SDK 回调 code 原样交给表单编码，不手动重复 URL 解码。仅验证身份，access_token/refresh_token 不返回客户端、不写日志，也不在当前存储中保存；支付等后续接口必须另行实现令牌加密保存与刷新。
+
+本地启动配置 TIKTOK_APP_ID（值是 Client Key）、TIKTOK_APP_SECRET（Client Secret）和 SDK_GAME_ID，平台名 TikTok。这些值来自服务端环境，客户端不得提供密钥。429/上游故障返回 PLATFORM_UNAVAILABLE；OAuth 错误返回 PLATFORM_REJECTED，当前不向客户端传递任意上游描述，也尚未细分全部 OAuth 错误。
+
+22 项后端测试使用模拟平台响应；未以真实 TikTok code 验收。配置受信绑定不等于平台应用已获准使用对应能力。

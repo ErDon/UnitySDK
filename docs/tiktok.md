@@ -41,6 +41,8 @@ new ErDon.UnitySDK.TikTok.TikTokCredentialProvider()
 
 升级先核对 Runtime/Editor 两侧方法签名和导入目标，再回归测试，并完成真实容器、后端及真机验证后更新兼容矩阵。不得仅替换 DLL 就标记升级验收完成。
 
+服务端身份兑换现已实现于 `server/src/tiktok.mjs`，依据 [Minis OAuth](https://developers.tiktok.com/docs/en/minis-oauth)。参见 [服务端接入](../server/README.md) 的绑定配置及令牌保存限制；当前仅通过模拟上游测试，尚未完成真实登录联调。
+
 ## 字符串存储
 
 `TikTokStorage(gameId, environment)` 实现 IStorage。初始化层在官方 TT.InitSDK 成功后构造它，并通过 UnitySdkHost.Initialize 的 storageProvider 参数传入，同时设置 StorageEnabled=true。上层仍调用统一的 SetStorageSync/GetStorageSync/RemoveStorageSync。

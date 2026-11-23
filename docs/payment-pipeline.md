@@ -75,6 +75,36 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 平台令牌加密存储
 
+### TikTok 服务端组合入口
+
+`server/src/tiktok-application.mjs` 的 `createTikTokApplication` 将登录兑换、凭据加密保存、游戏订单、预支付和签名通知组合成一个 HTTP handler。每个实例绑定一个游戏/应用/环境，配置中的 catalog 同时提供订单展示金额和 TikTok Beans 商品参数；两者必须由运营配置核对，SDK 不推算换算比例。
+
+```js
+import { createServer } from 'node:http';
+import { createTikTokApplication } from './src/tiktok-application.mjs';
+
+// deployment 由部署层加载；不得放进 Unity 工程或提交密钥到 Git。
+const app = createTikTokApplication({
+  binding: deployment.binding, // gameId, appId, environment, platform: 'TikTok', secret
+  isSandbox: true,
+  authPath: './data/auth.sqlite',
+  orderPath: './data/orders.sqlite',
+  credentialPath: './data/credentials.sqlite',
+  keys: deployment.keys, // Map<keyId, 32-byte Buffer>
+  currentKeyId: deployment.currentKeyId,
+  catalog: deployment.catalog // productId, amountMinor, currency, tokenAmount,
+  // productName, quantity, quantityUnit, imageUrl
+});
+const server = createServer({ requestTimeout: 10000, headersTimeout: 5000, maxHeaderSize: 8192 }, app.handler);
+server.listen(8787, '127.0.0.1'); // Unity / 平台通知通过部署层 HTTPS 入口访问。
+// 退出时先停止接收并排空 HTTP 请求，再关闭三个数据库及清除存储持有的密钥副本。
+process.once('SIGTERM', () => server.close(() => app.close()));
+```
+
+目录需预先创建。入口提供 POST /v1/session、订单路由（含 prepare）和 POST /v1/webhooks/tiktok/payment；不会创建公开发货路由，不接受客户端成功回执作为支付依据。服务器工作进程可读取 `app.pendingDelivery()`，再调用 `app.orders.fulfill(orderId, deliver)`；deliver 必须在业务数据库中将 deliveryKey 去重和权益增加放在同一事务内。
+
+此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 close。未包含公网部署、定时发货任务、平台查单或令牌刷新；原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
+
 `TikTokCredentialStore(path, { keys, currentKeyId, now?, capacity? })`（server/src/tiktok-credential-store.mjs）实现凭证提供器的 get，并提供 put/remove/close。keys 为密钥 ID 到 32 字节 Buffer 的 Map；调用方从部署密钥服务加载，不放进 Unity、JSON 配置或 Git。存储复制密钥 Buffer，关闭时清理自己的副本，不改调用方的 Buffer；不承诺 JavaScript 字符串在内存中安全擦除。
 
 put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 字节 nonce 加密；认证附加数据绑定版本、完整作用域、用户、有效期与密钥 ID。数据库保存密文、nonce、标签及必要关联元数据，应用/用户标识不加密。get 返回未过期的冻结凭据；缺失/过期返回 null，错误密钥、篡改、存储故障统一 PAY.CREDENTIAL_UNAVAILABLE。容量满拒绝新增，写入时清理过期记录。

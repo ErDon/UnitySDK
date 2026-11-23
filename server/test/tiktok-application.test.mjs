@@ -1,0 +1,68 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { createHmac } from 'node:crypto';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createTikTokApplication } from '../src/tiktok-application.mjs';
+
+test('composed application authenticates, prepares, accepts signed payment and resumes after restart', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'erdon-app-'));
+  let app, server, base, creates = 0;
+  const logs = [], timestamp = 1800000000;
+  const binding = { gameId:'game', appId:'app', environment:'test', platform:'TikTok', secret:'private-secret' };
+  const config = { binding, isSandbox:true, now:()=>timestamp*1000, log:line=>logs.push(line),
+    authPath:join(dir,'auth.db'), orderPath:join(dir,'orders.db'), credentialPath:join(dir,'credentials.db'),
+    keys:new Map([['key',Buffer.alloc(32,9)]]), currentKeyId:'key',
+    catalog:[{ productId:'coins', amountMinor:99, currency:'USD', tokenAmount:100, productName:'Coins',
+      quantity:1, quantityUnit:'item', imageUrl:'https://example.com/coins.png' }],
+    fetchImpl:async(url, options)=>{
+      if (url.endsWith('/oauth/token/')) return Response.json({ open_id:'player', access_token:'private-token', token_type:'Bearer', expires_in:3600 });
+      assert.ok(url.endsWith('/trade_order/create/'));
+      assert.equal(options.headers.Authorization,'Bearer private-token'); creates++;
+      return Response.json({ data:{trade_order_id:'trade'}, error:{code:'ok'} });
+    }
+  };
+  const stop = async()=>{
+    if (server) { await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}); server=null; }
+    app?.close();
+  };
+  t.after(async()=>{await stop();await rm(dir,{recursive:true,force:true});});
+  const start=async()=>{
+    app=createTikTokApplication(config);server=createServer(app.handler);
+    await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
+    base=`http://127.0.0.1:${server.address().port}`;
+  };
+  const request=async(path, body, session)=>{
+    const res=await fetch(base+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',
+      ...(session?{Authorization:'Bearer '+session}:{})},body:body===undefined?undefined:JSON.stringify(body)});
+    return {status:res.status,data:await res.json()};
+  };
+  await start();
+  const login=await request('/v1/session',{...binding,secret:undefined,code:'login'});
+  assert.equal(login.status,200);const session=login.data.session;
+  assert.ok(!JSON.stringify(login).includes('private-'));
+  const created=await request('/v1/orders',{productId:'coins',requestId:'purchase'},session);
+  assert.equal(created.status,200);const id=created.data.order.orderId;
+  const prepared=await request(`/v1/orders/${id}/prepare`,{accessToken:'forged',tokenAmount:1},session);
+  assert.equal(prepared.status,200);assert.equal(prepared.data.prepayment.tradeOrderId,'trade');
+  assert.equal((await request(`/v1/orders/${id}/confirm`,{evidence:'success'},session)).status,409);
+  await stop();await start();
+  assert.equal((await request(`/v1/orders/${id}/prepare`,{},session)).status,200);
+  assert.equal(creates,1);
+  const raw=JSON.stringify({client_key:'app',event:'minis.trade_order.redeem.success',create_time:timestamp,user_openid:'player',
+    content:JSON.stringify({order_id:id,trade_order_id:'trade',is_sandbox:true})});
+  const signature=`t=${timestamp},s=${createHmac('sha256',binding.secret).update(`${timestamp}.`).update(raw).digest('hex')}`;
+  for(let i=0;i<2;i++) {
+    const notified=await fetch(base+'/v1/webhooks/tiktok/payment',{method:'POST',headers:{'Content-Type':'application/json','TikTok-Signature':signature},body:raw});
+    assert.equal(notified.status,200);await notified.json();
+  }
+  assert.equal((await app.pendingDelivery()).length,1);
+  await app.orders.fulfill(id,async message=>{assert.equal(message.subject,'player');return true;});
+  assert.equal((await request(`/v1/orders/${id}`,undefined,session)).data.order.state,'Fulfilled');
+  assert.equal((await request('/v1/orders/'+id+'/fulfill',{},session)).status,404);
+  assert.ok(!logs.join('').includes('private-'));
+  app.close();app.close();
+  assert.equal((await request('/v1/session',{})).status,503);
+});

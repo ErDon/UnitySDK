@@ -127,6 +127,11 @@
 
 ## 2026-11-24 执行记录
 
+### 登录和订单响应接收限额
+
+发现 UnitySessionExchange/UnityOrderClient 原先使用 DownloadHandlerBuffer，在完整接收后才检查 64 KiB，无法限制接收时的正文内存。改为共用 BoundedJsonDownload：固定 65536 字节缓冲、逐块接收、越界前拒绝写入，超限优先返回 NETWORK.RESPONSE_TOO_LARGE。该助手独立于可选 Network 模块，登录仍能在网络/支付编译关闭时使用。独立 Unity 执行实际 DownloadHandlerScript 的注入分块测试，通过跨字节 UTF-8、恰好限额、末尾溢出、超大首块及非法分块检查，日志 SDK_BOUNDED_JSON_DOWNLOAD_PASS。首次导入新源码曾短暂报找不到新类型，后续编译和测试完成；不声称整个编辑器日志零错误。网络/支付排除模式的完整 HTTP 源码编译及公共 run-all-tests 回归均通过；此项不替代真实后端 HTTPS 与真机联调。
+
+
 ### 配置启动示例实际 Play Mode 验证
 
 新增 ConfiguredSamplePlayChecks，复制真实 ConfiguredSdkExample 到独立 BuildChecksProject，使用平台注册替身驱动实际组件。验证 JSON 游戏/环境绑定、会话工厂按配置传递、初始化不自动登录、未就绪时按钮拒绝、重复组件不重新启动且其销毁不影响负责人、平台成功后按钮收到登录会话、日志不泄露测试会话、负责人销毁后能力释放一次。configured-sample-play.log 出现 SDK_CONFIGURED_SAMPLE_PLAY_PASS 和登录结果日志，进程进入正常退出流程。首次受限启动无日志且进程已退出，确认后以完整本机权限重试；日志包含本机 Unity 许可证刷新错误，但测试确实执行完成。本项不访问官方账号、HTTPS 后端或真机，因此独立游戏完整验收仍未勾选。示例 README 补可重跑步骤及测试副作用范围。

@@ -36,7 +36,8 @@ namespace ErDon.UnitySDK
             var body=JsonUtility.ToJson(new RequestData{gameId=gameId,appId=appId,environment=environment,platform=credential.Platform,code=credential.Code});
             using(var request=new UnityWebRequest(endpoint,"POST")) {
                 request.uploadHandler=new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));
-                request.downloadHandler=new DownloadHandlerBuffer();
+                var download = new BoundedJsonDownload();
+                request.downloadHandler=download;
                 request.SetRequestHeader("Content-Type","application/json");
                 request.timeout=15;request.redirectLimit=0;
                 active.Add(request);
@@ -44,12 +45,13 @@ namespace ErDon.UnitySDK
                 active.Remove(request);
                 if(disposed)yield break;
                 LoginResult result;
-                if(request.result==UnityWebRequest.Result.ConnectionError)
+                if(download.Exceeded)
+                    result=LoginResult.Fail("NETWORK.RESPONSE_TOO_LARGE","Session response exceeds 65536 bytes");
+                else if(request.result==UnityWebRequest.Result.ConnectionError)
                     result=LoginResult.Fail("NETWORK.UNAVAILABLE","Session endpoint connection failed");
                 else {
                     try {
-                        if(request.downloadHandler.data.Length>65536)throw new FormatException();
-                        var response=JsonUtility.FromJson<SessionResponseData>(request.downloadHandler.text);
+                        var response=JsonUtility.FromJson<SessionResponseData>(download.ReadText());
                         result=SessionResponsePolicy.Evaluate(request.responseCode,response,request.GetResponseHeader("Retry-After"));
                     }catch{
                         result=request.responseCode==200

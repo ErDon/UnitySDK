@@ -55,13 +55,15 @@ namespace ErDon.UnitySDK
         {
             using(var request=new UnityWebRequest(url,method)) {
                 if(body!=null){request.uploadHandler=new UploadHandlerRaw(Encoding.UTF8.GetBytes(body));request.SetRequestHeader("Content-Type","application/json");}
-                request.SetRequestHeader("Authorization","Bearer "+session);request.downloadHandler=new DownloadHandlerBuffer();request.timeout=15;request.redirectLimit=0;
+                var download = new BoundedJsonDownload();
+                request.SetRequestHeader("Authorization","Bearer "+session);request.downloadHandler=download;request.timeout=15;request.redirectLimit=0;
                 active.Add(request);yield return request.SendWebRequest();active.Remove(request);if(disposed)yield break;
                 OrderResult result;
-                if(request.result==UnityWebRequest.Result.ConnectionError)result=OrderResult.Fail("NETWORK.UNAVAILABLE","Order service connection failed");
+                if(download.Exceeded)result=OrderResult.Fail("NETWORK.RESPONSE_TOO_LARGE","Order response exceeds 65536 bytes");
+                else if(request.result==UnityWebRequest.Result.ConnectionError)result=OrderResult.Fail("NETWORK.UNAVAILABLE","Order service connection failed");
                 else {
                     OrderResponseData data=null;
-                    try { if(request.downloadHandler.data.Length<=65536)data=JsonUtility.FromJson<OrderResponseData>(request.downloadHandler.text); }catch { }
+                    try { data=JsonUtility.FromJson<OrderResponseData>(download.ReadText()); }catch { }
                     result=OrderResponsePolicy.Evaluate(request.responseCode,data,orderId,productId,request.GetResponseHeader("Retry-After"));
                 }
                 callback(result);

@@ -107,7 +107,7 @@ orders.Create(gameSession, "coins", purchaseRequestId, result => {
 
 purchaseRequestId 应在一次购买开始时生成并保存，网络不确定时重试原值，不能每次重试都换号。订单价格完全由服务端返回。Confirm 的 evidence 当前是字符串字段，服务端平台验证器需支持对应字符串回执；结构化平台证据需另行扩展，不能把测试 evidence.valid 当作真实凭证。
 
-请求只走 HTTPS，禁止 URL 凭据/query/fragment，禁用重定向。会话仅放 Authorization 头，不输出会话、回执或响应正文。15 秒超时，JSON 请求 UTF-8 最多 8192 字节；响应收到后检查 64 KiB（不是下载时流量限制）。Dispose 后不再派发在途结果。调用方负责 host 生命周期、结果回调异常与统一 SDK 层日志；当前下层客户端不自行输出日志、不自动重试。
+请求只走 HTTPS，禁止 URL 凭据/query/fragment，禁用重定向。会话仅放 Authorization 头，不输出会话、回执或响应正文。15 秒超时，JSON 请求 UTF-8 最多 8192 字节；响应在接收分块时限制为 64 KiB，越界返回 NETWORK.RESPONSE_TOO_LARGE，不保留超限分块。该限制约束客户端正文缓冲，不等于精确限制底层网络流量。Dispose 后不再派发在途结果。调用方负责 host 生命周期、结果回调异常与统一 SDK 层日志；当前下层客户端不自行输出日志、不自动重试。
 
 结果策略核对订单 UUID、期望订单/商品、非空商品、正整数金额（不超过 JS 安全整数）、币种形状及三个已知状态。未知状态、矛盾响应、换单响应均为 PAY.INVALID_RESPONSE。服务端错误仅映射已登记 HTTP/错误码组合，其他返回 PAY.SERVER_REJECTED；429 提供 RetryAfterSeconds（仅接受正整数），401 会话错误提示重新登录。ServerCallId 只保留标准 UUID。
 

@@ -23,8 +23,22 @@ namespace ErDon.UnitySDK
             internal Action<NetworkResult> Callback;
             internal UnityNetwork Owner;
             public void Cancel(){if(Finished)return;if(Request!=null)Request.Abort();Complete(NetworkResult.Fail("NETWORK.CANCELLED","Caller cancelled network request"));}
-            internal void Complete(NetworkResult result){if(Finished)return;Finished=true;Owner.active.Remove(this);try{if(!Owner.disposed)Callback(result);}finally{Cleanup();}}
-            internal void Cleanup(){if(Request!=null){Request.Dispose();Request=null;}if(Download!=null){Download.Buffer.Dispose();Download=null;}}
+            internal void Complete(NetworkResult result)
+            {
+                if(Finished)return;
+                Finished=true;
+                var owner=Owner;var callback=Callback;
+                Owner=null;Callback=null;
+                owner.active.Remove(this);
+                try{if(!owner.disposed)callback(result);}finally{Cleanup();}
+            }
+            internal void Cleanup()
+            {
+                Owner=null;Callback=null;
+                var request=Request;var download=Download;Request=null;Download=null;
+                try{if(request!=null)request.Dispose();}
+                finally{if(download!=null)download.Buffer.Dispose();}
+            }
         }
         readonly MonoBehaviour host;
         readonly HashSet<Operation> active=new HashSet<Operation>();
@@ -34,7 +48,7 @@ namespace ErDon.UnitySDK
         {
             if(input==null||callback==null)throw new ArgumentNullException();
             var operation=new Operation{Owner=this,Callback=callback};
-            if(disposed){operation.Finished=true;callback(NetworkResult.Fail("SDK.DISPOSED","Network provider was disposed"));return operation;}
+            if(disposed){operation.Finished=true;try{callback(NetworkResult.Fail("SDK.DISPOSED","Network provider was disposed"));}finally{operation.Cleanup();}return operation;}
             if(host==null||!host.isActiveAndEnabled){operation.Complete(NetworkResult.Fail("NETWORK.HOST_UNAVAILABLE","Network host is inactive"));return operation;}
             try {
                 operation.Request=new UnityWebRequest(input.Url,input.Method);

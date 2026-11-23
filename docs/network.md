@@ -93,7 +93,7 @@ your-api.example 是占位域名，不会提供业务服务。生产 JSON 应使
 
 支持多个请求并发，每次有独立 CallId/TraceId、超时和 Cancel。初始化、调用、取消、Tick、Shutdown 均在 Unity 主线程执行；有效请求结果通过主线程派发器交付，预检失败直接在调用线程回调。回调抛异常会被隔离并记录 CALLBACK.EXCEPTION。UnitySdkHost 自动驱动 Tick；暂停后恢复时继续检查超时。
 
-Shutdown 会中止未完成操作并抑制旧结果，游戏自己关闭等待 UI。已完成句柄不再持有底层操作、回调或派发器；重复 Cancel 不重复完成。SDK 统一日志记录时间、接口、ID、阶段及结果，URL、查询、头与消息体全部脱敏。通用请求 CallId 不会自动写入 HTTP 请求头。
+Shutdown 会中止未完成操作并抑制旧结果，游戏自己关闭等待 UI。已完成的聚合句柄不再持有底层操作、回调或派发器；UnityNetwork 的底层句柄也在终态清除回调、通信实例和请求/缓冲引用。重复 Cancel 不重复完成。SDK 统一日志记录时间、接口、ID、阶段及结果，URL、查询、头与消息体全部脱敏。通用请求 CallId 不会自动写入 HTTP 请求头。
 
 ## 平台边界与验证
 

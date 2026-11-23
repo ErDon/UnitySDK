@@ -10,12 +10,20 @@ public static class NetworkPlayChecks
     const string Key="ErDon.Tests.NetworkPlay";
     static TcpListener listener;
     static UnityNetwork network;
+    static INetworkOperation timeoutOperation;
     static int cancelled, late, failed;
     static double deadline, observeUntil;
     static bool finished;
     static NetworkPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
     public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
     static void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+    static void Released(INetworkOperation operation)
+    {
+        foreach(var name in new[]{"Owner","Callback","Request","Download"}) {
+            var field=operation.GetType().GetField(name,System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic);
+            Check(field!=null&&field.GetValue(operation)==null,"completed transport retained "+name);
+        }
+    }
     static void Changed(PlayModeStateChange state)
     {
         if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
@@ -31,20 +39,24 @@ public static class NetworkPlayChecks
             UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false,NetworkEnabled=true,LogCallback=(l,s)=>{}},null,networkProvider:network);
             var operation=SDK.Request(request,r=>{Check(r.Error!=null&&r.Error.Code=="NETWORK.CANCELLED"&&r.Error.CallId==r.CallId&&!string.IsNullOrEmpty(r.CallId),"facade cancel result and correlation");cancelled++;});
             operation.Cancel();operation.Cancel(); // Facade delivery is queued to the Unity host; assert after frames below.
+            int directCancelled=0;
+            var direct=network.Send(request,r=>{Check(r.Error.Code=="NETWORK.CANCELLED","direct cancellation");directCancelled++;});
+            direct.Cancel();direct.Cancel();Check(directCancelled==1,"direct cancel once");Released(direct);
             var first=network.Send(request,r=>late++);
             network.Send(request,r=>late++);
             network.Dispose();network.Dispose();first.Cancel();Check(late==0,"dispose suppresses callbacks");
-            NetworkResult disposed=null;network.Send(request,r=>disposed=r).Cancel();
+            Released(first);
+            NetworkResult disposed=null;var rejected=network.Send(request,r=>disposed=r);rejected.Cancel();Released(rejected);
             Check(disposed.Error.Code=="SDK.DISPOSED","disposed rejects new request");
             host.gameObject.SetActive(false);
             using(var inactive=new UnityNetwork(host)){
-                NetworkResult result=null;inactive.Send(request,r=>result=r);
+                NetworkResult result=null;var rejectedInactive=inactive.Send(request,r=>result=r);Released(rejectedInactive);
                 Check(result.Error.Code=="NETWORK.HOST_UNAVAILABLE","inactive host rejection");
             }
             host.gameObject.SetActive(true);
             network=new UnityNetwork(host);
             // The listener accepts TCP but never speaks TLS: Unity's configured timeout must complete.
-            network.Send(request,r=>{
+            timeoutOperation=network.Send(request,r=>{
                 Check(!r.Success&&r.Error.Code=="NETWORK.UNAVAILABLE","timeout maps to safe connection failure");
                 failed++;observeUntil=EditorApplication.timeSinceStartup+0.3;
             });
@@ -56,6 +68,7 @@ public static class NetworkPlayChecks
         if(finished)return;
         if(EditorApplication.timeSinceStartup>deadline){Finish(false,"request did not terminate");return;}
         if(failed==0||EditorApplication.timeSinceStartup<observeUntil)return;
+        try{Released(timeoutOperation);}catch(Exception e){Finish(false,e.Message);return;}
         Finish(cancelled==1&&late==0&&failed==1,"cancel/dispose/timeout callback counts");
     }
     static void Finish(bool success,string message)

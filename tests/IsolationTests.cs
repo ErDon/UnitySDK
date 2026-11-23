@@ -17,6 +17,8 @@ class IsolationTests
   Require(PlatformIsolationPolicy.CheckPlatformDefines("AndroidChannel","","Android").Count>0,"unimplemented native target rejected");
   Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new[]{"WX.Runtime.dll"},new[]{"Packages/wx/Runtime/a.js"}).Count==0,"target allowed");
   Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new[]{"TT.Runtime.dll"},new string[0]).Count==1,"foreign DLL rejected");
+  Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new[]{"C:\\vendor\\TT.Runtime.dll"},new string[0]).Count==1,"absolute precompiled reference rejected");
+  Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new[]{"/vendor/tt.runtime.DLL"},new string[0]).Count==1,"cross platform reference casing rejected");
   Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new string[0],new[]{"Assets\\TikTok\\bridge.jslib"}).Count==1,"foreign bridge rejected");
   Require(PlatformIsolationPolicy.CheckIncluded("WeChat",deps,new string[0],new[]{"Assets/TikTokOther/a"}).Count==0,"segment boundary");
   tt.AssetRoots=new[]{"Assets/../secret"};Require(PlatformIsolationPolicy.ValidateManifest(tt).Count>0,"traversal rejected");

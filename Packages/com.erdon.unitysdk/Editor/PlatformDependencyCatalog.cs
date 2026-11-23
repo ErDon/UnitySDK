@@ -30,8 +30,15 @@ namespace ErDon.UnitySDK.Editor
         }
         public static List<string> CheckPlayerAssemblies(string target)
         {
-            return PlatformIsolationPolicy.CheckIncluded(target, ReadInstalled(),
-                CompilationPipeline.GetAssemblies(AssembliesType.Player).Select(x=>x.name), new string[0]);
+            return CheckPlayerAssemblies(target, ReadInstalled());
+        }
+        public static List<string> CheckPlayerAssemblies(string target, PlatformDependency[] dependencies)
+        {
+            var assemblies = CompilationPipeline.GetAssemblies(AssembliesType.Player);
+            // Precompiled vendor DLLs do not appear as source assemblies in GetAssemblies.
+            // Inspect references as well, even when a vendor package has no asmdef.
+            var names = assemblies.Select(x=>x.name).Concat(assemblies.SelectMany(x=>x.compiledAssemblyReferences));
+            return PlatformIsolationPolicy.CheckIncluded(target, dependencies, names, new string[0]);
         }
     }
     public sealed class SdkArtifactAudit : IPostprocessBuildWithReport

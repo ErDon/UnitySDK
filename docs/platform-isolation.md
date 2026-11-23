@@ -14,7 +14,7 @@
 
 清单版本必须与已安装 UPM 包一致，禁止 latest 或通配版本。程序集名保留点号，不把 Runtime 等后缀误当扩展名。资源路径必须位于 Assets 或 Packages 内，禁止父目录跳转。
 
-构建前读取已安装包的清单，检查 Player 程序集中是否有其他平台程序集。构建后核查 BuildReport 输出文件和打包资源来源，写入 Library/ErDonSdk/last-artifact-audit.txt。发现登记的非目标平台内容则构建失败。
+构建前读取已安装包的清单，检查 Player 源码程序集及其 compiledAssemblyReferences 中是否有其他平台程序集，覆盖没有 asmdef 的预编译 SDK DLL。构建后核查 BuildReport 输出文件和打包资源来源，写入 Library/ErDonSdk/last-artifact-audit.txt。发现登记的非目标平台内容则构建失败。
 
 该检查只验证已登记内容，不能证明未登记官方插件、原生二进制、合并 JS 或 StreamingAssets 已被排除。后续适配包需提供覆盖这些资源的清单和实际产物验证；当前没有真实平台成功构建记录。不能仅凭审计空错误宣称完整裁剪。
 
@@ -34,3 +34,6 @@
 | Editor Mock | 不启用任何 ERDON_PLATFORM_ 宏 |
 
 未知 ERDON_PLATFORM_ 宏、缺失目标宏、同时启用多个平台、非 WebGL 目标均报错。其他项目自有宏不受影响。此功能只检查，不自动改写 Player Settings 或删除包；选择目标平台并不代表官方 SDK 已装配。当前真实平台初始化/官方依赖装配未完成，其他发布阻断仍然有效。
+
+
+预编译引用检查使用 Unity 实际 Player 编译图，文件名比较同时规范化 Windows/Unix 分隔符和 DLL 扩展名。tests/SdkEditorChecks.cs.txt 将真实编译引用临时登记为外部平台依赖，确认检查会拦截；该测试仅构造内存清单，不修改插件或业务工程。它不覆盖未被引用但仍被打包的原生插件，后者仍需导入设置和产物核验。

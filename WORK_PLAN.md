@@ -158,3 +158,7 @@ HTTP 客户端 Retry-After 改动经独立 Unity 2022.3 工程编译与 Editor �
 增加 ISdkProviderFactory、SDK.InitializeWithFactory 及 UnitySdkHost 对应入口，未启用模块不创建 provider。创建失败回收本次对象，旧实例继续服务；拒绝复用旧 provider 与创建阶段重入。配置复制后再创建，避免工厂改变开关影响本次装配。Editor Mock 初始化改用该入口。
 
 公共 C# 回归及新工厂行为测试通过；独立 Unity Play Mode 输出 SDK_PLAY_CHECKS_PASS（factory-play.log），覆盖配置预览初始化与登录/存储开关。尚未完成真实平台自动初始化、配置生成或裁剪验收。
+
+### 预编译 SDK 引用隔离
+
+修复构建前只检查源码程序集而遗漏官方预编译 DLL 的问题，加入 Unity Player 编译图的 compiledAssemblyReferences。跨系统路径和大小写规范化后按已登记平台清单检查。公共回归通过；独立 Unity Editor 用真实编译引用验证外部平台依赖被拦截，precompiled-audit.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。未引用原生插件、StreamingAssets 与最终合并 JS 仍须后续覆盖。

@@ -79,7 +79,7 @@ namespace ErDon.UnitySDK.Editor
         }
         static string AssemblyName(string value)
         {
-            var name = Path.GetFileName(value);
+            var name = Path.GetFileName(Normalize(value));
             return name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
                 ? Path.GetFileNameWithoutExtension(name) : name;
         }

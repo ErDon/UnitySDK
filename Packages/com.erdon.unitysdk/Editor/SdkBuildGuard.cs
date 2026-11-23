@@ -1,4 +1,6 @@
 using UnityEditor.Build;
+using System.Linq;
+using UnityEditor.Compilation;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 namespace ErDon.UnitySDK.Editor
@@ -12,6 +14,9 @@ namespace ErDon.UnitySDK.Editor
             var settings = SdkProjectSettings.instance;
             var errors = settings.Validate();
             errors.AddRange(CheckDefines(settings.platform.ToString()));
+            errors.AddRange(PlatformIsolationPolicy.CheckTargetAdapter(settings.platform.ToString(),
+                PlatformDependencyCatalog.ReadInstalled(),
+                CompilationPipeline.GetAssemblies(AssembliesType.Player).Select(x => x.name)));
             errors.AddRange(PlatformDependencyCatalog.CheckPlayerAssemblies(settings.platform.ToString()));
             errors.AddRange(PlatformDependencyCatalog.CheckVendorInstallations(settings.platform.ToString()));
             if (settings.platform == DistributionPlatform.Mock)

@@ -62,6 +62,30 @@ namespace ErDon.UnitySDK.Editor
             if(engineTarget != "WebGL")errors.Add("Current mini-game adapters require the WebGL build target");
             return errors;
         }
+        // Positive check complements foreign-platform isolation: defines alone do not install an adapter.
+        public static List<string> CheckTargetAdapter(string target, IEnumerable<PlatformDependency> dependencies,
+            IEnumerable<string> playerAssemblyNames)
+        {
+            var errors = new List<string>();
+            string package, assembly;
+            switch (target) {
+                case "WeChat": package = "com.erdon.unitysdk.wechat"; assembly = "ErDon.UnitySDK.WeChat"; break;
+                case "Douyin": package = "com.erdon.unitysdk.douyin"; assembly = "ErDon.UnitySDK.Douyin"; break;
+                case "TikTok": package = "com.erdon.unitysdk.tiktok"; assembly = "ErDon.UnitySDK.TikTok"; break;
+                default: errors.Add("No Player adapter registered for target: " + target); return errors;
+            }
+            var matches = dependencies.Where(x => x != null && x.Platform == target && x.Package == package).ToArray();
+            if (matches.Length != 1) errors.Add("Exactly one target adapter manifest required: " + package);
+            else {
+                errors.AddRange(ValidateManifest(matches[0]));
+                if (matches[0].Assemblies == null || !matches[0].Assemblies.Contains(assembly))
+                    errors.Add("Target manifest must declare adapter assembly: " + assembly);
+            }
+            // Only source Player assemblies supplied by CompilationPipeline qualify; an Editor-only DLL reference does not.
+            if (!playerAssemblyNames.Contains(assembly, StringComparer.Ordinal))
+                errors.Add("Target adapter absent from Player compilation: " + assembly);
+            return errors;
+        }
         public static List<string> ValidateManifest(PlatformDependency dependency)
         {
             var errors = new List<string>();

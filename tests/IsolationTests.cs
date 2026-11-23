@@ -7,6 +7,17 @@ class IsolationTests
   var wx=new PlatformDependency{Platform="WeChat",Package="wx",Version="1.0.0",Assemblies=new[]{"WX.Runtime"},AssetRoots=new[]{"Packages/wx/Runtime"}};
   var tt=new PlatformDependency{Platform="TikTok",Package="tt",Version="1.0.0",Assemblies=new[]{"TT.Runtime"},AssetRoots=new[]{"Assets/TikTok"}};
   var deps=new[]{wx,tt};
+  var target=new PlatformDependency{Platform="WeChat",Package="com.erdon.unitysdk.wechat",Version="0.1.0",
+      Assemblies=new[]{"ErDon.UnitySDK.WeChat"},AssetRoots=new[]{"Packages/com.erdon.unitysdk.wechat"}};
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("WeChat",new[]{target},new[]{"ErDon.UnitySDK.WeChat"}).Count==0,"target manifest and Player assembly present");
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("WeChat",new PlatformDependency[0],new[]{"ErDon.UnitySDK.WeChat"}).Count>0,"assembly alone insufficient");
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("WeChat",new[]{target},new string[0]).Count>0,"installed but excluded adapter rejected");
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("WeChat",new[]{target,target},new[]{"ErDon.UnitySDK.WeChat"}).Count>0,"duplicate target manifests rejected");
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("TikTok",new[]{target},new[]{"ErDon.UnitySDK.WeChat"}).Count>0,"foreign adapter cannot satisfy target");
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("Mock",new[]{target},new[]{"ErDon.UnitySDK.WeChat"}).Count>0,"Mock has no Player adapter");
+  target.Assemblies=new[]{"Other"};
+  Require(PlatformIsolationPolicy.CheckTargetAdapter("WeChat",new[]{target},new[]{"ErDon.UnitySDK.WeChat"}).Count>0,"manifest assembly declaration required");
+
   Require(PlatformIsolationPolicy.CheckVendorInstallations("WeChat",new[]{"Assets/Plugins/com.tiktok.minigame"}).Count==1,"vendor without adapter rejected");
   Require(PlatformIsolationPolicy.CheckVendorInstallations("WeChat",new[]{"Packages/com.qq.weixin.minigame"}).Count==0,"target vendor allowed");
   Require(PlatformIsolationPolicy.CheckVendorInstallations("TikTok",new[]{"Assets/Plugins/ByteGame/com.bytedance.starksdk"}).Count==1,"Douyin vendor isolated from TikTok");

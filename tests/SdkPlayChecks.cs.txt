@@ -37,7 +37,15 @@ public static class SdkPlayChecks
             if(phase==1){phase=2;SdkProjectSettings.instance.login=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);SDK.Login(r=>{if(r.Error==null||r.Error.Code!="MODULE.DISABLED")Fail("disabled failed");else phase=3;});}
             if(phase==3){phase=4;SdkProjectSettings.instance.login=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Timeout);SDK.Login(r=>{if(r.Error==null||r.Error.Code!="AUTH.TIMEOUT")Fail("timeout failed");else phase=5;},50);}
             if(phase==5){phase=6;EditorSdkBootstrap.Initialize(MockLoginOutcome.Denied);SDK.Login(r=>{if(r.Error==null||r.Error.Code!="AUTH.PERMISSION_DENIED")Fail("denied failed");else phase=7;});}
-            if(phase==7){finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);}
+            if(phase==7){
+                var settings=SdkProjectSettings.instance;
+                settings.storage=true;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                if(!SDK.SetStorageSync("play-key","play-value").Success || SDK.GetStorageSync("play-key").Value!="play-value")throw new Exception("storage roundtrip");
+                if(!SDK.RemoveStorageSync("play-key").Success || SDK.GetStorageSync("play-key").Error.Code!="STORAGE.NOT_FOUND")throw new Exception("storage removal");
+                settings.storage=false;EditorSdkBootstrap.Initialize(MockLoginOutcome.Success);
+                if(SDK.GetStorageSync("play-key").Error.Code!="MODULE.DISABLED")throw new Exception("storage disabled");
+                finished=true;SDK.Shutdown();SessionState.SetBool(Key,false);Debug.Log("SDK_PLAY_CHECKS_PASS");EditorApplication.Exit(0);
+            }
         }catch(Exception e){Fail(e.Message);}
     }
     static void Fail(string message){finished=true;SessionState.SetBool(Key,false);Debug.LogError("SDK_PLAY_CHECKS_FAIL: "+message);EditorApplication.Exit(1);}

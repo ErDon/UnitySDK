@@ -30,8 +30,8 @@ namespace ErDon.UnitySDK.Editor
                 issues.Add("目标平台适配包尚未实现；当前不能生成真实平台接入。");
                 if (string.IsNullOrWhiteSpace(appId)) issues.Add("缺少平台应用标识 App ID。");
             }
-            if (rewardedAds || payments || share || storage || network || analytics)
-                issues.Add("已勾选尚未实现的能力。当前仅提供 Editor Mock 登录示例。");
+            if (rewardedAds || payments || share || network || analytics)
+                issues.Add("已勾选尚未实现的能力。当前提供 Editor Mock 登录和存储示例。");
             return issues;
         }
     }
@@ -40,6 +40,7 @@ namespace ErDon.UnitySDK.Editor
         Vector2 scroll;
         MockLoginOutcome outcome;
         string lastResult = "尚未调用";
+        string storageKey = "preview.key", storageValue = "preview-value";
         [MenuItem("Tools/ErDon SDK/配置与预览")]
         public static void Open() { GetWindow<SdkSettingsWindow>("SDK 配置"); }
         void OnGUI()
@@ -58,7 +59,7 @@ namespace ErDon.UnitySDK.Editor
             settings.rewardedAds = EditorGUILayout.Toggle("激励广告（待实现）", settings.rewardedAds);
             settings.payments = EditorGUILayout.Toggle("支付（待实现）", settings.payments);
             settings.share = EditorGUILayout.Toggle("分享（待实现）", settings.share);
-            settings.storage = EditorGUILayout.Toggle("存储（待实现）", settings.storage);
+            settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（待实现）", settings.network);
             settings.analytics = EditorGUILayout.Toggle("数据上报（待实现）", settings.analytics);
             if (EditorGUI.EndChangeCheck()) settings.SaveSettings();
@@ -90,10 +91,21 @@ namespace ErDon.UnitySDK.Editor
                     }, outcome == MockLoginOutcome.Timeout ? 1000 : 15000);
                 }
                 if (GUILayout.Button("取消当前登录")) SDK.CancelLogin();
+                EditorGUILayout.Space();
+                EditorGUILayout.LabelField("内存存储预览（初始化/退出后清空）", EditorStyles.boldLabel);
+                storageKey = EditorGUILayout.TextField("Key", storageKey);
+                storageValue = EditorGUILayout.TextField("Value", storageValue);
+                if (GUILayout.Button("写入 SDK.SetStorageSync")) ShowStorage(SDK.SetStorageSync(storageKey, storageValue));
+                if (GUILayout.Button("读取 SDK.GetStorageSync")) ShowStorage(SDK.GetStorageSync(storageKey));
+                if (GUILayout.Button("删除 SDK.RemoveStorageSync")) ShowStorage(SDK.RemoveStorageSync(storageKey));
                 if (GUILayout.Button("释放 SDK")) { SDK.Shutdown(); lastResult = "已释放"; }
             }
             EditorGUILayout.LabelField(lastResult, EditorStyles.wordWrappedLabel);
             EditorGUILayout.EndScrollView();
+        }
+        void ShowStorage(StorageResult result) {
+            lastResult = (result.Success ? "存储成功" : result.Error.Code) + " callId=" + result.CallId;
+            if (result.Success && result.Value != null) storageValue = result.Value;
         }
     }
 }

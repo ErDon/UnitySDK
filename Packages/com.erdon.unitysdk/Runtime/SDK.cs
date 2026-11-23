@@ -51,16 +51,33 @@ namespace ErDon.UnitySDK
     {
         void Login(Action<LoginResult> callback);
     }
+    public sealed class StorageResult
+    {
+        public bool Success { get { return Error == null; } }
+        public string Value { get; private set; }
+        public SdkError Error { get; private set; }
+        public string CallId { get; internal set; }
+        public static StorageResult Ok(string value = null) { return new StorageResult { Value = value }; }
+        public static StorageResult Fail(string code, string reason) { return new StorageResult { Error = new SdkError(code, reason) }; }
+    }
+    public interface IStorage : IDisposable
+    {
+        StorageResult Set(string key, string value);
+        StorageResult Get(string key);
+        StorageResult Remove(string key);
+    }
     public sealed class SdkConfig
     {
         public string Platform = "Unconfigured";
         public bool LoginEnabled = true;
+        public bool StorageEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
     // Internal composition keeps provider selection out of game-facing calls.
     public static class SDK
     {
         static IAuth auth;
+        static IStorage storage;
         static SdkConfig config;
         static Action<Action> dispatch;
         static Action<SdkLogLevel, string> fallback;
@@ -69,19 +86,21 @@ namespace ErDon.UnitySDK
         static Action cancelLogin;
         static Action checkTimeout;
         static bool changingLifecycle;
+        static bool callingStorage;
         [ThreadStatic] static bool writingLog;
         public static void Initialize(SdkConfig settings, IAuth provider,
-            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog)
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            if (provider != null && ReferenceEquals(provider, auth))
+            if ((provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage))) ||
+                (storageProvider != null && (ReferenceEquals(storageProvider, storage) || ReferenceEquals(storageProvider, auth))))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
             changingLifecycle = true;
             try {
                 ResetCore();
-                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, LogCallback = settings.LogCallback };
-                auth = provider; dispatch = mainThreadDispatch; fallback = engineLog;
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, LogCallback = settings.LogCallback };
+                auth = provider; storage = storageProvider; dispatch = mainThreadDispatch; fallback = engineLog;
                 Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             } finally { changingLifecycle = false; }
         }
@@ -89,6 +108,7 @@ namespace ErDon.UnitySDK
         {
             if (writingLog) throw new InvalidOperationException("SDK operations cannot be invoked from the log sink");
             if (changingLifecycle) throw new InvalidOperationException("SDK operations cannot be invoked while initializing or disposing providers");
+            if (callingStorage) throw new InvalidOperationException("SDK operations cannot be reentered from a storage provider");
         }
         static string Safe(string value) { return (value ?? "").Replace("\r", " ").Replace("\n", " "); }
         static void Log(SdkLogLevel level, string api, string call, string stage, string parameters, string result)
@@ -170,6 +190,34 @@ namespace ErDon.UnitySDK
             var cancel = cancelLogin;
             if (cancel != null) cancel();
         }
+        public static StorageResult SetStorageSync(string key, string value) { return StorageCall("SDK.SetStorageSync", key, value, 0); }
+        public static StorageResult GetStorageSync(string key) { return StorageCall("SDK.GetStorageSync", key, null, 1); }
+        public static StorageResult RemoveStorageSync(string key) { return StorageCall("SDK.RemoveStorageSync", key, null, 2); }
+        static StorageResult StorageCall(string api, string key, string value, int operation)
+        {
+            EnsureNotLogging();
+            string call = Guid.NewGuid().ToString("N");
+            string parameters = "{\"keyLength\":" + (key == null ? 0 : key.Length) + ",\"valueLength\":" + (value == null ? 0 : value.Length) + "}";
+            Log(SdkLogLevel.Info, api, call, "Start", parameters, "Pending");
+            StorageResult result;
+            if (config == null) result = StorageResult.Fail("SDK.NOT_INITIALIZED", "Initialize SDK before storage calls");
+            else if (!config.StorageEnabled) result = StorageResult.Fail("MODULE.DISABLED", "Storage module is disabled");
+            else if (storage == null) result = StorageResult.Fail("CAPABILITY.NOT_SUPPORTED", "No storage provider is installed");
+            else if (string.IsNullOrWhiteSpace(key) || (operation == 0 && value == null)) result = StorageResult.Fail("STORAGE.INVALID_ARGUMENT", "Storage requires a nonblank key and a non-null value for Set");
+            else {
+                callingStorage = true;
+                try {
+                    result = operation == 0 ? storage.Set(key, value) : operation == 1 ? storage.Get(key) : storage.Remove(key);
+                    if (result == null || (operation == 1 && result.Success && result.Value == null))
+                        result = StorageResult.Fail("STORAGE.INVALID_RESULT", "Storage provider returned an invalid result");
+                } catch { result = StorageResult.Fail("STORAGE.PROVIDER_FAILED", "Storage provider failed"); }
+                finally { callingStorage = false; }
+            }
+            result.CallId = call;
+            if (result.Error != null) { result.Error.CallId = call; result.Error.Operation = api; result.Error.Stage = "Storage"; }
+            Log(result.Success ? SdkLogLevel.Info : SdkLogLevel.Error, api, call, "Complete", parameters, result.Success ? "Success" : result.Error.Code);
+            return result;
+        }
         public static void Shutdown()
         {
             EnsureNotLogging();
@@ -180,7 +228,7 @@ namespace ErDon.UnitySDK
         {
             generation++; busy = false; cancelLogin = null;
             checkTimeout = null;
-            var old = auth; auth = null; dispatch = null;
+            var old = auth; var oldStorage = storage; auth = null; storage = null; dispatch = null;
             string call = Guid.NewGuid().ToString("N");
             bool failed = false;
             if (old != null) {
@@ -189,6 +237,10 @@ namespace ErDon.UnitySDK
                     failed = true;
                     Log(SdkLogLevel.Error, "SDK.Shutdown", call, "Dispose", "{}", "SDK.DISPOSE_FAILED");
                 }
+            }
+            if (oldStorage != null && !ReferenceEquals(old, oldStorage)) {
+                try { oldStorage.Dispose(); }
+                catch { failed = true; Log(SdkLogLevel.Error, "SDK.Shutdown", call, "DisposeStorage", "{}", "SDK.DISPOSE_FAILED"); }
             }
             if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
             config = null;

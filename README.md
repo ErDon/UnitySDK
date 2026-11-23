@@ -14,3 +14,5 @@
 已实现登录聚合入口、诊断日志、Editor Mock、配置检查与部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md) 与 [TikTok](docs/tiktok.md) 已有登录凭证适配及契约测试；真实后端、官方运行时集成、真机链路与完整产物裁剪尚待验证，不可用于生产接入。抖音适配仍待实现；Android/iOS 本轮仅保留扩展接口。
 
 配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。当前真实平台装配尚未完成，Player 构建会被明确阻断；请在独立测试工程接入。
+
+[存储接口与预览](docs/storage.md)：支持统一同步读写/删除、配置开关及 Editor 内存 Mock；真实平台持久化仍待接入。

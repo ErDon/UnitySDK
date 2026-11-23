@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 namespace ErDon.UnitySDK.Editor
@@ -30,8 +31,19 @@ namespace ErDon.UnitySDK.Editor
             if (issues.Count != 0) throw new InvalidOperationException(string.Join("\n", issues));
             if (!EditorApplication.isPlaying) throw new InvalidOperationException("Enter Play Mode before initializing the SDK host");
             UnitySdkHost.Initialize(new SdkConfig {
-                Platform = "Mock", LoginEnabled = settings.login, LogCallback = logger
-            }, settings.login ? new EditorMockAuth(outcome) : null);
+                Platform = "Mock", LoginEnabled = settings.login, StorageEnabled = settings.storage, LogCallback = logger
+            }, settings.login ? new EditorMockAuth(outcome) : null, settings.storage ? new EditorMockStorage() : null);
         }
+    }
+    public sealed class EditorMockStorage : IStorage
+    {
+        readonly Dictionary<string, string> data = new Dictionary<string, string>();
+        public StorageResult Set(string key, string value) { data[key] = value; return StorageResult.Ok(); }
+        public StorageResult Get(string key) {
+            string value;
+            return data.TryGetValue(key, out value) ? StorageResult.Ok(value) : StorageResult.Fail("STORAGE.NOT_FOUND", "Storage key does not exist");
+        }
+        public StorageResult Remove(string key) { data.Remove(key); return StorageResult.Ok(); }
+        public void Dispose() { data.Clear(); }
     }
 }

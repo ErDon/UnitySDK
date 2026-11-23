@@ -48,3 +48,16 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 - [平台隔离](platform-isolation.md)、[Android/iOS 扩展](native-extension.md)
 
 所有接口以各能力文档的当前实现说明为准；整体架构草案包含尚未完成的发布目标。工作计划顶部勾选项列明已验证范围，未勾选的真机、真实支付与最终裁剪不视为完成。
+
+
+## 复核能力文档示例
+
+分享、存储、广告、上报、登录、网络与支付编排文档中的 C# 片段是游戏方法内的调用示例；`using` 放在源文件顶部，调用语句放进自己的方法。支付示例中命名的订单客户端、平台收银台、主线程派发器和会话由游戏接入层提供，并非默认可用的真实支付实现。
+
+导入核心及 HTTP 包、等待 Unity 编译完成后，可运行：
+
+```powershell
+./tests/compile-capability-doc-examples.ps1 -CoreAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.dll' -HttpAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.Transport.Http.dll'
+```
+
+默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份文档的全部 C# 代码块（当前 11 段），失败立即停止；不会运行这些调用或访问平台。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。

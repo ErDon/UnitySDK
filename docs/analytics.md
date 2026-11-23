@@ -79,6 +79,10 @@ WeChatAnalytics 使用 `WX.ReportEvent<Dictionary<string,object>>`。本地 WX.d
 ## 跨平台统一回调入口
 
 ```csharp
+using ErDon.UnitySDK;
+
+var analyticsEvent = new AnalyticsEvent("level_end",
+    new System.Collections.Generic.Dictionary<string, object> { { "mode", "solo" } });
 IAnalyticsOperation operation = SDK.ReportEvent(analyticsEvent, result => {
     if (result.Dispatched)
         UnityEngine.Debug.Log("上报调用完成，CallId=" + result.CallId);

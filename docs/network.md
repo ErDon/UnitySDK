@@ -9,6 +9,8 @@
 单独验证 HTTP 时可直接初始化（这会替换当前 SDK，不能在已运行的游戏 SDK 上重复执行）：
 
 ```csharp
+using ErDon.UnitySDK;
+
 // this 为持续激活的 MonoBehaviour；在主线程执行。
 UnitySdkHost.Initialize(
     new SdkConfig { Platform = "Mock", LoginEnabled = false, NetworkEnabled = true },
@@ -28,7 +30,8 @@ INetworkOperation operation = SDK.Request(
         maxResponseBytes: 256 * 1024),
     result => {
         if (!result.Success) {
-            UnityEngine.Debug.Log(result.Error.Code + ": " + result.Error.Reason);
+            UnityEngine.Debug.Log(result.Error.Code + ": " + result.Error.Reason
+                + " callId=" + result.CallId);
             return;
         }
         if (!result.IsHttpSuccess) {
@@ -46,6 +49,8 @@ example.com 仅用于连接示例；实际业务应替换为自己的已配置�
 ## JSON POST
 
 ```csharp
+using ErDon.UnitySDK;
+
 var request = new NetworkRequest(
     "https://your-api.example/events", "POST",
     System.Text.Encoding.UTF8.GetBytes("{\"level\":1}"),
@@ -53,8 +58,9 @@ var request = new NetworkRequest(
         { "Content-Type", "application/json" }
     }, timeoutSeconds: 15, maxResponseBytes: 1024 * 1024);
 SDK.Request(request, result => {
-    if (!result.Success) UnityEngine.Debug.Log(result.Error.Code);
-    else if (!result.IsHttpSuccess) UnityEngine.Debug.Log("HTTP " + result.StatusCode);
+    if (!result.Success) UnityEngine.Debug.Log(result.Error.Code + ": " + result.Error.Reason
+        + " callId=" + result.CallId);
+    else if (!result.IsHttpSuccess) UnityEngine.Debug.Log("HTTP " + result.StatusCode + " callId=" + result.CallId);
 });
 ```
 

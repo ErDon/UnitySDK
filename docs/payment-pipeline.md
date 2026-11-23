@@ -16,6 +16,8 @@ VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负�
 ## 接口示例
 
 ```csharp
+using ErDon.UnitySDK;
+
 // orderClient、platformLauncher、mainThreadPost 由接入层创建。
 // mainThreadPost 将委托排入 Unity 主线程队列，不能直接在任意平台回调线程执行。
 IPay payment = new VerifiedPayment(orderClient, platformLauncher, mainThreadPost);
@@ -52,11 +54,13 @@ PaymentPipelineTests 覆盖重复回调、主线程队列、并发支付拒绝�
 通过 SdkConfig.PayEnabled 开启支付；工厂实现 IPayProviderFactory.CreatePay(post)，返回全新 VerifiedPayment。关闭模块时不创建支付 provider。也可在 UnitySdkHost.Initialize 的 payProvider 参数传入实现；工厂方式更适合按配置装配。
 
 ```csharp
+using ErDon.UnitySDK;
+
 SDK.Pay(new PaymentRequest(gameSession, "coins", savedPurchaseRequestId), result => {
     if (result.Success) {
         // 服务端已完成发货，只同步权益。
     } else {
-        UnityEngine.Debug.LogWarning(result.Error.Code + " callId=" + result.CallId);
+        UnityEngine.Debug.LogWarning(result.Error.Code + ": " + result.Error.Reason + " callId=" + result.CallId);
         // TIMEOUT/CANCELLED 不能解释为未扣费。保留购买编号，查单后处理。
     }
 }, timeoutMilliseconds: 60000);

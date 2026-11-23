@@ -65,3 +65,28 @@ TikTokShare 实现 IShare，在 TT.InitSDK 成功后创建，通过 shareProvide
 测试脚本 run-tiktok-tests.ps1 分别对 Runtime/Editor DLL 编译并运行注入测试，覆盖参数、成功/失败顺序、结构化错误、空错误、释放与异常。ErrorInfo 由官方内部创建，测试使用未初始化对象仅构造回调数据，不运行真实宿主。分享回调类型依赖 netstandard 2.1，使用 -UnityMono 指定 Unity 自带 Mono；旧 .NET Framework 运行器不能完整加载该类型。默认路径以本机 Unity 2022.3.14f1c1 为基线，可按安装路径覆盖。
 
 两套 DLL 均输出 TIKTOK_SHARE_TESTS_PASS，原登录/存储和公共回归亦通过。没有真实 TikTok 容器或设备分享证据，发布仍不放行。
+## SDK 内置平台工厂
+
+游戏无需重复实现三个 Create 方法，使用 TikTokProviderFactory 即可。以下函数放在游戏的持久 MonoBehaviour 中，并且只在官方 TT.InitSDK 已成功后调用。需要安装可选 HTTP 传输包；地址与 appId 替换为实际受信配置，客户端不保存 AppSecret。
+
+```csharp
+void OnTikTokRuntimeReady()
+{
+    var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
+        "my-game", "production",
+        () => new ErDon.UnitySDK.UnitySessionExchange(
+            this, "https://your-api.example/v1/session",
+            "my-game", "your-tiktok-app-id", "production"));
+    ErDon.UnitySDK.UnitySdkHost.InitializeWithFactory(
+        new ErDon.UnitySDK.SdkConfig {
+            Platform = "TikTok", LoginEnabled = true,
+            StorageEnabled = true, ShareEnabled = true, PayEnabled = false
+        }, factory);
+}
+```
+
+工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 TikTokCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
+
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
+
+工厂验证随 run-tiktok-tests.ps1 执行，已分别引用 1.1.6-Release 的 Runtime/Editor DLL 通过配置、缺失后端拒绝和释放测试，不代表真机初始化成功。

@@ -78,3 +78,28 @@ WeChatShare 实现 IShare。在官方微信运行时初始化后，通过 UnityS
 核对的本地 0.1.23 DTO 没有成功/失败回调；调用正常返回即报告 Dispatched，不表示用户发送、取消或对方收到。底层抛异常返回 SHARE.PROVIDER_FAILED，原始异常不泄露；释放后调用返回 SDK.DISPOSED。实际宿主异步失败无法由该入口推断。
 
 run-wechat-share-tests.ps1 需要 OfficialPackagePath 与 CompiledWxAssembly，引用官方 DTO 和现有工程 Wx.dll 编译入口，注入 dispatch 验证字段、可选参数、非法参数、异常、释放及回调异常不重复调用。当前测试输出 WECHAT_SHARE_TESTS_PASS，但编译报告其他类型的 CS1684 警告，表明现有工程编译产物和 0.1.23 DTO 包不完全匹配。此证据仅限分享所用入口，不是干净官方工程编译或整包兼容通过。后续须从一致来源重新编译并完成真机分享。
+## SDK 内置平台工厂
+
+游戏无需重复实现三个 Create 方法，使用 WeChatProviderFactory 即可。以下函数放在游戏的持久 MonoBehaviour 中，并且只在官方 WX.InitSDK 已成功后调用。需要安装可选 HTTP 传输包；地址与 appId 替换为实际受信配置，客户端不保存 AppSecret。
+
+```csharp
+void OnWeChatRuntimeReady()
+{
+    var factory = new ErDon.UnitySDK.WeChat.WeChatProviderFactory(
+        "my-game", "production",
+        () => new ErDon.UnitySDK.UnitySessionExchange(
+            this, "https://your-api.example/v1/session",
+            "my-game", "your-wechat-app-id", "production"));
+    ErDon.UnitySDK.UnitySdkHost.InitializeWithFactory(
+        new ErDon.UnitySDK.SdkConfig {
+            Platform = "WeChat", LoginEnabled = true,
+            StorageEnabled = true, ShareEnabled = true, PayEnabled = false
+        }, factory);
+}
+```
+
+工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 WeChatCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
+
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 微信 SDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
+
+工厂验证命令：tests/run-wechat-factory-tests.ps1 -OfficialPackagePath <0.1.23包目录> -CompiledWxAssembly <Wx.dll路径>。配置及释放测试通过；本机 Wx.dll 与包 DTO 仍存在其他接口类型 CS1684 警告，不能作为干净官方版本组合验收。

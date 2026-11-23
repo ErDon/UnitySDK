@@ -24,5 +24,11 @@ try {
         if($LASTEXITCODE -ne 0){throw "TikTok storage compile failed: $binary"}
         & .\.tests\tiktok\TikTokStorageTests.exe
         if($LASTEXITCODE -ne 0){throw "TikTok storage tests failed: $binary"}
+        $coreSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk\Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
+        $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.tiktok\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
+        & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\tiktok\TikTokFactoryTests.exe $coreSources $platformSources .\tests\TikTokFactoryTests.cs
+        if($LASTEXITCODE -ne 0){throw "TikTok factory compile failed: $binary"}
+        & $UnityMono .\.tests\tiktok\TikTokFactoryTests.exe
+        if($LASTEXITCODE -ne 0){throw "TikTok factory tests failed: $binary"}
     }
 } finally {Pop-Location}

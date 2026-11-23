@@ -268,3 +268,9 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 
 官方 DLL 测试新增工厂配置和所有权场景并通过。接入文档给出 UnitySessionExchange + UnitySdkHost 的装配示例，明确官方初始化前置条件与协程宿主生命周期，未将此视为面板自动装配完成。
 独立 Unity douyin-factory.log 完成适配程序集编译，检查通过，退出码 0。
+
+### 微信与 TikTok 内置能力工厂
+
+补齐 WeChatProviderFactory/TikTokProviderFactory，使三平台统一使用配置驱动的工厂装配。各工厂只引用自己的平台实现；登录后端按需创建并移交 VerifiedAuth，存储/分享实例独立，未实现支付明确拒绝。新增初始化示例和宿主生命周期说明。
+
+TikTok Runtime/Editor 两套 DLL 的登录/存储/分享/工厂测试均通过。微信工厂配置/生命周期测试通过，但本机编译 Wx.dll 与 0.1.23 DTO 的其他类型 CS1684 警告仍在，不宣称完整版本兼容或干净工程验收。平台初始化、面板自动装配及真机验证继续待办。

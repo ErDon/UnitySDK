@@ -46,6 +46,9 @@ namespace ErDon.UnitySDK
     {
         byte[] body=new byte[0];
         Dictionary<string,string> headers=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
+        public string CallId {get;internal set;}
+        public string TraceId {get{return CallId;}}
+        internal NetworkResult Snapshot(){var copy=(NetworkResult)MemberwiseClone();copy.Error=Error==null?null:Error.Snapshot();return copy;}
         public bool Success { get { return Error==null; } }
         // Like wx.request: HTTP 4xx/5xx is a completed response, not a connection failure.
         public bool IsHttpSuccess { get { return Success&&StatusCode>=200&&StatusCode<300; } }

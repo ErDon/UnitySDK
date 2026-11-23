@@ -94,9 +94,9 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面板下拉框不会改变当前运行平台，必须重新初始化；当前平台标识为只读诊断值，Shutdown 后返回 null。此保护避免切回 Mock 配置后把测试参数发给仍在运行的真实 provider。
 
-## 通用网络底层接口（聚合接入待完成）
+## 通用网络接口（配置工厂接入待完成）
 
-新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前尚未接 SDK 聚合日志、配置工厂和面板，因此 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
+新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志，但配置工厂和面板仍待接入，因此 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
 
 ```csharp
 // 在 MonoBehaviour 内调用；字段保留 provider，并在 OnDestroy 中 Dispose。
@@ -125,3 +125,26 @@ Success 表示拿到了 HTTP 响应；4xx/5xx 仍是 Success=true，IsHttpSucces
 Cancel 结束底层请求并回调一次取消结果；Dispose 中止所有请求且抑制回调。调用均需主线程，并在宿主销毁前释放 provider。请求停止后不可假定服务端没有执行操作；需要业务幂等键。底层目前没有重试、证书绕过或服务端响应业务校验。流式接收限制已测试，Unity 编译通过；本机 Play Mode 已验证取消、释放、宿主失活拒绝及实际连接超时；正常 HTTPS 响应、平台网络桥接和宿主销毁联调仍待验收。
 
 网络生命周期回归模板为 `tests/NetworkPlayChecks.cs.txt`：复制到隔离工程 Assets/Editor，使用 `-executeMethod NetworkPlayChecks.Run`（不加 `-quit`）运行。通过标记为 SDK_NETWORK_PLAY_PASS。测试创建本机临时 TCP 监听，不完成 TLS，用来验证取消与超时；它不是成功 HTTPS 响应测试。结束时关闭监听和 provider，不修改系统证书或代理设置。
+
+## 聚合网络调用
+
+```csharp
+// 在 MonoBehaviour 内初始化；SDK 接管 provider 所有权，不再自行 Dispose 同一实例。
+UnitySdkHost.Initialize(new SdkConfig { LoginEnabled = false, NetworkEnabled = true },
+    null, networkProvider: new UnityNetwork(this));
+var operation = SDK.Request(new NetworkRequest("https://your-api.example.com/config"), result => {
+    if (!result.Success) {
+        UnityEngine.Debug.LogWarning(result.Error.Code + " callId=" + result.CallId);
+        return;
+    }
+    // HTTP 404/500 仍是已收到响应，按 StatusCode / IsHttpSuccess 处理。
+});
+// operation.Cancel();
+// UnitySdkHost.Shutdown(); // 中止全部在途请求并释放 provider
+```
+
+SDK.Request 支持并发，每个返回句柄仅取消自己的请求。首个终态胜出，重复取消、迟到回调不重复通知。NetworkRequest.TimeoutSeconds 同时用于 SDK 本地等待超时；本地超时返回 NETWORK.TIMEOUT 并尝试取消底层。底层先返回连接失败时可能是 NETWORK.UNAVAILABLE。取消只能终止客户端等待，不能撤销服务端操作。
+
+SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创建网络对象；未安装 provider 返回 CAPABILITY.NOT_SUPPORTED。SDK.InitializeWithFactory 支持自定义 INetworkProviderFactory，现有三平台工厂暂未提供网络，因此面板和运行时 JSON 的 network 开关保持拒绝。直接注入示例用于验证，不能代替平台网络兼容检查。
+
+结果带 CallId/TraceId，错误包含 Operation=SDK.Request、Stage=Network。日志由 SDK 生成，不输出 URL、查询参数、Headers 或 Body；完成记录 HTTP 状态或统一错误码。用户回调在 Unity 宿主队列派发，因此 Cancel 后不要假定结果已同步送达。Shutdown/重新初始化后旧回调不交给游戏。

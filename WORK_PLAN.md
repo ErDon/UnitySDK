@@ -51,7 +51,8 @@
 - [ ] 三平台激励广告真机验证及 TikTok 干净官方插件集成。
 - [x] 网络请求/响应契约、数据快照和接收大小限制测试；Unity HTTP 底层实现编译。
 - [x] Unity 网络取消、释放抑制回调、宿主不可用和连接超时的本机 Play Mode 检查。
-- [ ] 通用网络聚合/配置/日志接入、正常 HTTPS 响应及小游戏平台验证。
+- [x] SDK.Request 并发聚合、独立取消/超时、所有权和脱敏日志；公共及 Unity 回归。
+- [ ] 网络配置工厂/面板接入、正常 HTTPS 响应及小游戏平台验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -486,3 +487,9 @@ Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所�
 新增 NetworkPlayChecks，在隔离 Unity Play Mode 启动仅监听本机回环地址的临时 TCP 端口，不访问外部服务、不绕过证书。用不完成 TLS 的连接验证 UnityWebRequest 实际超时；验证立即取消及重复取消只有一次回调、多个在途请求 Dispose 后不回调、Dispose 后新请求拒绝、宿主失活拒绝。
 
 network-play.log 输出 SDK_NETWORK_PLAY_PASS，无 C# 错误。该检查证明请求终止与回调抑制边界，不证明正常 HTTPS 内容、平台域名白名单、真机桥接或响应大小在平台网络栈上的表现。
+
+### 并发网络聚合入口
+
+新增 SDK.Request，返回独立取消句柄；NetworkEnabled 和 INetworkProviderFactory 纳入快照、按需创建及回收。每个请求独立超时/取消，关闭时中止在途请求并抑制迟到结果。结果 CallId/TraceId、统一日志不包含 URL/头/正文。派发失败沿用主线程恢复队列。配置 JSON/面板尚未开放网络，避免勾选后缺少平台网络工厂。
+
+NetworkFacadeTests 和公共回归通过，抖音实际 DLL 回归通过。Unity 初次测试按同步取消断言失败；修正为等待宿主队列后，network-facade-confirm.log 无 C# 错误并输出 SDK_NETWORK_PLAY_PASS，验证实际 UnityNetwork 经过聚合入口的取消与关联 ID，以及原底层超时/释放行为。

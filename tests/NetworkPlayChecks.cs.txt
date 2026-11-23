@@ -28,8 +28,9 @@ public static class NetworkPlayChecks
             int port=((IPEndPoint)listener.LocalEndpoint).Port;
             var request=new NetworkRequest("https://127.0.0.1:"+port+"/test",timeoutSeconds:1);
             network=new UnityNetwork(host);
-            var operation=network.Send(request,r=>{Check(r.Error!=null&&r.Error.Code=="NETWORK.CANCELLED","cancel result");cancelled++;});
-            operation.Cancel();operation.Cancel();Check(cancelled==1,"cancel must notify once");
+            UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false,NetworkEnabled=true,LogCallback=(l,s)=>{}},null,networkProvider:network);
+            var operation=SDK.Request(request,r=>{Check(r.Error!=null&&r.Error.Code=="NETWORK.CANCELLED"&&r.Error.CallId==r.CallId&&!string.IsNullOrEmpty(r.CallId),"facade cancel result and correlation");cancelled++;});
+            operation.Cancel();operation.Cancel(); // Facade delivery is queued to the Unity host; assert after frames below.
             var first=network.Send(request,r=>late++);
             network.Send(request,r=>late++);
             network.Dispose();network.Dispose();first.Cancel();Check(late==0,"dispose suppresses callbacks");

@@ -18,4 +18,14 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Douyin storage compile failed'}
     & $UnityMono .\.tests\douyin\DouyinStorageTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin storage tests failed'}
+    $jsonSources=@(Get-ChildItem -LiteralPath (Join-Path $OfficialPluginPath 'LitJson') -Filter '*.cs' | ForEach-Object {$_.FullName})
+    if($jsonSources.Count -eq 0){throw 'Official TTLitJson sources missing'}
+    $unityCompiler=Join-Path (Split-Path (Split-Path $UnityMono -Parent) -Parent) 'lib\mono\4.5\csc.exe'
+    if(!(Test-Path -LiteralPath $unityCompiler)){throw 'Unity Mono C# compiler missing; required by official TTLitJson sources'}
+    & $UnityMono $unityCompiler /nologo /target:library /out:.tests\douyin\TTLitJson.dll $jsonSources
+    if($LASTEXITCODE -ne 0){throw 'Official TTLitJson compile failed'}
+    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinShareTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk.douyin\Runtime\DouyinShare.cs .\tests\DouyinShareTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Douyin share compile failed'}
+    & $UnityMono .\.tests\douyin\DouyinShareTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Douyin share tests failed'}
 } finally {Pop-Location}

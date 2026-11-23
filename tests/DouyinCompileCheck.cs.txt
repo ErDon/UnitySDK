@@ -11,5 +11,8 @@ public static class DouyinCompileCheck {
   var storage=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinStorage, ErDon.UnitySDK.Douyin");
   if(storage==null || !typeof(ErDon.UnitySDK.IStorage).IsAssignableFrom(storage)) throw new System.Exception("Douyin storage not loaded");
   Debug.Log("DOUYIN_UNITY_COMPILE_PASS");
+  var share=System.Type.GetType("ErDon.UnitySDK.Douyin.DouyinShare, ErDon.UnitySDK.Douyin");
+  if(share==null || !typeof(ErDon.UnitySDK.IShare).IsAssignableFrom(share)) throw new System.Exception("Douyin share not loaded");
+  Debug.Log("DOUYIN_SHARE_UNITY_COMPILE_PASS");
  }
 }

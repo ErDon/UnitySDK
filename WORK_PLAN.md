@@ -240,3 +240,9 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 新增 DouyinStorage，以官方 TTSDK 6.9.7 的 TT.PlayerPrefs 实现 IStorage；保持游戏/环境作用域、格式标记、Save 后回读、幂等删除与安全错误映射。模块关闭时不创建实例，Dispose 不删除持久数据。文档说明账号隔离和回读不代表重启持久性。
 
 官方 DLL 编译及注入存储行为测试通过；独立 Unity 工程 douyin-storage-verify.log 输出 DOUYIN_UNITY_COMPILE_PASS 并以 0 退出，检查确认 IStorage 实现已加载。真机宿主配额和重启持久性未验证。
+
+### 抖音分享适配
+
+按 TTSDK 6.9.7 实际 JSON + 成功字典/失败文本/取消回调接口实现 DouyinShare，显式引用 TTLitJson。上层仍为 SDK.Share；添加安全错误映射、首回调胜出、释放抑制与可选字段省略。未解析自由文本错误码，不把成功当送达证据。
+
+官方 DLL/JSON 源码编译与注入行为测试通过；Unity 独立工程 douyin-share-verify.log 输出 DOUYIN_SHARE_UNITY_COMPILE_PASS，退出码 0。官方 JSON 源码仅有 CS3021 注解警告。已更新接口文档；官方网页正文未能读取，不宣称真机字段限制和分享结果已验证。

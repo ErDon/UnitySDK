@@ -56,3 +56,15 @@ public IStorage CreateStorage()
 写入/删除调用 Save 后回读检查；静默写失败返回 STORAGE.WRITE_FAILED，删除未生效返回 STORAGE.REMOVE_FAILED。缺失 key 返回 STORAGE.NOT_FOUND，已存在却返回 null 为 STORAGE.READ_FAILED，非 SDK 字符串格式为 STORAGE.FORMAT_MISMATCH。异常统一 STORAGE.PROVIDER_FAILED，不回传含数据的异常正文。Dispose 不删除存档。回读成功不证明断电重启后的持久性。
 
 run-douyin-tests.ps1 已覆盖真实 DLL 入口编译和注入存储行为，包括空字符串、Unicode、作用域分隔符冲突、静默失败、格式异常、重复删除和生命周期；真机容量、宿主配额及重启持久性仍待验证。
+
+## 分享
+
+`DouyinShare` 实现 IShare，在工厂同时实现 IShareProviderFactory，并令 CreateShare 返回 new DouyinShare()。ShareEnabled=true 时才创建；业务调用与 [SDK.Share 示例](share.md) 相同。必须先完成官方 TT.InitSDK。
+
+本次核对安装包 ttsdk.xml 及 6.9.7 DLL 的真实方法：TT.ShareAppMessage(JsonData, OnShareSuccessCallback, OnShareFailedCallback, OnShareCancelledCallback)。成功携带 Dictionary<string,object>，失败只有 string，取消无参数。此接口与 TikTok 的 ShareAppMessageParam 不同。程序集显式引用官方 TTLitJson；不得复制 TikTok DLL 或混装两个平台。
+
+统一 Title/ImageUrl/Query 映射为 JSON 的 title/imageUrl/query，null 可选字段不发送。标题必填；业务负责分享图片、业务参数和平台审核配置。JSON 通过官方 JsonData 序列化，不手拼字符串。分享成功回调映射 Dispatched，不证明发送、送达或奖励条件；失败映射 SHARE.PLATFORM_REJECTED，平台取消映射 SHARE.CANCELLED，调用异常映射 SHARE.PROVIDER_FAILED。任意失败文本、成功字典都不写入日志或猜测数字错误码。首个回调生效，Dispose 后不派发旧结果；等待超时由聚合层管理。
+
+官方 XML 所附 JS 参数说明链接为 https://microapp.bytedance.com/docs/zh-CN/mini-game/develop/api/retweet/tt-share-app-message/ 。当前网页读取未返回参数正文，因此未据此声称平台字段限制或真机行为已验收。
+
+run-douyin-tests.ps1 使用官方 TTLitJson 源码与 Unity Mono 编译器，覆盖字段/转义、省略可选字段、成功/失败/取消竞争、释放和异常脱敏。官方源码存在 CS3021 注解警告；无适配层编译错误。独立 Unity 工程 douyin-share-verify.log 输出 DOUYIN_SHARE_UNITY_COMPILE_PASS，退出码 0。仍需真机确认分享面板、图片及参数的实际表现。

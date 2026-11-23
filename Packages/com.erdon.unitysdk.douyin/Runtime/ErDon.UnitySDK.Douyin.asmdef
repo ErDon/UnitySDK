@@ -1,7 +1,8 @@
 {
   "name": "ErDon.UnitySDK.Douyin",
   "references": [
-    "ErDon.UnitySDK"
+    "ErDon.UnitySDK",
+    "TTLitJson"
   ],
   "includePlatforms": [
     "Editor",

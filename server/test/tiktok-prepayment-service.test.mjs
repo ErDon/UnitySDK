@@ -6,6 +6,8 @@ import { SqliteOrderStore } from '../src/sqlite-orders.mjs';
 import { TikTokPrepayments } from '../src/tiktok-prepayments.mjs';
 import { TikTokPrepaymentFlow } from '../src/tiktok-prepayment-flow.mjs';
 import { TikTokPrepaymentService } from '../src/tiktok-prepayment-service.mjs';
+import { createServer } from 'node:http';
+import { createOrderHandler } from '../src/orders-http.mjs';
 const binding = { gameId: 'game', appId: 'app', environment: 'sandbox', platform: 'TikTok', secret: 'test' };
 async function fixture(t, tokenLookup) {
   const auth = new AuthService({ bindings: [binding], store: new MemoryAuthStore(), verifiers: { TikTok: async (_, code) => ({ subject: code }) } });
@@ -21,7 +23,7 @@ async function fixture(t, tokenLookup) {
     lookups++; return tokenLookup ? tokenLookup(scope, subject, auth, alice) : { binding: bindingKey(scope), subject, accessToken: 'server-token', expiresAt: Date.now() + 60000 };
   } };
   const service = new TikTokPrepaymentService({ orders, flow, catalog, credentials, isSandbox: true });
-  return { service, auth, alice, bob, order, requests, catalog, lookups: () => lookups };
+  return { service, orders, auth, alice, bob, order, requests, catalog, lookups: () => lookups };
 }
 test('authorized preparation uses frozen server catalog and returns no credential or identity', async t => {
   const f = await fixture(t); f.catalog[0].tokenAmount = 1;
@@ -54,4 +56,25 @@ test('session revocation during credential lookup prevents platform call', async
   });
   await assert.rejects(f.service.prepare(f.alice, f.order.orderId), { code: 'AUTH.SESSION_INVALID' });
   assert.equal(f.requests.length, 0);
+});
+test('HTTP prepare authenticates ownership, ignores client prices and credentials, and redacts logs', async t => {
+  const f = await fixture(t), logs = [];
+  const server = createServer(createOrderHandler(f.orders, { prepayments: f.service, log: line => logs.push(line) }));
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const send = async session => {
+    const response = await fetch(`http://127.0.0.1:${server.address().port}/v1/orders/${f.order.orderId}/prepare`, {
+      method: 'POST', headers: { Authorization: 'Bearer ' + session, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tokenAmount: 1, accessToken: 'attacker-token', openId: 'attacker', orderId: 'other' }) });
+    return { status: response.status, body: await response.json() };
+  };
+  assert.equal((await send(f.bob)).status, 404); assert.equal(f.lookups(), 0);
+  const success = await send(f.alice); assert.equal(success.status, 200);
+  assert.deepEqual(success.body.prepayment, { orderId: f.order.orderId, tradeOrderId: 'trade' });
+  assert.match(success.body.callId, /^[a-f0-9-]{36}$/);
+  assert.equal(f.requests[0].tokenAmount, 100); assert.equal(f.requests[0].accessToken, 'server-token');
+  await f.auth.revoke(f.alice); assert.equal((await send(f.alice)).status, 401);
+  assert.equal(f.requests.length, 1);
+  for (const secret of ['attacker-token', 'server-token', f.alice, f.bob]) assert.equal(logs.join('').includes(secret), false);
+  assert.equal(JSON.stringify(success.body).includes('server-token'), false);
 });

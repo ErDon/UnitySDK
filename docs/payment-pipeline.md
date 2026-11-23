@@ -57,7 +57,7 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 持久化预支付编排
 
-`TikTokPrepaymentFlow(payments, tradeClient)`（server/src/tiktok-prepayment-flow.mjs）把平台创建请求与关联存储连接起来。仅供可信服务器内部调用：`create` 接收 binding/isSandbox/openId、accessToken、orderId 及商品展示/Beans 参数；productId 从已有游戏订单读取。调用前必须完成玩家认证、目录定价和令牌身份匹配，尚未提供面向客户端的 HTTP 下单入口。
+`TikTokPrepaymentFlow(payments, tradeClient)`（server/src/tiktok-prepayment-flow.mjs）把平台创建请求与关联存储连接起来。仅供可信服务器内部调用：`create` 接收 binding/isSandbox/openId、accessToken、orderId 及商品展示/Beans 参数；productId 从已有游戏订单读取。调用前必须完成玩家认证、目录定价和令牌身份匹配，可通过下述可选 HTTP 路由提供服务。
 
 平台请求前以 SQLite 事务保存该游戏订单的 Pending 尝试；并发调用或重启后再调用均返回 PAY.PREPAYMENT_UNCERTAIN，不重复请求。请求成功后通过 completeAttempt 在同一 SQLite 事务内注册预支付关联并将尝试记为 Ready；相同参数再次调用复用平台单号。身份、价格或商品内容变化返回 PAY.PREPAYMENT_CONFLICT。令牌更新不改变已完成尝试的身份摘要。
 
@@ -71,9 +71,13 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 凭证提供器 `credentials.get(binding, subject)` 是服务器内部依赖，返回 `{ binding: bindingKey(binding), subject, accessToken, expiresAt }`，过期时间为毫秒。服务核对应用/游戏/环境作用域、用户和有效期，不符或读取异常返回 PAY.CREDENTIAL_UNAVAILABLE。异步读取后再次认证会话，随后交给持久化编排；响应仅含 orderId、tradeOrderId。当前身份映射使用 TikTok 登录验证器的 open_id 作为 subject。
 
-这是授权服务，不是令牌库实现；仍需接入加密持久化和生命周期管理。商品档位须由服务端运营配置与平台要求核对。尚未开放预支付 HTTP 路由。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
+这是授权服务，不是令牌库实现；仍需接入加密持久化和生命周期管理。商品档位须由服务端运营配置与平台要求核对。订单 handler 的可选预支付路由见下文，默认未开启。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
 
 ## HTTP 通知入口装配
+
+订单接口装配时传入 `createOrderHandler(orders, { prepayments: prepaymentService })`，启用 `POST /v1/orders/{orderId}/prepare`。prepaymentService 必须使用同一个 orders 实例；不传时路由返回 404。请求使用游戏会话 `Authorization: Bearer ...`，JSON 正文为 `{}`；请求正文的额外字段全部不用于下单。成功响应为 `{ prepayment: { orderId, tradeOrderId }, callId }`，没有平台令牌。服务器仍须配置凭证提供器和商品目录，默认 start.mjs 未装配它。
+
+该路由复用订单接口的限流、请求限额、HTTP 错误和脱敏日志，接口名为 Order.Prepare。其他玩家订单返回 404，会话无效/撤销返回 401；服务端不接受通过正文换订单、改价或换平台身份。Unity IPrepaymentClient 的 HTTPS 实现仍待接入。
 
 `createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。
 

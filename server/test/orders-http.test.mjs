@@ -34,6 +34,7 @@ test('HTTP orders retain server prices, authenticate ownership, verify payment a
   const paid=await f.send(path+'/confirm','POST',{evidence:{valid:true}});
   assert.equal(paid.data.order.state,'Paid');assert.equal(f.verifications(),2);
   assert.equal((await f.send(path+'/fulfill','POST',{})).status,404);
+  assert.equal((await f.send(path+'/prepare','POST',{})).status,404);
   assert.equal(paid.headers.get('cache-control'),'no-store');
   assert.match(paid.data.callId,/^[0-9a-f-]{36}$/);
   assert.ok(!f.logs.join('').includes(f.session));assert.ok(!f.logs.join('').includes('valid'));

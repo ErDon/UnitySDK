@@ -54,7 +54,8 @@
 - [x] SDK.Request 并发聚合、独立取消/超时、所有权和脱敏日志；公共及 Unity 回归。
 - [x] 网络 Mock 配置工厂/面板接入与 Play Mode 验证。
 - [x] 微信可选网络工厂配置装配；平台就绪后按需创建及缺工厂预检。
-- [ ] 抖音/TikTok 网络工厂、正常 HTTPS 响应及小游戏平台验证。
+- [x] Unity Editor 实际 HTTPS GET/HEAD 响应及接收限额检查。
+- [ ] 抖音/TikTok 网络工厂与小游戏平台网络验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -509,3 +510,9 @@ network-mock-editor.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0；�
 
 公共回归通过，新增工厂预检、延迟构建、单次创建/释放及关闭模块零构建测试。JSON 仅放行 Mock/微信网络。未进行微信导出或真机请求，不据此解除构建阻断。
 重开后 network-composition-confirm.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 正常 HTTPS 与接收限额验证
+
+新增 NetworkHttpsPlayChecks，以不携带凭证的 https://example.com/ 为基线。实际通过 SDK.Request -> UnityNetwork -> UnityWebRequest 验证 GET 200、Content-Type 响应头及非空正文，1 字节限额触发 NETWORK.RESPONSE_TOO_LARGE，HEAD 200 正文为空。
+
+network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修改证书信任、代理或跳过 TLS 校验；测试只用于联网集成验证，不纳入离线公共回归。此证据限于 Unity Editor，不替代三平台开发工具/真机网络兼容、业务服务授权及支付接口测试。

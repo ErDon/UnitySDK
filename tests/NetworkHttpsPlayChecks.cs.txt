@@ -1,0 +1,59 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class NetworkHttpsPlayChecks
+{
+    const string Key="ErDon.Tests.NetworkHttps";
+    const string Url="https://example.com/";
+    static int phase;
+    static bool finished;
+    static double deadline;
+    static NetworkHttpsPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+    public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
+    static void Changed(PlayModeStateChange state)
+    {
+        if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+        deadline=EditorApplication.timeSinceStartup+60;EditorApplication.update+=Step;
+        try {
+            UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false},null);
+            var host=UnityEngine.Object.FindObjectOfType<UnitySdkHost>();
+            UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false,NetworkEnabled=true,LogCallback=(l,s)=>{}},null,networkProvider:new UnityNetwork(host));
+            SDK.Request(new NetworkRequest(Url,timeoutSeconds:15),result=>{
+                string contentType;
+                if(!result.IsHttpSuccess||result.StatusCode!=200||result.Body.Length<2||
+                    !result.Headers.TryGetValue("Content-Type",out contentType)||!contentType.StartsWith("text/html",StringComparison.OrdinalIgnoreCase))
+                    Finish(false,"HTTPS GET: "+(result.Error==null?"HTTP "+result.StatusCode:result.Error.Code));
+                else phase=1;
+            });
+        }catch(Exception){Finish(false,"initialization exception");}
+    }
+    static void Step()
+    {
+        if(finished)return;
+        if(EditorApplication.timeSinceStartup>deadline){Finish(false,"deadline");return;}
+        if(phase==1){
+            phase=2;
+            SDK.Request(new NetworkRequest(Url,maxResponseBytes:1),result=>{
+                if(result.Error==null||result.Error.Code!="NETWORK.RESPONSE_TOO_LARGE")Finish(false,"response byte limit not enforced");
+                else phase=3;
+            });
+        }
+        if(phase==3){
+            phase=4;
+            SDK.Request(new NetworkRequest(Url,method:"HEAD"),result=>{
+                if(!result.IsHttpSuccess||result.StatusCode!=200||result.Body.Length!=0)Finish(false,"HEAD response semantics");
+                else Finish(true,"");
+            });
+        }
+    }
+    static void Finish(bool success,string reason)
+    {
+        if(finished)return;finished=true;SessionState.SetBool(Key,false);EditorApplication.update-=Step;
+        UnitySdkHost.Shutdown();
+        if(success)Debug.Log("SDK_NETWORK_HTTPS_PASS: GET 200, bounded receive, HEAD 200");
+        else Debug.LogError("SDK_NETWORK_HTTPS_FAIL: "+reason);
+        EditorApplication.Exit(success?0:1);
+    }
+}

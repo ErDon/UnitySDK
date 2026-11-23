@@ -122,7 +122,7 @@ var operation = network.Send(request, result => {
 
 Success 表示拿到了 HTTP 响应；4xx/5xx 仍是 Success=true，IsHttpSuccess 仅对 2xx 为 true。错误包括 NETWORK.UNAVAILABLE（连接失败或超时，当前底层不区分）、NETWORK.RESPONSE_TOO_LARGE、NETWORK.INVALID_RESPONSE、NETWORK.CANCELLED、NETWORK.HOST_UNAVAILABLE、NETWORK.PROVIDER_FAILED 和 SDK.DISPOSED。不返回 Unity 原始网络错误文本。
 
-Cancel 结束底层请求并回调一次取消结果；Dispose 中止所有请求且抑制回调。调用均需主线程，并在宿主销毁前释放 provider。请求停止后不可假定服务端没有执行操作；需要业务幂等键。底层目前没有重试、证书绕过或服务端响应业务校验。流式接收限制已测试，Unity 编译通过；本机 Play Mode 已验证取消、释放、宿主失活拒绝及实际连接超时；正常 HTTPS 响应、平台网络桥接和宿主销毁联调仍待验收。
+Cancel 结束底层请求并回调一次取消结果；Dispose 中止所有请求且抑制回调。调用均需主线程，并在宿主销毁前释放 provider。请求停止后不可假定服务端没有执行操作；需要业务幂等键。底层目前没有重试、证书绕过或服务端响应业务校验。流式接收限制已测试，Unity 编译通过；本机 Play Mode 已验证取消、释放、宿主失活拒绝及实际连接超时；Unity Editor 正常 HTTPS GET/HEAD 及接收限额已验证；平台网络桥接和宿主销毁联调仍待验收。
 
 网络生命周期回归模板为 `tests/NetworkPlayChecks.cs.txt`：复制到隔离工程 Assets/Editor，使用 `-executeMethod NetworkPlayChecks.Run`（不加 `-quit`）运行。通过标记为 SDK_NETWORK_PLAY_PASS。测试创建本机临时 TCP 监听，不完成 TLS，用来验证取消与超时；它不是成功 HTTPS 响应测试。结束时关闭监听和 provider，不修改系统证书或代理设置。
 
@@ -163,3 +163,9 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 ### 微信可选网络工厂
 
 网络配置现对 Mock 和微信开放；抖音/TikTok 网络仍拒绝。微信使用 `BeginConfiguredStartup(..., createNetwork: () => new UnityNetwork(host))` 注入可选 HTTP 实现，面板对应 EditorPlatformBootstrap.NetworkFactory。缺失时返回 CONFIG.NETWORK_PROVIDER_REQUIRED；真实请求兼容性仍待验证。Mock 预览行为不变。
+
+### 联网集成检查
+
+`tests/NetworkHttpsPlayChecks.cs.txt` 可复制到隔离工程 Assets/Editor，以 `-executeMethod NetworkHttpsPlayChecks.Run` 运行（不加 `-quit`）。它通过 SDK 聚合入口向公开 https://example.com/ 发出 GET、受 1 字节限额约束的 GET 和 HEAD，不发送凭证。期望成功标记为 SDK_NETWORK_HTTPS_PASS。
+
+该检查需要 DNS、网络和有效 TLS 信任；不适合放进离线测试套件。站点不可达或内容类型变更应判为环境/基线待排查，不应改成忽略失败。已观察 GET 200/HTML 正文、限额拒绝、HEAD 200/空正文通过；未验证小游戏平台的域名配置或业务后端权限。

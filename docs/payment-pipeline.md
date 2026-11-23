@@ -2,6 +2,29 @@
 
 VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。已接 SDK.Pay 聚合及 Editor Mock 配置预览，真实平台收银台尚未接入。
 
+## TikTok 服务端验签基础（尚未接通订单）
+
+`server/src/tiktok-webhook.mjs` 提供 `verifyTikTokWebhook`，按 [TikTok 官方验签协议](https://developers.tiktok.com/docs/en/webhooks-verification)使用时间戳、点号和原始请求体计算 HMAC-SHA256，以恒定时间比较摘要。以下是服务器代码，不能放进 Unity 客户端：
+
+```javascript
+import { verifyTikTokWebhook } from './src/tiktok-webhook.mjs';
+const checked = verifyTikTokWebhook({
+  rawBody, // HTTP 层限流读取的原始 Buffer，不能 JSON.parse 后重新序列化
+  signature: request.headers['tiktok-signature'],
+  clientSecret: secrets.tiktokClientSecret // 仅来自服务器密钥配置
+});
+if (!checked.valid) {
+  // 拒绝该事件；日志只保留 checked.code，不记录正文、签名或密钥。
+}
+// valid 仅证明签名与时间窗口通过，不能在这里直接发货。
+```
+
+此函数要求非空 Buffer 且不超过 64 KiB，默认允许前后 300 秒，可缩短窗口；HTTP 层仍须在读取过程中限长。缺失、重复 t/s、额外字段、格式错误或超长头均拒绝。返回 WEBHOOK.INVALID_BODY、WEBHOOK.INVALID_SIGNATURE 或 WEBHOOK.TIMESTAMP_OUT_OF_RANGE；无效服务器配置抛 TypeError。时间窗口内的重复请求仍能验签成功，不能替代持久化幂等处理。
+
+后续处理必须匹配应用、用户、内部订单与平台订单，并隔离测试订单；官方以服务端支付通知作为发货依据。见 [TikTok IAP 流程](https://developers.tiktok.com/docs/en/in-app-purchases)。当前尚无 webhook HTTP 路由、订单关联持久化和真实发货接入，不能将此函数直接作为 OrderService.verifyPayment 或把 valid 映射为 paid。
+
+本地运行 `node --test test/tiktok-webhook.test.mjs`（在 server 目录）：覆盖原始字节、正文/时间戳篡改、错误密钥、前后时间边界、重复头及输入限额。测试密钥只用于离线测试，不证明真实 TikTok 通知已通过。
+
 ## 状态与步骤
 
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。

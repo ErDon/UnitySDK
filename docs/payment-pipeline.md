@@ -119,6 +119,10 @@ PaymentResult.Success 只有服务端订单状态为 Fulfilled 时成立。Order
 
 ## 验证范围
 
+`server/test/tiktok-payment-integration.test.mjs` 串接 OrderService、SQLite、预支付编排/传输、真实回环 HTTP 通知、验签和测试游戏发货接收方。它验证重复通知、接收方提交后确认丢失、订单与接收方数据库关闭重开、重试发货及已发货再次通知：最终一笔订单 Fulfilled、一次平台创建、一次权益增加。测试接收方在独立 SQLite 事务内同时记录 deliveryKey 和增加余额，避免“去重记录成功但没有发货”或相反情况。
+
+该链路的上游平台响应、登录身份和游戏发货接收方都是测试实现，没有真实平台扣款或 Unity 收银台。不能将其算作工作计划的真实支付端到端验收。执行 `node --test test/tiktok-payment-integration.test.mjs`（server 目录），需允许本机回环网络。
+
 PaymentPipelineTests 覆盖重复回调、主线程队列、并发支付拒绝、平台成功后仍等待服务端、Paid/Fulfilled 恢复不再拉起收银台、取消竞争、订单被替换及释放失效。订单与 launcher 均使用测试实现，不等同于真实支付验收。
 
 

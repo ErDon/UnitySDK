@@ -4,11 +4,11 @@
 
 | 组件 | 版本基线 | 当前证据 | 尚未完成 |
 | --- | --- | --- | --- |
-| Unity 核心/Editor/HTTP | SDK 0.1.0，Unity 2022.3.14f1c1 | 独立工程编译、Editor 检查、登录与存储 Play Mode 测试 | 域重载关闭、多游戏及目标平台构建 |
+| Unity 核心/Editor/HTTP | SDK 0.1.0，Unity 2022.3.14f1c1 | 独立工程编译、Editor/Play Mode 检查、域重载关闭生命周期、HTTPS 请求与限额、三平台开发构建 | 多游戏完整验收、面板视觉验收及最终产物隔离 |
 | 微信本地基线 | com.qq.weixin.minigame 0.1.23 | 隔离重编译、能力契约回归及 Unity WebGL Development Build | 包缺少转换性能库；来源完整性、官方转换、后端与真机 |
-| 微信官方固定提交 | package 0.1.1；915d4bf4f60ef0cd1c29316a8d67257185d609a7 | 干净官方 Git 克隆；独立副本编译/官方小游戏转换；链接后微信自动注册保留；登录、工厂、存储、分享、广告、初始化与字符串上报七项契约回归 | 须显式 ERDON_WECHAT_STRING_ANALYTICS，数字上报拒绝；最终平台/模块裁剪、真机及真实服务端联调 |
-| TikTok | 1.1.6-Release | Runtime/Editor DLL 登录、存储、分享入口编译，注入行为测试 | 干净官方插件集成、真机与后端联调；本机插件含旧项目宏 |
-| 抖音 | TTSDK 6.9.7 | BGDT 官方安装、真实 DLL 登录/存储/分享入口编译与注入行为测试、隔离 Unity 工程编译加载 | 初始化、目标导出、后端联调及真机 |
+| 微信官方固定提交 | package 0.1.1；915d4bf4f60ef0cd1c29316a8d67257185d609a7 | 干净官方 Git 克隆；独立副本编译/官方小游戏转换；链接后微信自动注册保留；登录、工厂、存储、分享、广告、初始化与字符串上报七项契约回归；五类适配全部关闭的实际链接检查 | 须显式 ERDON_WECHAT_STRING_ANALYTICS，数字上报拒绝；最终平台/模块裁剪、真机及真实服务端联调 |
+| TikTok | 官方完整 1.1.6-Release；哈希见 docs/tiktok.md | 干净插件工程、Runtime/Editor 七组回归、Play Mode 注册、开发构建/官方导出及 StreamingAssets 保留；五类适配全部关闭的实际链接检查 | 网络/支付/公共核心与官方内部代码裁剪，真机与后端联调 |
+| 抖音 | TTSDK 6.9.7 | BGDT 官方安装、七组接口/注入回归、独立开发构建与官方导出、注册保留；五类适配全部关闭的实际链接检查 | 最终产物隔离、真实初始化、后端联调及真机 |
 | BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入、cp 模式安装 TTSDK 6.9.7 | 导出构建链路 |
 | 公共服务端 | 0.1.0，Node 24.20.0 | 37 项测试：模拟微信/抖音/TikTok 上游、真实 loopback HTTP、SQLite 重开与并发连接、内存/SQLite 订单和幂等发货恢复 | 官方接口调用、Unity HTTPS、部署、备份与性能 |
 | Android/iOS 原生渠道 | 无 | 扩展边界设计 | 本轮不接具体供应商 |
@@ -19,7 +19,7 @@
 - `tests/run-all-tests.ps1`：纯 C# 核心、配置行为契约、存储和隔离策略。
 - `tests/run-wechat-tests.ps1`：需本地官方 0.1.23 包；不是实际微信登录。
 - `tests/run-wechat-storage-tests.ps1`：需工程编译的 Wx.dll；不是干净包重编译。
-- `tests/run-tiktok-tests.ps1`：需本地 1.1.6-Release 插件；分别编译 Runtime/Editor 入口。
+- `tests/run-tiktok-tests.ps1`：需本地 1.1.6-Release 插件；分别编译 Runtime/Editor 入口，当前已对干净官方下载包重跑。
 - `tests/run-douyin-tests.ps1`：需 BGDT 安装的官方 TTSDK 6.9.7；真实 DLL 编译，回调为注入，不是真机登录。
 - `tests/SdkEditorChecks.cs.txt`、`tests/SdkPlayChecks.cs.txt`：复制到独立 Unity 测试工程后执行。
 - `server/` 下 `node --test`：包含临时本地端口和数据库，不访问真实平台。
@@ -49,3 +49,9 @@ v2 快照覆盖包目录全部文件；v1 历史快照仅覆盖当时选取的�
 运行 `tests/run-wechat-official-tests.ps1 -OfficialPackagePath <该官方包> -CompiledWxAssembly <同一包在Unity中编译的Wx.dll>`。脚本显式启用字符串上报分支并使用真实 WX 类型编译七套契约测试。登录失败 DTO 在此提交为 LoginFailCallbackErr，本地0.1.23为 RequestFailCallbackErr；生产适配使用类型推断，测试分别实例化实际 DTO。初始化200等返回码测试是注入行为，不能充当实际宿主初始化成功证据。
 
 脚本版本检查只校验包标识，不能证明传入目录来源。执行前应核对固定 Git 提交与原件清洁状态，并确保 Wx.dll 来自同一工程；不可用另一个版本的缓存程序集混测。结果仅支持已列明范围，不代表支付、真机或所有官方 API 均受支持。
+
+## 五类适配全部关闭的构建组合
+
+三平台分别在独立 Unity 工程关闭 Login/Storage/Share/Ads/Analytics，保留各自平台宏，执行实际 Development Build；全部成功退出 0。使用 check-linked-platform.ps1 的 ExcludedCapabilities 检查，各平台五类适配类型定义与引用均缺失，RuntimeInitializeOnLoadMethod 注册方法保留。微信仍保留字符串上报兼容宏，未以改宏绕过官方接口差异。
+
+这覆盖“全部关闭”的组合和适配程序集，不覆盖所有单项组合、网络/支付/公共核心、官方单体 SDK 内部实现或最终 JS/Wasm/资源的完整排除。默认开启模式的官方接口回归仍需在每次升级后重跑；两种验证不能互相替代。

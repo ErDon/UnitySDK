@@ -6,7 +6,7 @@
 
 ## 进度总览
 
-已完成并按列明范围验证 **62 / 78 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；真实平台构建、真机与支付闭环仍未完成。
+已完成并按列明范围验证 **62 / 78 个子项**，待完成或验收 **16 个**。这是清单数量统计，不代表整体工作量完成百分比；正式发布验收、真机与支付闭环仍未完成。
 
 | 阶段 | 已勾选 | 待完成/验收 |
 | --- | ---: | ---: |
@@ -672,3 +672,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 全部关闭能力的实际构建验证（2026-11-23）
 
 发现测试场景原来硬编码开启存储/分享/广告/上报，改为序列化面板配置完整快照，并新增 ConfigureAllCapabilitiesOff。tiktok-all-off-build.log 构建成功退出 0，场景配置五类开关均关闭；check-linked-platform.ps1 的 ExcludedCapabilities 检查确认五类 TikTok 适配定义及引用均消失、注册方法仍在。工具对未裁剪的抖音旧产物正确拒绝 Login 排除断言。此项不等同于其他平台组合、网络/支付、官方 SDK 内部及真机验收，整体裁剪继续未勾选。
+
+### 微信与抖音全部关闭能力的构建组合（2026-11-23）
+
+更新两份隔离工程的配置快照探针后，分别执行 ConfigureAllCapabilitiesOff 和 Build。WeChatBuildProject-all-off-build.log、DouyinBuildProject-all-off-build.log 均输出 SDK_DEVELOPMENT_WEBGL_BUILD_PASS 并退出 0；链接后五类排除能力类型和引用检查通过，平台自动注册保留。微信兼容宏 ERDON_WECHAT_STRING_ANALYTICS 仍保留。三平台全部关闭组合已有实际证据，矩阵同步更新；完整能力裁剪仍需网络/支付/核心及官方内部代码边界，保持未勾选。

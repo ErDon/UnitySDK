@@ -4,6 +4,19 @@ const validText = (value, limit = 256) => typeof value === 'string' && value.len
   value.trim() === value && !/[\u0000-\u001f\u007f]/.test(value);
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
+export function validateTikTokTradeRequest({ accessToken, tokenAmount, orderId, productId, productName, orderUrl, quantity, quantityUnit, imageUrl } = {}) {
+  if (!validText(accessToken, 8192) || /\s/.test(accessToken) ||
+      !Number.isSafeInteger(tokenAmount) || tokenAmount <= 0 ||
+      !Number.isSafeInteger(quantity) || quantity <= 0 ||
+      ![orderId, productId, productName, quantityUnit].every(value => validText(value)) ||
+      !validText(orderUrl, 2048) || !validText(imageUrl, 2048))
+    throw new TypeError('Invalid TikTok prepayment request');
+  let image;
+  try { image = new URL(imageUrl); } catch { throw new TypeError('Invalid TikTok product image URL'); }
+  if (image.protocol !== 'https:' || image.username || image.password)
+    throw new TypeError('Invalid TikTok product image URL');
+}
+
 // Server-to-server transport only; caller owns token custody, catalog, attempt tracking
 // and persistence. Never retry create automatically after an uncertain response.
 export function createTikTokTradeClient({ fetchImpl = fetch, timeoutMs = 8000 } = {}) {
@@ -11,16 +24,7 @@ export function createTikTokTradeClient({ fetchImpl = fetch, timeoutMs = 8000 } 
     throw new TypeError('Invalid TikTok trade client configuration');
   return Object.freeze({
     async create({ accessToken, tokenAmount, orderId, productId, productName, orderUrl, quantity, quantityUnit, imageUrl } = {}) {
-      if (!validText(accessToken, 8192) || /\s/.test(accessToken) ||
-          !Number.isSafeInteger(tokenAmount) || tokenAmount <= 0 ||
-          !Number.isSafeInteger(quantity) || quantity <= 0 ||
-          ![orderId, productId, productName, quantityUnit].every(value => validText(value)) ||
-          !validText(orderUrl, 2048) || !validText(imageUrl, 2048))
-        throw new TypeError('Invalid TikTok prepayment request');
-      let image;
-      try { image = new URL(imageUrl); } catch { throw new TypeError('Invalid TikTok product image URL'); }
-      if (image.protocol !== 'https:' || image.username || image.password)
-        throw new TypeError('Invalid TikTok product image URL');
+      validateTikTokTradeRequest({ accessToken, tokenAmount, orderId, productId, productName, orderUrl, quantity, quantityUnit, imageUrl });
       const body = JSON.stringify({ token_type: 'BEANS', token_amount: tokenAmount, order_info: {
         order_id: orderId, product_id: productId, product_name: productName, order_url: orderUrl,
         quantity, quantity_unit: quantityUnit, image_url: imageUrl

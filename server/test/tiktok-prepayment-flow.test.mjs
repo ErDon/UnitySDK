@@ -63,3 +63,14 @@ test('failure updating Ready rolls back the platform association in the same tra
   await assert.rejects(flow.create(input), { code: 'PAY.PREPAYMENT_UNCERTAIN' });
   assert.equal(calls, 1);
 });
+test('invalid preflight parameters never reserve an attempt and corrected input can proceed', async t => {
+  const f = await fixture(t); let calls = 0;
+  const flow = new TikTokPrepaymentFlow(f.payments, { create: async () => { calls++; return { tradeOrderId: 'trade' }; } });
+  for (const patch of [{ imageUrl: 'http://example.com/a' }, { accessToken: 'token\nvalue' },
+    { openId: 'user\nvalue' }, { productName: 'x'.repeat(257) }, { orderUrl: 'x'.repeat(2049) }]) {
+    await assert.rejects(flow.create({ ...input, ...patch }), TypeError);
+    assert.equal(f.store.db.prepare('SELECT COUNT(*) AS count FROM erdon_tiktok_attempts').get().count, 0);
+  }
+  assert.equal(calls, 0);
+  assert.deepEqual(await flow.create(input), { tradeOrderId: 'trade' }); assert.equal(calls, 1);
+});

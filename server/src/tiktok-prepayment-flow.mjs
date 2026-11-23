@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { OrderError } from './orders.mjs';
 import { bindingKey } from './auth.mjs';
 import { TikTokPrepayments } from './tiktok-prepayments.mjs';
+import { validateTikTokTradeRequest } from './tiktok-trade-client.mjs';
 
 // Internal service composition, not a public client endpoint. All arguments must
 // come from authenticated server identity/catalog configuration.
@@ -23,18 +24,22 @@ export class TikTokPrepaymentFlow {
   }
   async create({ binding, isSandbox, openId, accessToken, orderId, tokenAmount, productName, orderUrl, quantity, quantityUnit, imageUrl }) {
     this.payments.validate(binding, isSandbox);
-    if (typeof openId !== 'string' || !openId.trim() || openId.length > 256 ||
+    if (typeof openId !== 'string' || !openId.trim() || openId.length > 256 || openId.trim() !== openId || /[\u0000-\u001f\u007f]/.test(openId) ||
         typeof accessToken !== 'string' || !accessToken || !Number.isSafeInteger(tokenAmount) || tokenAmount <= 0 ||
         !Number.isSafeInteger(quantity) || quantity <= 0 ||
         ![orderId, productName, orderUrl, quantityUnit, imageUrl].every(v => typeof v === 'string' && v.trim()))
       throw new TypeError('Invalid prepayment flow request');
     const scope = Object.freeze({ ...binding });
     const request = { accessToken, tokenAmount, orderId, productName, orderUrl, quantity, quantityUnit, imageUrl };
+    const initialOrder = await this.store.get(orderId);
+    if (!initialOrder || initialOrder.binding !== bindingKey(scope)) throw new OrderError('PAY.ORDER_NOT_FOUND', 404);
+    request.productId = initialOrder.productId;
+    validateTikTokTradeRequest(request);
     const claim = this.store.transaction(() => {
       const order = this.store.read(orderId);
       if (!order || order.binding !== bindingKey(scope)) throw new OrderError('PAY.ORDER_NOT_FOUND', 404);
       if (order.state !== 'Created') throw new OrderError('PAY.ORDER_ALREADY_PAID', 409);
-      request.productId = order.productId;
+      if (request.productId !== order.productId) throw new OrderError('PAY.PREPAYMENT_CONFLICT', 409);
       const hash = createHash('sha256').update(JSON.stringify([bindingKey(scope), isSandbox, openId,
         tokenAmount, orderId, order.productId, productName, orderUrl, quantity, quantityUnit, imageUrl])).digest('hex');
       const existing = this.store.db.prepare('SELECT * FROM erdon_tiktok_attempts WHERE order_id=?').get(orderId);

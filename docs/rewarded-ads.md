@@ -1,6 +1,6 @@
 # 激励广告（聚合接口与 Editor 预览）
 
-新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/抖音映射广告开关。微信/TikTok 的广告配置继续明确拒绝；真实平台自动装配和构建仍未开放。
+新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/微信/抖音映射广告开关。TikTok 的广告配置继续明确拒绝；真实平台自动装配和构建仍未开放。
 
 抖音 6.9.7 使用 TT.CreateRewardedVideoAd(CreateRewardedVideoAdParam)，关闭 Multiton，再订阅 OnLoad/OnError/OnClose 后 Load。加载完成调用一次 Show；关闭时根据官方 complete 布尔值返回 Completed。Error 只有数字码进入 PlatformCode，自由文本不回传。随包 ttsdk.xml 明确 IsComplete 表示播放完成；不把所有 OnClose 都视为完整观看。
 
@@ -35,7 +35,7 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 }, timeoutMilliseconds: 120000);
 ```
 
-关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 DouyinProviderFactory 已支持；微信/TikTok 工厂暂未支持广告，开启会明确拒绝初始化。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
+关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 WeChatProviderFactory 和 DouyinProviderFactory 已支持；TikTok 工厂暂未支持广告，开启会明确拒绝初始化。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
 
 结果含 CallId/TraceId，错误 Stage=RewardedAd、Operation=SDK.ShowRewardedAd。日志不输出广告位内容，完整观看和提前关闭分别记录 Completed/ClosedEarly。与支付/分享的并发状态独立；旧回调和重复终态不会覆盖新调用。此处仍不提供服务端奖励验证或重复领奖保护。
 
@@ -49,3 +49,11 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 预览不加载广告、不产生收入、不发放真实奖励。导出的 JSON 保留 rewardedAds；ToSdkConfig 只为已实现的平台能力放行，不能作为真实平台初始化或构建完成的证明。
 
 聚合层还会返回 ADS.TIMEOUT、ADS.CANCELLED、ADS.INVALID_RESULT（适配器返回空结果）、ADS.PROVIDER_FAILED（适配器抛出异常），以及 SDK.NOT_INITIALIZED / MODULE.DISABLED / CAPABILITY.NOT_SUPPORTED。ADS.LOAD_FAILED 目前用于 Editor Mock 失败演练，真实抖音错误保留 ADS.PLATFORM_FAILED 与平台数字码。
+
+## 微信适配
+
+`WeChatRewardedAds` 使用本地官方 `com.qq.weixin.minigame 0.1.23` 的 `WX.CreateRewardedVideoAd`，关闭 multiton；监听 OnError/OnClose，显式 Load 成功后 Show。Load 失败或 OnError 返回 ADS.PLATFORM_FAILED，保留 errCode；Show 的失败回调仅有文本，返回 ADS.SHOW_FAILED，不解析或输出原始文本。
+
+随包 wx-runtime.xml 对 WXRewardedVideoAdOnCloseResponse.isEnded 的说明为完整观看后关闭。只有收到非空关闭响应且 isEnded=true 才报告 Completed；空响应返回 ADS.INVALID_RESULT。提前关闭正常返回 Completed=false。终态解绑并销毁；释放后忽略迟到回调。每次流程独立创建；不要与其他广告插件同时操作同类平台实例。
+
+`tests/run-wechat-factory-tests.ps1` 现在同时编译并执行广告测试：使用官方 wx-runtime-editor.dll 和隔离工程生成的 Wx.dll，注入广告事件验证加载/展示顺序、重复事件、并发、提前关闭、完整观看、错误数字码及释放。它不证明真实广告位授权、填充、收入或奖励验证；这些仍需真机验收。

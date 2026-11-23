@@ -14,6 +14,9 @@ public static class WeChatCompileCheck {
   var share=System.Type.GetType("ErDon.UnitySDK.WeChat.WeChatShare, ErDon.UnitySDK.WeChat");
   if(share==null || !typeof(ErDon.UnitySDK.IShare).IsAssignableFrom(share)) throw new System.Exception("WeChat share not loaded");
   Debug.Log("WECHAT_SHARE_UNITY_COMPILE_PASS");
+  var ads=System.Type.GetType("ErDon.UnitySDK.WeChat.WeChatRewardedAds, ErDon.UnitySDK.WeChat");
+  if(ads==null || !typeof(ErDon.UnitySDK.IRewardedAds).IsAssignableFrom(ads)) throw new System.Exception("WeChat ads not loaded");
+  Debug.Log("WECHAT_ADS_UNITY_COMPILE_PASS");
  }
 }
 

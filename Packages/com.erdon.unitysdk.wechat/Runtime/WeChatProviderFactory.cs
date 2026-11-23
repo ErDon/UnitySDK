@@ -3,7 +3,7 @@ using System;
 namespace ErDon.UnitySDK.WeChat
 {
     /// <summary>Use only after official WeChat SDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class WeChatProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory
+    public sealed class WeChatProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory
     {
         public string Platform { get { return "WeChat"; } }
         readonly string gameId;
@@ -29,6 +29,7 @@ namespace ErDon.UnitySDK.WeChat
             catch { try { exchange.Dispose(); } catch { } throw; }
         }
         public IStorage CreateStorage() { return new WeChatStorage(gameId, environment); }
+        public IRewardedAds CreateRewardedAds() { return new WeChatRewardedAds(); }
         public IShare CreateShare() { return new WeChatShare(); }
     }
 }

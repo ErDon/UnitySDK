@@ -17,7 +17,7 @@ class RuntimeConfigurationTests {
   data.appId="app";data.rewardedAds=true;
   Check(data.ToSdkConfig().RewardedAdsEnabled,"Douyin ad mapping");
   data.platform="Mock";data.production=false;Check(data.ToSdkConfig().RewardedAdsEnabled,"Mock ad mapping");
-  data.platform="WeChat";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"unimplemented WeChat ads rejected");
+  data.platform="WeChat";Check(data.ToSdkConfig().RewardedAdsEnabled,"WeChat ad mapping");
   data.platform="TikTok";Check(data.Validate().Contains("CONFIG.CAPABILITY_UNIMPLEMENTED"),"unimplemented TikTok ads rejected");
   Console.WriteLine("PASS: portable configuration mapping, snapshot independence and unsupported configuration rejection");
  }

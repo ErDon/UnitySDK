@@ -28,4 +28,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Douyin share compile failed'}
     & $UnityMono .\.tests\douyin\DouyinShareTests.exe
     if($LASTEXITCODE -ne 0){throw 'Douyin share tests failed'}
+    $coreSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk\Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
+    $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.douyin\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
+    & $UnityMono $unityCompiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /reference:.tests\douyin\TTLitJson.dll /out:.tests\douyin\DouyinFactoryTests.exe $coreSources $platformSources .\tests\DouyinFactoryTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Douyin factory compile failed'}
+    & $UnityMono .\.tests\douyin\DouyinFactoryTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Douyin factory tests failed'}
 } finally {Pop-Location}

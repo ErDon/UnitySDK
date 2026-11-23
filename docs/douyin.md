@@ -68,3 +68,27 @@ run-douyin-tests.ps1 已覆盖真实 DLL 入口编译和注入存储行为，包
 官方 XML 所附 JS 参数说明链接为 https://microapp.bytedance.com/docs/zh-CN/mini-game/develop/api/retweet/tt-share-app-message/ 。当前网页读取未返回参数正文，因此未据此声称平台字段限制或真机行为已验收。
 
 run-douyin-tests.ps1 使用官方 TTLitJson 源码与 Unity Mono 编译器，覆盖字段/转义、省略可选字段、成功/失败/取消竞争、释放和异常脱敏。官方源码存在 CS3021 注解警告；无适配层编译错误。独立 Unity 工程 douyin-share-verify.log 输出 DOUYIN_SHARE_UNITY_COMPILE_PASS，退出码 0。仍需真机确认分享面板、图片及参数的实际表现。
+
+## SDK 内置平台工厂
+
+游戏无需重复实现三个 Create 方法，使用 DouyinProviderFactory 即可。以下函数放在游戏的持久 MonoBehaviour 中，并且只在官方 TT.InitSDK 已成功后调用。需要安装可选 HTTP 传输包；地址与 appId 替换为实际受信配置，客户端不保存 AppSecret。
+
+```csharp
+void OnDouyinRuntimeReady()
+{
+    var factory = new ErDon.UnitySDK.Douyin.DouyinProviderFactory(
+        "my-game", "production",
+        () => new ErDon.UnitySDK.UnitySessionExchange(
+            this, "https://your-api.example/v1/session",
+            "my-game", "your-douyin-app-id", "production"));
+    ErDon.UnitySDK.UnitySdkHost.InitializeWithFactory(
+        new ErDon.UnitySDK.SdkConfig {
+            Platform = "Douyin", LoginEnabled = true,
+            StorageEnabled = true, ShareEnabled = true, PayEnabled = false
+        }, factory);
+}
+```
+
+工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 DouyinCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
+
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。

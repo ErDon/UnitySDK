@@ -261,3 +261,10 @@ Editor 面板增加支付开关与 Fulfilled/Pending/Cancelled/Timeout 预览，
 
 新增 ResultSnapshotTests：覆盖异步排队前后的 Retry 数据、重复登录历史 ID、跨能力共享错误、存储结果复用和调用方修改隔离。调整旧测试为检查返回错误的关联 ID，不再要求 SDK 修改 provider 原错误。全部公共回归通过。
 独立 Unity result-snapshot.log 输出 SDK_EDITOR_CHECKS_PASS，退出码 0。
+
+### 抖音内置能力工厂
+
+新增 DouyinProviderFactory，聚合已验证的登录/存储/分享实现。登录按需创建后端 exchange 并由 VerifiedAuth 接管，关闭时不创建；每次能力返回新实例。缺失后端工厂/null 结果明确拒绝；不提供未完成的支付实现。
+
+官方 DLL 测试新增工厂配置和所有权场景并通过。接入文档给出 UnitySessionExchange + UnitySdkHost 的装配示例，明确官方初始化前置条件与协程宿主生命周期，未将此视为面板自动装配完成。
+独立 Unity douyin-factory.log 完成适配程序集编译，检查通过，退出码 0。

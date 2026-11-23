@@ -65,16 +65,18 @@ namespace ErDon.UnitySDK
             SDK.CheckHostLifecycleEntry();
             SdkCompiledModules.Validate(config);
             var host = GetOrCreate();
-            host.ReplaceStartup(null);
+            if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
             SDK.InitializeWithFactory(config, factory, a => host.queue.Enqueue(a), WriteLog);
+            host.ReplaceStartup(null);
         }
         public static void Initialize(SdkConfig config, IAuth provider, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null, INetwork networkProvider = null, IAnalytics analyticsProvider = null)
         {
             SDK.CheckHostLifecycleEntry();
             SdkCompiledModules.Validate(config);
             var host = GetOrCreate();
-            host.ReplaceStartup(null);
+            if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
             SDK.Initialize(config, provider, a => host.queue.Enqueue(a), WriteLog, storageProvider, shareProvider, payProvider, adsProvider, networkProvider, analyticsProvider);
+            host.ReplaceStartup(null);
         }
         static UnitySdkHost GetOrCreate()
         {

@@ -175,3 +175,5 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 构建能力选择保留项目其他宏，只维护 ERDON_EXCLUDE_LOGIN/STORAGE/SHARE/ADS/ANALYTICS/NETWORK/PAYMENTS。修改勾选不会立即触发重编译，需要再次应用；如果勾选已排除的能力却未应用，构建报 CONFIG.MODULE_NOT_COMPILED。手工构建脚本也可调用 SdkProjectSettings.instance.ApplyCapabilityDefines()，然后等编译结束再构建。对运行时 JSON 和直接 SDK.Initialize/InitializeWithFactory 均有未编译能力检查，失败发生在能力创建和替换现有 SDK 之前。
 
 直接 SdkStartup 构造及 UnitySdkHost.BeginStartup/Initialize/InitializeWithFactory 同样在取得新运行时所有权或取消旧启动前检查编译能力。请求未编译能力时立即抛 CONFIG.MODULE_NOT_COMPILED，不等待官方初始化后再转换成 INIT.COMPOSITION_FAILED。构造被拒绝的 runtime 仍由调用方拥有，SDK 不负责释放它。Editor 的预览编译不受 Player 排除符号限制。
+
+UnitySdkHost 的直接 Initialize/InitializeWithFactory 只有在新的 SDK 初始化成功后才释放旧的等待启动。重复传入已由 SDK 拥有的 provider、空工厂或工厂抛异常时，原 SDK 和原启动继续有效；成功替换会释放旧启动并忽略其迟到回调。释放旧启动期间禁止再次进入宿主初始化。可在隔离 Play Mode 运行 tests/HostStartupPreservationChecks.cs.txt 的 Run 方法复核。

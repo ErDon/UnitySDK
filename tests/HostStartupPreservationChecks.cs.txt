@@ -1,0 +1,64 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+[InitializeOnLoad]
+public static class HostStartupPreservationChecks {
+ const string Key="ErDon.Tests.HostStartupPreservation";
+ sealed class Auth:IAuth {public int Disposes;public void Login(Action<LoginResult> cb){cb(LoginResult.Ok("probe"));}public void Dispose(){Disposes++;}}
+ sealed class Runtime:IPlatformRuntime {public int Disposes;public Action OnDispose;public Action<SdkError> Done;public string Platform{get{return "Probe";}}public bool IsReady{get{return true;}}public void Initialize(Action<SdkError> cb){Done=cb;}public void Dispose(){Disposes++;if(OnDispose!=null)OnDispose();}}
+ sealed class Factory:IPlatformSdkProviderFactory {public bool Throw;public string Platform{get{return "Probe";}}public IAuth CreateAuth(Action<Action> dispatch){if(Throw)throw new InvalidOperationException("factory probe");return new Auth();}public IStorage CreateStorage(){throw new Exception("storage unexpected");}}
+ static Runtime runtime;static Auth oldAuth;static StartupResult completion;
+ static int scenario,frames;static bool replacementLogin,reentryRejected;static double deadline;
+ static HostStartupPreservationChecks(){EditorApplication.playModeStateChanged+=Changed;}
+ public static void Run(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
+ static void Check(bool condition,string reason){if(!condition)throw new Exception(reason);}
+ static void Changed(PlayModeStateChange state){
+  if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+  SessionState.SetBool(Key,false);scenario=0;deadline=EditorApplication.timeSinceStartup+30;EditorApplication.update+=Step;
+  try{Begin();}catch(Exception e){Finish(e);}
+ }
+ static void Begin(){
+  oldAuth=new Auth();UnitySdkHost.Initialize(new SdkConfig{Platform="Probe"},oldAuth);
+  runtime=new Runtime();completion=null;frames=0;
+  UnitySdkHost.BeginStartup(new SdkConfig{Platform="Probe",LoginEnabled=false},runtime,new Factory(),r=>completion=r);
+  if(scenario<3){
+   bool rejected=false;
+   try{
+    if(scenario==0)UnitySdkHost.Initialize(new SdkConfig{Platform="Probe"},oldAuth);
+    else if(scenario==1)UnitySdkHost.InitializeWithFactory(new SdkConfig{Platform="Probe"},new Factory{Throw=true});
+    else UnitySdkHost.InitializeWithFactory(new SdkConfig{Platform="Probe"},null);
+   }catch(ArgumentException){rejected=scenario!=1;}catch(InvalidOperationException){rejected=scenario==1;}
+   Check(rejected,"replacement was not rejected");
+   Check(runtime.Disposes==0&&oldAuth.Disposes==0,"failed replacement disposed old startup or SDK; scenario="+scenario);
+   runtime.Done(null);
+  }else{
+   runtime.OnDispose=()=>{
+    try{UnitySdkHost.Initialize(new SdkConfig{Platform="Probe",LoginEnabled=false},null);}
+    catch(InvalidOperationException){reentryRejected=true;}
+   };
+   UnitySdkHost.InitializeWithFactory(new SdkConfig{Platform="Probe"},new Factory());
+   Check(runtime.Disposes==1&&oldAuth.Disposes==1,"successful replacement did not release old state once");
+   runtime.Done(null);SDK.Login(r=>replacementLogin=r.Success);
+  }
+ }
+ static void Step(){
+  try{
+   if(EditorApplication.timeSinceStartup>deadline)throw new Exception("test deadline");
+   if(scenario<3){
+    if(completion==null)return;
+    Check(completion.Success&&runtime.Disposes==1&&oldAuth.Disposes==1,"preserved startup could not complete");
+    scenario++;Begin();
+   }else if(++frames>=4){
+    Check(completion==null&&runtime.Disposes==1&&replacementLogin&&reentryRejected,"late startup callback replaced new SDK");
+    Finish(null);
+   }
+  }catch(Exception e){Finish(e);}
+ }
+ static void Finish(Exception error){
+  EditorApplication.update-=Step;UnitySdkHost.Shutdown();
+  if(error==null){Debug.Log("SDK_HOST_STARTUP_PRESERVATION_PASS");EditorApplication.Exit(0);}
+  else {Debug.LogError("SDK_HOST_STARTUP_PRESERVATION_FAIL: "+error.Message);EditorApplication.Exit(1);}
+ }
+}

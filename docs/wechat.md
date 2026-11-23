@@ -16,6 +16,8 @@
 下列代码位于项目微信专属程序集。`postToMainThread` 是初始化层提供的主线程队列；`sessionExchange` 是真正的服务端会话交换实现，不能把微信 code 当作游戏 session。
 
 ```csharp
+using ErDon.UnitySDK;
+
 IAuth auth = new VerifiedAuth(
     new ErDon.UnitySDK.WeChat.WeChatCredentialProvider(10000),
     sessionExchange,
@@ -32,6 +34,7 @@ SDK.Login(result => {
     }
     // 用统一错误码显示提示，CallId 关联 SDK 日志。
     // AUTH.PLATFORM_FAILED 时 PlatformCode 保留微信 errno。
+    UnityEngine.Debug.LogError(result.Error.Code + " / " + result.Error.Reason + " callId=" + result.CallId);
 });
 ```
 
@@ -100,7 +103,7 @@ void OnWeChatRuntimeReady()
 
 工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 WeChatCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
 
-SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 微信 SDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板到正式平台的自动启动装配仍待完成。
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 UnitySdkHost.Shutdown，建议在持久启动对象上装配。此工厂不处理微信 SDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板和运行时 JSON 已接入按平台注册的自动启动装配；这不代替真实账号、后端和真机验收。
 
 工厂验证命令：tests/run-wechat-factory-tests.ps1 -OfficialPackagePath <0.1.23包目录> -CompiledWxAssembly <Wx.dll路径>。配置及释放测试通过；本机 Wx.dll 与包 DTO 仍存在其他接口类型 CS1684 警告，不能作为干净官方版本组合验收。
 
@@ -117,6 +120,9 @@ SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游
 `WeChatRuntime` 实现 IPlatformRuntime，调用 WX.InitSDK；仅回调码 200 表示就绪，0 以及其他返回码均映射 INIT.PLATFORM_FAILED，PlatformCode 保留原始数字。依据是本地包 `Runtime/wechat-default/unity-sdk/index.js` 的 WXInitializeSDK：moduleHelper.init 后发送 Inited=200；WXSDKManagerHandler.Inited 将整数直接交给 Action<int>。升级 SDK 时需重新核对这条契约。
 
 ```csharp
+using ErDon.UnitySDK;
+using ErDon.UnitySDK.WeChat;
+
 // 示例只开存储；开启登录时需给工厂提供后端 ISessionExchange 工厂。
 UnitySdkHost.BeginStartup(
     new SdkConfig { Platform = "WeChat", LoginEnabled = false, StorageEnabled = true },
@@ -124,10 +130,12 @@ UnitySdkHost.BeginStartup(
     new WeChatProviderFactory("your-game-id", "test"),
     result => {
         if (!result.Success) {
-            UnityEngine.Debug.LogError(result.Error.Code + " platformCode=" + result.Error.PlatformCode);
+            UnityEngine.Debug.LogError(result.Error.Code + " / " + result.Error.Reason + " platformCode=" + result.Error.PlatformCode + " callId=" + result.CallId);
             return;
         }
-        SDK.SetStorageSync("example", "ready");
+        var stored = SDK.SetStorageSync("example", "ready");
+        if (!stored.Success)
+            UnityEngine.Debug.LogError(stored.Error.Code + " / " + stored.Error.Reason + " callId=" + stored.CallId);
     });
 ```
 
@@ -140,13 +148,18 @@ Dispose 只结束桥接生命周期，不卸载微信官方 SDK。该实现已�
 本地 0.1.23 的 C# 接口没有通用 WX.Request/RequestOption；Unity 网络走 UnityWebRequest。随包 CHANGELOG.md 第 336 行记录 UnityWebRequest timeout 支持，第 71 行记录请求头缓存控制。当前沿用可选 HTTP 包的 UnityNetwork，不虚构独立的 WX.Request C# 签名。
 
 ```csharp
+using ErDon.UnitySDK;
+
 // 位于游戏 MonoBehaviour 的 Awake/Start 中；需安装 com.erdon.unitysdk.transport.http。
 var data = new SdkRuntimeConfiguration {
     platform = "WeChat", gameId = "your-game", appId = "your-app",
     login = false, network = true
 };
 UnitySdkHost.BeginConfiguredStartup(data, null, result => {
-    if (!result.Success) return;
+    if (!result.Success) {
+        UnityEngine.Debug.LogError(result.Error.Code + " / " + result.Error.Reason + " callId=" + result.CallId);
+        return;
+    }
     // 此后可调用 SDK.Request。
 }, createNetwork: () => new UnityNetwork(this));
 ```

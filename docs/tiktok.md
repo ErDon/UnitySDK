@@ -31,10 +31,15 @@
 
 ## 用法
 
-初始化层按 [微信组合示例](wechat.md) 的方式组合，只替换 provider 为：
+官方运行时就绪后，在初始化层组合凭证适配器和实际后端交换器；sessionExchange 与 postToMainThread 的要求同 [微信组合示例](wechat.md)：
 
 ```csharp
-new ErDon.UnitySDK.TikTok.TikTokCredentialProvider()
+using ErDon.UnitySDK;
+
+var auth = new VerifiedAuth(
+    new ErDon.UnitySDK.TikTok.TikTokCredentialProvider(),
+    sessionExchange, postToMainThread);
+UnitySdkHost.Initialize(new SdkConfig { Platform = "TikTok", LoginEnabled = true }, auth);
 ```
 
 同时把 `SdkConfig.Platform` 设为 `TikTok`。服务端根据凭证 Platform 选择 TikTok 验证器，不能交给微信 code 换 session 的接口。客户端不能包含 Client Secret。
@@ -67,7 +72,7 @@ new ErDon.UnitySDK.TikTok.TikTokCredentialProvider()
 
 写入后回读不一致返回 STORAGE.WRITE_FAILED；键存在但读取 null 返回 STORAGE.READ_FAILED；格式不兼容返回 STORAGE.FORMAT_MISMATCH；删除后键仍存在返回 STORAGE.REMOVE_FAILED。底层抛异常转换为 STORAGE.PROVIDER_FAILED，不泄露原文。键不存在返回 STORAGE.NOT_FOUND，空字符串仍是合法值。
 
-上述 run-tiktok-tests.ps1 同时编译两套官方 DLL 的存储入口并运行注入行为测试。真实 PlayerPrefs、Save 落盘、配额、宿主退出及设备重启仍需真机验证；回读成功不能作为磁盘持久化证明。当前平台构建仍不放行。
+上述 run-tiktok-tests.ps1 同时编译两套官方 DLL 的存储入口并运行注入行为测试。真实 PlayerPrefs、Save 落盘、配额、宿主退出及设备重启仍需真机验证；回读成功不能作为磁盘持久化证明。当前允许非生产 Development Build 技术验证，正式/生产构建仍不放行。
 
 
 ## 分享
@@ -112,16 +117,21 @@ SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游
 `TikTokRuntime` 调用 TT.InitSDK，等待 code=0 才设置 IsReady，其他整数统一返回 INIT.PLATFORM_FAILED，并保留 PlatformCode。不将抖音的 1/2 错误原因套用到 TikTok；也不接受微信的成功码 200。
 
 ```csharp
+using ErDon.UnitySDK;
+using ErDon.UnitySDK.TikTok;
+
 UnitySdkHost.BeginStartup(
     new SdkConfig { Platform = "TikTok", LoginEnabled = false, StorageEnabled = true },
     new TikTokRuntime(),
     new TikTokProviderFactory("your-game-id", "test"),
     result => {
         if (!result.Success) {
-            UnityEngine.Debug.LogError(result.Error.Code + " platformCode=" + result.Error.PlatformCode);
+            UnityEngine.Debug.LogError(result.Error.Code + " / " + result.Error.Reason + " platformCode=" + result.Error.PlatformCode + " callId=" + result.CallId);
             return;
         }
-        SDK.SetStorageSync("example", "ready");
+        var stored = SDK.SetStorageSync("example", "ready");
+        if (!stored.Success)
+            UnityEngine.Debug.LogError(stored.Error.Code + " / " + stored.Error.Reason + " callId=" + stored.CallId);
     });
 ```
 

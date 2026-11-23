@@ -19,6 +19,10 @@ class SessionResponseTests
         Check(SessionResponsePolicy.Evaluate(403,new SessionResponseData{errorCode="AUTH.APP_NOT_ALLOWED"}).Error.Retry==RetryPolicy.Never,"Binding configuration failure");
         Check(SessionResponsePolicy.Evaluate(502,new SessionResponseData{errorCode="AUTH.PLATFORM_UNAVAILABLE"}).Error.Retry==RetryPolicy.Delayed,"Upstream failure");
         Check(SessionResponsePolicy.Evaluate(429,null).Error.Code=="AUTH.RATE_LIMITED","Non JSON 429 still diagnosed");
+        Check(SessionResponsePolicy.Evaluate(429,null,"37").Error.RetryAfterSeconds==37,"Server cooldown retained");
+        foreach(var invalid in new[]{"-1","+2","1.5"," 30","999999999999","Wed, 21 Oct 2015 07:28:00 GMT"})
+            Check(SessionResponsePolicy.Evaluate(429,null,invalid).Error.RetryAfterSeconds==null,"Invalid or unsupported cooldown ignored");
+        Check(SessionResponsePolicy.Evaluate(200,new SessionResponseData{session="ok"},"30").Success,"Success unaffected by cooldown header");
         Check(SessionResponsePolicy.Evaluate(401,response).Error.Code=="AUTH.SERVER_REJECTED","Wrong code-status pair ignored");
         Check(!SessionResponsePolicy.Evaluate(200,response).Success,"Contradictory success response rejected");
         Check(!SessionResponsePolicy.Evaluate(200,new SessionResponseData{session=" "}).Success,"Blank session rejected");

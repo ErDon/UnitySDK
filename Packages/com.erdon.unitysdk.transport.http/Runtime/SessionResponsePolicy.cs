@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 
 namespace ErDon.UnitySDK
 {
@@ -13,7 +14,7 @@ namespace ErDon.UnitySDK
     // The same policy is used by Unity transport and standalone contract tests.
     public static class SessionResponsePolicy
     {
-        public static LoginResult Evaluate(long status, SessionResponseData response)
+        public static LoginResult Evaluate(long status, SessionResponseData response, string retryAfter = null)
         {
             LoginResult result;
             if (status == 200) {
@@ -22,6 +23,9 @@ namespace ErDon.UnitySDK
                     : LoginResult.Ok(response.session);
             } else {
                 var error = MapError(status, response == null ? null : response.errorCode);
+                int seconds;
+                if (status == 429 && int.TryParse(retryAfter, NumberStyles.None, CultureInfo.InvariantCulture, out seconds) && seconds > 0)
+                    error.WithRetry(RetryPolicy.Delayed, seconds);
                 result = LoginResult.Fail(error);
             }
             return result.WithServerCallId(response == null ? null : response.callId);

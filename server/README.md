@@ -84,3 +84,11 @@ $env:SDK_AUTH_DB = Join-Path (Get-Location) 'data/auth.sqlite'
 此实现支持同机多个数据库连接竞争同一文件，不将 WAL 文件放在网络共享盘。多台服务器部署应实现 Redis/SQL 等共享存储；同步 SQLite 会阻塞 Node 事件循环，当前尚无高负载性能验收。过期清理在操作时执行，schema 升级、备份恢复与容量策略仍需部署验收。
 
 持久化测试覆盖关闭/重开、作用域、撤销、过期释放容量、关闭后的失败、四个 worker 独立连接并发 claim 和未知 schema 拒绝。它们不代表生产部署验收。
+
+## 会话接口限流
+
+默认每个直接连接来源每 60 秒最多 30 次请求，超限返回 HTTP 429、AUTH.RATE_LIMITED 和 Retry-After 整数秒数；限流在读取请求正文和兑换凭证前执行。客户端仅展示重试建议，不自动重试。
+
+createAuthHandler 可注入 limiter，其 take(source) 返回或异步返回 {allowed, retryAfterSeconds}。默认 MemoryRateLimiter 使用进程随机盐 HMAC 生成来源键，不存储原始 IP；最大一万个来源键，容量耗尽返回 SERVER.CAPACITY。计数只存在本进程，重启清空。
+
+不信任客户端 X-Forwarded-For。反向代理后的连接会共享代理地址额度；部署时应在受信网关实施客户端限流，并配置适配的服务端 limiter，不能直接信任转发头。多实例需共享限流实现；此参考实现不替代部署验收。

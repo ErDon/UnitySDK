@@ -50,11 +50,11 @@ namespace ErDon.UnitySDK
                     try {
                         if(request.downloadHandler.data.Length>65536)throw new FormatException();
                         var response=JsonUtility.FromJson<SessionResponseData>(request.downloadHandler.text);
-                        result=SessionResponsePolicy.Evaluate(request.responseCode,response);
+                        result=SessionResponsePolicy.Evaluate(request.responseCode,response,request.GetResponseHeader("Retry-After"));
                     }catch{
                         result=request.responseCode==200
                             ? LoginResult.Fail("AUTH.INVALID_RESPONSE","Malformed session response")
-                            : SessionResponsePolicy.Evaluate(request.responseCode,null);
+                            : SessionResponsePolicy.Evaluate(request.responseCode,null,request.GetResponseHeader("Retry-After"));
                     }
                 }
                 callback(result);

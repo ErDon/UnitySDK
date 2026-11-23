@@ -1,0 +1,1 @@
+{"name":"com.erdon.unitysdk","version":"0.1.0","displayName":"ErDon Unity SDK Core","description":"Cross-platform SDK core and Unity bridge. No real platform adapters yet.","unity":"2022.3","samples":[{"displayName":"Mock Login","description":"Editor-only login example","path":"Samples~/Login"}]}

@@ -45,7 +45,7 @@ sealed class GameSdkFactory : IPlatformSdkProviderFactory
 
 ## 导出与读取运行时配置
 
-面板的“导出运行时配置 JSON”把 Game ID、App ID、平台、生产标记及全部能力开关导出为 SdkRuntimeConfiguration，不包含 AppSecret、登录凭证或回调。文件由游戏自行纳入资源管理，不自动放入 Resources 或构建产物。导出的数据可以包含未完成的配置，运行前必须 Validate/ToSdkConfig，后者发现错误即抛异常。
+面板的“导出运行时配置 JSON”把 Game ID、App ID、平台、生产标记及全部能力开关导出为 SdkRuntimeConfiguration，不包含 AppSecret、登录凭证或回调。文件由游戏自行纳入资源管理，不自动放入 Resources 或构建产物。面板会先校验配置，无效时拒绝导出；取消文件选择不会写入文件。运行时仍须 Validate/ToSdkConfig，因为文件可能被手工修改或来自不同版本，后者发现错误即抛异常。通过配置校验不代表官方依赖、后端权限或真实平台能力已验收。
 
 ```csharp
 // configAsset 是游戏加载的 TextAsset；不要把平台密钥放入此文件。
@@ -67,11 +67,13 @@ Environment 固定映射 production/test，平台身份必须与所选择的工�
 已安装且编译启用的平台适配包会在 Unity BeforeSceneLoad 自动注册构造器；核心不引用任何平台程序集。请在游戏 Awake/Start 或更晚调用，早于注册阶段会报 CONFIG.PLATFORM_NOT_REGISTERED。
 
 ```csharp
+using ErDon.UnitySDK;
+
 var data = UnityEngine.JsonUtility.FromJson<SdkRuntimeConfiguration>(configAsset.text);
 // 示例 JSON 应关闭 login；启用时用自己的后端交换器工厂替换 null。
 UnitySdkHost.BeginConfiguredStartup(data, null, result => {
     if (!result.Success) {
-        UnityEngine.Debug.LogError(result.Error.Code + " traceId=" + result.TraceId);
+        UnityEngine.Debug.LogError(result.Error.Code + " / " + result.Error.Reason + " traceId=" + result.TraceId);
         return;
     }
     // 此时才能调用已勾选的能力。
@@ -101,6 +103,8 @@ Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面�
 新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志和 Mock 配置面板；微信/抖音/TikTok 可注入网络工厂；下面是底层接入示例。
 
 ```csharp
+using ErDon.UnitySDK;
+
 // 在 MonoBehaviour 内调用；字段保留 provider，并在 OnDestroy 中 Dispose。
 network = new UnityNetwork(this); // network 字段类型为 INetwork
 var request = new NetworkRequest("https://your-api.example.com/game/config");
@@ -131,6 +135,8 @@ Cancel 结束底层请求并回调一次取消结果；Dispose 中止所有请�
 ## 聚合网络调用
 
 ```csharp
+using ErDon.UnitySDK;
+
 // 在 MonoBehaviour 内初始化；SDK 接管 provider 所有权，不再自行 Dispose 同一实例。
 UnitySdkHost.Initialize(new SdkConfig { LoginEnabled = false, NetworkEnabled = true },
     null, networkProvider: new UnityNetwork(this));
@@ -153,14 +159,14 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 
 ## 网络 Mock 预览
 
-面板选 Mock，勾选“网络（Editor Mock）”，进入 Play Mode，选择“网络模拟结果”后重新初始化 Mock，再点击“调用 SDK.Request（不会联网）”。结果展示 HTTP 状态或统一错误码及 CallId。
+面板选 Mock，勾选“网络（可选通信工厂）”，进入 Play Mode，选择“网络模拟结果”后重新初始化 Mock，再点击“调用 SDK.Request（不会联网）”。结果展示 HTTP 状态或统一错误码及 CallId。
 
 - HttpOk：本地返回 HTTP 200 与 JSON `{"mock":true}`。
 - HttpUnauthorized：本地返回 HTTP 401，Success=true、IsHttpSuccess=false，用于验证业务对 HTTP 状态的处理。
 - ConnectionFailed：返回 NETWORK.UNAVAILABLE。
 - Timeout：保持请求等待，面板使用“预览等待上限（秒）”设置；点击“取消最近一次网络请求”可提前返回 NETWORK.CANCELLED。
 
-取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；真实平台开启网络必须注入工厂；未实现的数据上报继续拒绝。
+取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；真实平台开启网络必须注入工厂。数据上报使用独立能力开关，平台后台是否收到事件需要另行验证。
 
 ### 真实平台可选网络工厂
 

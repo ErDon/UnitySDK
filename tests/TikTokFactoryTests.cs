@@ -12,7 +12,7 @@ class TikTokFactoryTests {
   int created=0;MockExchange exchange=null;
   var factory=new TikTokProviderFactory("game","test",()=>{created++;return exchange=new MockExchange();});
   Check(created==0,"constructor creates no exchange");
-  SDK.InitializeWithFactory(new SdkConfig{Platform="TikTok",LoginEnabled=false,StorageEnabled=true,ShareEnabled=true},factory,action=>action(),(l,s)=>{});
+  SDK.InitializeWithFactory(new SdkConfig{Platform="TikTok",LoginEnabled=false,StorageEnabled=true,ShareEnabled=true,RewardedAdsEnabled=true},factory,action=>action(),(l,s)=>{});
   Check(created==0,"disabled login never creates exchange");SDK.Shutdown();
   SDK.InitializeWithFactory(new SdkConfig{Platform="TikTok"},factory,action=>action(),(l,s)=>{});
   Check(created==1,"enabled login creates exchange");SDK.Shutdown();Check(exchange.Disposes==1,"SDK owns exchange");

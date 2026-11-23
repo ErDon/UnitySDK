@@ -1,6 +1,6 @@
 # 激励广告（聚合接口与 Editor 预览）
 
-新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/微信/抖音映射广告开关。TikTok 的广告配置继续明确拒绝；真实平台自动装配和构建仍未开放。
+新增 IRewardedAds.Show(RewardedAdRequest, callback) 与 DouyinRewardedAds，参数为 AdUnitId。底层适配在主线程、官方运行时初始化成功后使用。已接 SDK 聚合入口、抖音模块工厂及统一超时；面板已提供 Editor Mock 预览，运行时 JSON 对 Mock/微信/抖音/TikTok映射广告开关。真实平台自动装配和构建仍未开放。
 
 抖音 6.9.7 使用 TT.CreateRewardedVideoAd(CreateRewardedVideoAdParam)，关闭 Multiton，再订阅 OnLoad/OnError/OnClose 后 Load。加载完成调用一次 Show；关闭时根据官方 complete 布尔值返回 Completed。Error 只有数字码进入 PlatformCode，自由文本不回传。随包 ttsdk.xml 明确 IsComplete 表示播放完成；不把所有 OnClose 都视为完整观看。
 
@@ -35,7 +35,7 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 }, timeoutMilliseconds: 120000);
 ```
 
-关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 WeChatProviderFactory 和 DouyinProviderFactory 已支持；TikTok 工厂暂未支持广告，开启会明确拒绝初始化。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
+关闭 RewardedAdsEnabled 时，工厂不会创建广告 provider，调用返回 MODULE.DISABLED。当前 WeChatProviderFactory、DouyinProviderFactory 和 TikTokProviderFactory 均支持广告按需创建。默认等待 120 秒，UnitySdkHost 自动驱动超时；SDK.CancelRewardedAd 只取消本地等待，不保证关闭平台广告 UI 或停止底层广告流程。取消/超时后底层尚有广告活动时，后续调用可能仍返回 ADS.IN_PROGRESS，直到关闭或重新初始化释放 provider。
 
 结果含 CallId/TraceId，错误 Stage=RewardedAd、Operation=SDK.ShowRewardedAd。日志不输出广告位内容，完整观看和提前关闭分别记录 Completed/ClosedEarly。与支付/分享的并发状态独立；旧回调和重复终态不会覆盖新调用。此处仍不提供服务端奖励验证或重复领奖保护。
 
@@ -57,3 +57,9 @@ SDK.ShowRewardedAd(new RewardedAdRequest("your-ad-unit-id"), result => {
 随包 wx-runtime.xml 对 WXRewardedVideoAdOnCloseResponse.isEnded 的说明为完整观看后关闭。只有收到非空关闭响应且 isEnded=true 才报告 Completed；空响应返回 ADS.INVALID_RESULT。提前关闭正常返回 Completed=false。终态解绑并销毁；释放后忽略迟到回调。每次流程独立创建；不要与其他广告插件同时操作同类平台实例。
 
 `tests/run-wechat-factory-tests.ps1` 现在同时编译并执行广告测试：使用官方 wx-runtime-editor.dll 和隔离工程生成的 Wx.dll，注入广告事件验证加载/展示顺序、重复事件、并发、提前关闭、完整观看、错误数字码及释放。它不证明真实广告位授权、填充、收入或奖励验证；这些仍需真机验收。
+
+## TikTok 适配
+
+`TikTokRewardedAds` 针对本地 `1.1.6-Release` 的 TTSDK Runtime/Editor 两套 DLL 编译。CreateRewardedVideoAdParam 只有 AdUnitId，RewardedAdClosedDelegate 只有 bool 参数，与抖音的参数形态不同。订阅 OnLoad/OnError/OnClose 后 Load，加载成功调用 Show；关闭回调布尔值映射 Completed，提前关闭不视为完整观看。错误保留数值码，不传递原始消息。
+
+本地插件 JS 将 isEnded 转发给关闭回调，作为此次字段映射的来源；该本地插件含项目定制，尚未核验干净官方发行包的完整性，不能据此声称官方原包或线上行为已验收。`tests/run-tiktok-tests.ps1` 分别编译 Runtime/Editor DLL 并注入广告生命周期测试。尚需干净插件工程集成、真实客户端版本能力、广告位授权、填充和奖励验证。

@@ -3,7 +3,7 @@ using System;
 namespace ErDon.UnitySDK.TikTok
 {
     /// <summary>Use only after official TTSDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class TikTokProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory
+    public sealed class TikTokProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory
     {
         public string Platform { get { return "TikTok"; } }
         readonly string gameId;
@@ -29,6 +29,7 @@ namespace ErDon.UnitySDK.TikTok
             catch { try { exchange.Dispose(); } catch { } throw; }
         }
         public IStorage CreateStorage() { return new TikTokStorage(gameId, environment); }
+        public IRewardedAds CreateRewardedAds() { return new TikTokRewardedAds(); }
         public IShare CreateShare() { return new TikTokShare(); }
     }
 }

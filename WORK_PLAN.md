@@ -50,7 +50,8 @@
 - [x] TikTok 激励广告接口、工厂及配置映射；Runtime/Editor DLL 编译与注入行为测试。
 - [ ] 三平台激励广告真机验证及 TikTok 干净官方插件集成。
 - [x] 网络请求/响应契约、数据快照和接收大小限制测试；Unity HTTP 底层实现编译。
-- [ ] 通用网络聚合/配置/日志接入及真实请求、取消和平台验证。
+- [x] Unity 网络取消、释放抑制回调、宿主不可用和连接超时的本机 Play Mode 检查。
+- [ ] 通用网络聚合/配置/日志接入、正常 HTTPS 响应及小游戏平台验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -479,3 +480,9 @@ Unity SubsystemRegistration 清理上轮启动任务、宿主队列和 SDK 所�
 增加 INetwork/INetworkOperation、不可变请求快照和 HTTP 状态响应模型；HTTP 4xx/5xx 与连接失败分开。UnityNetwork 支持取消、释放抑制回调、不重定向、响应分块大小限制；不把 Unity 原始错误文本带出。暂未开放配置 network 开关，聚合日志和平台网络接入仍待完成。
 
 新增 NetworkContractTests 覆盖 URL/方法/头校验、请求及结果快照、HTTP 状态语义和流式超限；公共回归通过。隔离 Unity network-provider.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0。真实 HTTPS 和请求生命周期联调尚未完成，不能用编译替代。配置文档补底层示例和所有已定义错误。
+
+### 网络请求生命周期的实际 Unity 验证
+
+新增 NetworkPlayChecks，在隔离 Unity Play Mode 启动仅监听本机回环地址的临时 TCP 端口，不访问外部服务、不绕过证书。用不完成 TLS 的连接验证 UnityWebRequest 实际超时；验证立即取消及重复取消只有一次回调、多个在途请求 Dispose 后不回调、Dispose 后新请求拒绝、宿主失活拒绝。
+
+network-play.log 输出 SDK_NETWORK_PLAY_PASS，无 C# 错误。该检查证明请求终止与回调抑制边界，不证明正常 HTTPS 内容、平台域名白名单、真机桥接或响应大小在平台网络栈上的表现。

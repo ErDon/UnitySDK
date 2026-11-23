@@ -1,0 +1,67 @@
+using System;
+using System.Net;
+using System.Net.Sockets;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEngine;
+[InitializeOnLoad]
+public static class NetworkPlayChecks
+{
+    const string Key="ErDon.Tests.NetworkPlay";
+    static TcpListener listener;
+    static UnityNetwork network;
+    static int cancelled, late, failed;
+    static double deadline, observeUntil;
+    static bool finished;
+    static NetworkPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+    public static void Run(){SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
+    static void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+    static void Changed(PlayModeStateChange state)
+    {
+        if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+        try {
+            deadline=EditorApplication.timeSinceStartup+15;
+            UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false},null);
+            var host=UnityEngine.Object.FindObjectOfType<UnitySdkHost>();
+            // Local listener intentionally never completes TLS. No remote service or certificate bypass.
+            listener=new TcpListener(IPAddress.Loopback,0);listener.Start();
+            int port=((IPEndPoint)listener.LocalEndpoint).Port;
+            var request=new NetworkRequest("https://127.0.0.1:"+port+"/test",timeoutSeconds:1);
+            network=new UnityNetwork(host);
+            var operation=network.Send(request,r=>{Check(r.Error!=null&&r.Error.Code=="NETWORK.CANCELLED","cancel result");cancelled++;});
+            operation.Cancel();operation.Cancel();Check(cancelled==1,"cancel must notify once");
+            var first=network.Send(request,r=>late++);
+            network.Send(request,r=>late++);
+            network.Dispose();network.Dispose();first.Cancel();Check(late==0,"dispose suppresses callbacks");
+            NetworkResult disposed=null;network.Send(request,r=>disposed=r).Cancel();
+            Check(disposed.Error.Code=="SDK.DISPOSED","disposed rejects new request");
+            host.gameObject.SetActive(false);
+            using(var inactive=new UnityNetwork(host)){
+                NetworkResult result=null;inactive.Send(request,r=>result=r);
+                Check(result.Error.Code=="NETWORK.HOST_UNAVAILABLE","inactive host rejection");
+            }
+            host.gameObject.SetActive(true);
+            network=new UnityNetwork(host);
+            // The listener accepts TCP but never speaks TLS: Unity's configured timeout must complete.
+            network.Send(request,r=>{
+                Check(!r.Success&&r.Error.Code=="NETWORK.UNAVAILABLE","timeout maps to safe connection failure");
+                failed++;observeUntil=EditorApplication.timeSinceStartup+0.3;
+            });
+            EditorApplication.update+=Step;
+        }catch(Exception e){Finish(false,e.Message);}
+    }
+    static void Step()
+    {
+        if(finished)return;
+        if(EditorApplication.timeSinceStartup>deadline){Finish(false,"request did not terminate");return;}
+        if(failed==0||EditorApplication.timeSinceStartup<observeUntil)return;
+        Finish(cancelled==1&&late==0&&failed==1,"cancel/dispose/timeout callback counts");
+    }
+    static void Finish(bool success,string message)
+    {
+        if(finished)return;finished=true;SessionState.SetBool(Key,false);EditorApplication.update-=Step;
+        if(network!=null)network.Dispose();if(listener!=null)listener.Stop();UnitySdkHost.Shutdown();
+        if(success)Debug.Log("SDK_NETWORK_PLAY_PASS");else Debug.LogError("SDK_NETWORK_PLAY_FAIL: "+message);
+        EditorApplication.Exit(success?0:1);
+    }
+}

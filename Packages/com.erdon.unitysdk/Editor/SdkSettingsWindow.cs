@@ -53,6 +53,7 @@ namespace ErDon.UnitySDK.Editor
         string storageKey = "preview.key", storageValue = "preview-value";
         [MenuItem("Tools/ErDon SDK/配置与预览")]
         public static void Open() { GetWindow<SdkSettingsWindow>("SDK 配置"); }
+        void OnEnable() { minSize = new Vector2(480, 600); }
         void OnGUI()
         {
             var settings = SdkProjectSettings.instance;
@@ -66,10 +67,10 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("能力模块", EditorStyles.boldLabel);
             settings.login = EditorGUILayout.Toggle("登录", settings.login);
-            settings.rewardedAds = EditorGUILayout.Toggle("激励广告（Editor Mock）", settings.rewardedAds);
+            settings.rewardedAds = EditorGUILayout.Toggle("激励广告", settings.rewardedAds);
             settings.payments = EditorGUILayout.Toggle("支付（Editor Mock）", settings.payments);
-            settings.share = EditorGUILayout.Toggle("分享（Editor Mock）", settings.share);
-            settings.storage = EditorGUILayout.Toggle("存储（Editor Mock）", settings.storage);
+            settings.share = EditorGUILayout.Toggle("分享", settings.share);
+            settings.storage = EditorGUILayout.Toggle("存储", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（可选通信工厂）", settings.network);
             settings.analytics = EditorGUILayout.Toggle("数据上报", settings.analytics);
             if (EditorGUI.EndChangeCheck()) settings.SaveSettings();
@@ -77,7 +78,16 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("配置预览", EditorStyles.boldLabel);
             EditorGUILayout.LabelField("核心包", "com.erdon.unitysdk 0.1.0");
             EditorGUILayout.LabelField("平台实现", settings.platform == DistributionPlatform.Mock ? "Editor 示例；非真实服务" : "按平台包自动注册；需安装官方依赖");
-            EditorGUILayout.LabelField("登录开关", settings.login ? "Mock 初始化时启用" : "Mock 初始化时关闭");
+            var enabled = new List<string>();
+            if (settings.login) enabled.Add("登录");
+            if (settings.rewardedAds) enabled.Add("激励广告");
+            if (settings.payments) enabled.Add("支付");
+            if (settings.share) enabled.Add("分享");
+            if (settings.storage) enabled.Add("存储");
+            if (settings.network) enabled.Add("网络");
+            if (settings.analytics) enabled.Add("数据上报");
+            EditorGUILayout.LabelField("启用模块", enabled.Count == 0 ? "无" : string.Join("、", enabled.ToArray()), EditorStyles.wordWrappedLabel);
+            EditorGUILayout.HelpBox("预览显示下一次初始化使用的配置；修改开关后需重新初始化。关闭模块不会创建对应能力实例。", MessageType.Info);
             EditorGUILayout.HelpBox("官方依赖需按目标平台独立安装。此预览不是依赖安装检查或构建产物裁剪证明。", MessageType.Info);
             foreach (var issue in settings.Validate()) EditorGUILayout.HelpBox(issue, MessageType.Error);
             foreach (var issue in SdkBuildGuard.CheckDefines(settings.platform.ToString())) EditorGUILayout.HelpBox(issue, MessageType.Error);

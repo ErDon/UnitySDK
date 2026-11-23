@@ -109,6 +109,7 @@ namespace ErDon.UnitySDK
         public bool PayEnabled;
         public bool RewardedAdsEnabled;
         public bool NetworkEnabled;
+        public bool AnalyticsEnabled;
         public Action<SdkLogLevel, string> LogCallback;
     }
     public interface ISdkProviderFactory
@@ -127,6 +128,8 @@ namespace ErDon.UnitySDK
         public static string ActivePlatform { get { return config == null ? null : config.Platform; } }
         static IAuth auth;
         static IStorage storage;
+        static IAnalytics analytics;
+        static bool callingAnalytics;
         static IShare share;
         static IRewardedAds ads;
         static bool showingAd;
@@ -152,13 +155,14 @@ namespace ErDon.UnitySDK
             EnsureNotLogging();
             if (settings == null || factory == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
             var snapshot = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled,
-                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, NetworkEnabled = settings.NetworkEnabled, LogCallback = settings.LogCallback };
+                StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, NetworkEnabled = settings.NetworkEnabled, AnalyticsEnabled = settings.AnalyticsEnabled, LogCallback = settings.LogCallback };
             IAuth createdAuth = null;
             IStorage createdStorage = null;
             IShare createdShare = null;
             IPay createdPay = null;
             IRewardedAds createdAds = null;
             INetwork createdNetwork = null;
+            IAnalytics createdAnalytics = null;
             changingLifecycle = true;
             try {
                 var platformFactory = factory as IPlatformSdkProviderFactory;
@@ -197,6 +201,12 @@ namespace ErDon.UnitySDK
                         throw new InvalidOperationException("Enabled network has no provider");
                     if(IsOwned(createdNetwork))throw new InvalidOperationException("Factory must return a fresh provider");
                 }
+                if (snapshot.AnalyticsEnabled) {
+                    var analyticsFactory = factory as IAnalyticsProviderFactory;
+                    if (analyticsFactory == null || (createdAnalytics = analyticsFactory.CreateAnalytics()) == null)
+                        throw new InvalidOperationException("Enabled analytics has no provider");
+                    if (IsOwned(createdAnalytics)) throw new InvalidOperationException("Factory must return a fresh provider");
+                }
                 if (snapshot.PayEnabled) {
                     var payFactory = factory as IPayProviderFactory;
                     if (payFactory == null || (createdPay = payFactory.CreatePay(mainThreadDispatch)) == null)
@@ -211,29 +221,30 @@ namespace ErDon.UnitySDK
                 if (!ReferenceEquals(createdPay, createdAuth) && !ReferenceEquals(createdPay, createdStorage) && !ReferenceEquals(createdPay, createdShare)) DisposeUnowned(createdPay);
                 if (!ReferenceEquals(createdAds, createdAuth) && !ReferenceEquals(createdAds, createdStorage) && !ReferenceEquals(createdAds, createdShare) && !ReferenceEquals(createdAds, createdPay)) DisposeUnowned(createdAds);
                 if (!ReferenceEquals(createdNetwork,createdAuth) && !ReferenceEquals(createdNetwork,createdStorage) && !ReferenceEquals(createdNetwork,createdShare) && !ReferenceEquals(createdNetwork,createdPay) && !ReferenceEquals(createdNetwork,createdAds)) DisposeUnowned(createdNetwork);
+                if (!ReferenceEquals(createdAnalytics,createdAuth) && !ReferenceEquals(createdAnalytics,createdStorage) && !ReferenceEquals(createdAnalytics,createdShare) && !ReferenceEquals(createdAnalytics,createdPay) && !ReferenceEquals(createdAnalytics,createdAds) && !ReferenceEquals(createdAnalytics,createdNetwork)) DisposeUnowned(createdAnalytics);
                 throw;
             } finally { changingLifecycle = false; }
-            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare, createdPay, createdAds, createdNetwork);
+            Initialize(snapshot, createdAuth, mainThreadDispatch, engineLog, createdStorage, createdShare, createdPay, createdAds, createdNetwork, createdAnalytics);
         }
         static bool IsOwned(IDisposable provider)
-        { return provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share) || ReferenceEquals(provider, pay) || ReferenceEquals(provider, ads) || ReferenceEquals(provider, network)); }
+        { return provider != null && (ReferenceEquals(provider, auth) || ReferenceEquals(provider, storage) || ReferenceEquals(provider, share) || ReferenceEquals(provider, pay) || ReferenceEquals(provider, ads) || ReferenceEquals(provider, network) || ReferenceEquals(provider, analytics)); }
         static void DisposeUnowned(IDisposable provider)
         {
             if (provider == null || IsOwned(provider)) return;
             try { provider.Dispose(); } catch { /* Preserve the original factory failure. */ }
         }
         public static void Initialize(SdkConfig settings, IAuth provider,
-            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null, INetwork networkProvider = null)
+            Action<Action> mainThreadDispatch, Action<SdkLogLevel, string> engineLog, IStorage storageProvider = null, IShare shareProvider = null, IPay payProvider = null, IRewardedAds adsProvider = null, INetwork networkProvider = null, IAnalytics analyticsProvider = null)
         {
             EnsureNotLogging();
             if (settings == null || mainThreadDispatch == null || engineLog == null) throw new ArgumentNullException();
-            if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider) || IsOwned(adsProvider) || IsOwned(networkProvider))
+            if (IsOwned(provider) || IsOwned(storageProvider) || IsOwned(shareProvider) || IsOwned(payProvider) || IsOwned(adsProvider) || IsOwned(networkProvider) || IsOwned(analyticsProvider))
                 throw new ArgumentException("Reinitialization requires a new provider; the SDK owns the previous provider");
             changingLifecycle = true;
             try {
                 ResetCore();
-                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, NetworkEnabled = settings.NetworkEnabled, LogCallback = settings.LogCallback };
-                auth = provider; storage = storageProvider; share = shareProvider; pay = payProvider; ads = adsProvider; network = networkProvider; dispatch = mainThreadDispatch; fallback = engineLog;
+                config = new SdkConfig { Platform = settings.Platform, LoginEnabled = settings.LoginEnabled, StorageEnabled = settings.StorageEnabled, ShareEnabled = settings.ShareEnabled, PayEnabled = settings.PayEnabled, RewardedAdsEnabled = settings.RewardedAdsEnabled, NetworkEnabled = settings.NetworkEnabled, AnalyticsEnabled = settings.AnalyticsEnabled, LogCallback = settings.LogCallback };
+                auth = provider; storage = storageProvider; share = shareProvider; pay = payProvider; ads = adsProvider; network = networkProvider; analytics = analyticsProvider; dispatch = mainThreadDispatch; fallback = engineLog;
                 Log(SdkLogLevel.Info, "SDK.Initialize", Guid.NewGuid().ToString("N"), "Complete", "{}", "Success");
             } finally { changingLifecycle = false; }
         }
@@ -241,6 +252,7 @@ namespace ErDon.UnitySDK
         {
             if (writingLog) throw new InvalidOperationException("SDK operations cannot be invoked from the log sink");
             if (changingLifecycle) throw new InvalidOperationException("SDK operations cannot be invoked while initializing or disposing providers");
+            if (callingAnalytics) throw new InvalidOperationException("SDK operations cannot be reentered from an analytics provider");
             if (callingStorage) throw new InvalidOperationException("SDK operations cannot be reentered from a storage provider");
         }
         internal static void CheckHostLifecycleEntry() { EnsureNotLogging(); }
@@ -547,7 +559,7 @@ namespace ErDon.UnitySDK
             showingAd = false; cancelAd = null; checkAdTimeout = null;
             paying = false; cancelPay = null; checkPayTimeout = null;
             checkTimeout = null;
-            var old = auth; var oldStorage = storage; var oldShare = share; var oldPay = pay; var oldAds = ads; var oldNetwork = network; network = null; ads = null; auth = null; storage = null; share = null; pay = null; dispatch = null;
+            var old = auth; var oldStorage = storage; var oldShare = share; var oldPay = pay; var oldAds = ads; var oldNetwork = network; var oldAnalytics = analytics; analytics = null; network = null; ads = null; auth = null; storage = null; share = null; pay = null; dispatch = null;
             string call = Guid.NewGuid().ToString("N");
             bool failed = false;
             if (old != null) {
@@ -574,6 +586,9 @@ namespace ErDon.UnitySDK
             }
             if(oldNetwork!=null && !ReferenceEquals(oldNetwork,old) && !ReferenceEquals(oldNetwork,oldStorage) && !ReferenceEquals(oldNetwork,oldShare) && !ReferenceEquals(oldNetwork,oldPay) && !ReferenceEquals(oldNetwork,oldAds)) {
                 try{oldNetwork.Dispose();}catch{failed=true;Log(SdkLogLevel.Error,"SDK.Shutdown",call,"DisposeNetwork","{}","SDK.DISPOSE_FAILED");}
+            }
+            if(oldAnalytics!=null && !ReferenceEquals(oldAnalytics,old) && !ReferenceEquals(oldAnalytics,oldStorage) && !ReferenceEquals(oldAnalytics,oldShare) && !ReferenceEquals(oldAnalytics,oldPay) && !ReferenceEquals(oldAnalytics,oldAds) && !ReferenceEquals(oldAnalytics,oldNetwork)) {
+                try{oldAnalytics.Dispose();}catch{failed=true;Log(SdkLogLevel.Error,"SDK.Shutdown",call,"DisposeAnalytics","{}","SDK.DISPOSE_FAILED");}
             }
             if (config != null) Log(failed ? SdkLogLevel.Warning : SdkLogLevel.Info, "SDK.Shutdown", call, "Complete", "{}", failed ? "CompletedWithDisposeError" : "Success");
             config = null;

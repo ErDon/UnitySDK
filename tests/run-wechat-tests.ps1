@@ -11,7 +11,7 @@ try {
     Copy-Item -LiteralPath $dll -Destination $testDirectory
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
     if(!(Test-Path -LiteralPath $NetStandardFacade)){throw 'Provide -NetStandardFacade for the .NET Framework netstandard facade'}
-    & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\wechat\WeChatCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk.wechat\Runtime\WeChatCredentialProvider.cs .\tests\WeChatCredentialTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs .\Packages\com.erdon.unitysdk\Runtime\Network.cs .\Packages\com.erdon.unitysdk\Runtime\SDKNetwork.cs
+    & $compiler /nologo "/reference:$dll" "/reference:$NetStandardFacade" /out:.tests\wechat\WeChatCredentialTests.exe .\Packages\com.erdon.unitysdk\Runtime\SDK.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedAuth.cs .\Packages\com.erdon.unitysdk.wechat\Runtime\WeChatCredentialProvider.cs .\tests\WeChatCredentialTests.cs .\Packages\com.erdon.unitysdk\Runtime\Orders.cs .\Packages\com.erdon.unitysdk\Runtime\VerifiedPayment.cs .\Packages\com.erdon.unitysdk\Runtime\RewardedAds.cs .\Packages\com.erdon.unitysdk\Runtime\Network.cs .\Packages\com.erdon.unitysdk\Runtime\SDKNetwork.cs .\Packages\com.erdon.unitysdk\Runtime\Analytics.cs .\Packages\com.erdon.unitysdk\Runtime\SDKAnalytics.cs
     if($LASTEXITCODE -ne 0){throw 'WeChat compile failed'}
     & .\.tests\wechat\WeChatCredentialTests.exe
     if($LASTEXITCODE -ne 0){throw 'WeChat tests failed'}

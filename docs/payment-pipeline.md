@@ -45,6 +45,16 @@ if (!checked.valid) {
 
 Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游戏幂等发货接收方完成后续步骤；本方法不发放权益、不自动查询上游订单，HTTP 由下述 handler 承接。预支付记录仍须来自可信平台下单响应，不能开放 register 给客户端。新增测试覆盖 Paid/重启/已发货重复通知、签名正确但换单/换用户、两连接重复通知及第二笔交易冲突，不代表真实平台沙盒或生产验收。
 
+## TikTok 预支付传输客户端
+
+`createTikTokTradeClient`（server/src/tiktok-trade-client.mjs）的 `create` 接收服务器 accessToken、tokenAmount、orderId、productId、productName、orderUrl、quantity、quantityUnit、imageUrl。依照 [官方支付 API](https://developers.tiktok.com/docs/en/minis-payment-apis)固定向 TikTok HTTPS 创建订单地址发 POST，token_type 为 BEANS，禁止重定向；仅返回冻结的 tradeOrderId。
+
+这只是服务器传输组件，调用方必须从可信商品配置和登录令牌保管服务取值，不能转发客户端金额或令牌。当前登录验证器仍只保留身份，不保管平台 token；该客户端尚未与登录、下单尝试持久化和 Unity 收银台接通。
+
+本地参数错误在请求前拒绝；响应限制 16 KiB，默认请求超时 8 秒。401 返回 PAY.PLATFORM_TOKEN_REJECTED；网络异常、其他非成功 HTTP、业务错误或无效响应统一为 PAY.PREPAYMENT_UNCERTAIN，不输出平台正文或密钥。结果不确定时禁止自动重新创建订单；需要持久化尝试状态和对账，不能推断“平台未下单”。拿到平台单号后也必须可靠保存关联，不能因保存失败就重新下单。
+
+`test/tiktok-trade-client.test.mjs` 使用注入响应检查端点、字段、参数拒绝、响应上限和不重试。没有访问真实支付接口，商户权限、令牌保管、档位校验及真实平台验收仍待完成。
+
 ## HTTP 通知入口装配
 
 `createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。

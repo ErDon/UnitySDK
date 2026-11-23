@@ -6,6 +6,7 @@
 - [整体架构与设计图](docs/architecture.md)
 - [错误码与诊断规范](docs/errors.md)
 - [迭代与验收计划](docs/roadmap.md)
+- [版本与验证矩阵](compatibility/README.md)
 
 原则：模块可选、配置可预览、每个公开接口有文档与可运行示例；依赖版本可锁定；不依赖任何特定游戏的业务框架。第一阶段支持 Unity，保留跨引擎协议边界，不提前实现 Godot。
 

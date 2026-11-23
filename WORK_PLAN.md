@@ -127,6 +127,12 @@
 
 ## 2026-11-24 执行记录
 
+### 广告与支付面板实际交互验收（部分）
+
+在独立 UnityProject 配置面板实际勾选广告、支付，观察配置预览同步出现两项能力；进入 Play Mode 后按配置初始化 Mock。点击广告显示“Mock 完整观看（非发奖凭证）”与 CallId；点击支付 Fulfilled 显示“Mock 已发货（非真实支付）”与 CallId。通过下拉菜单改为 Pending 并重新初始化后，支付返回 PAY.FULFILLMENT_PENDING、Payment verified; server delivery is pending 原因和 CallId，没有显示已发货。退出 Play Mode 后业务按钮禁用。
+
+面板观察与 .tests/panel-visual.log 对应：广告 7e4a3f21475d459fb9e112be6a17a8e8 为 Completed，支付 0bcf5f7b0fb44ec5809e9775c142cff2 为 Fulfilled，支付 8a9f051e498b4116a1f7b32d2971ece7 为 PAY.FULFILLMENT_PENDING；每项有 Start/Complete、时间、脱敏参数及不同 logId。此次只执行 Editor Mock，无真实交易或广告请求。其他广告/支付模拟分支、取消和完整面板交互尚待验收，整体保持 65/78。
+
 ### TikTok 压缩 Wasm 与数据包内容核对
 
 将既有 TikTok 资源导出的两个 Brotli 文件解压到独立审查目录，未修改导出：Wasm 30,717,797 字节、数据包 4,725,909 字节。字面检查发现 Douyin 命名符号，随后对照官方 1.1.6 原件清单核验的 Runtime/Editor DLL，确认 ShowDouyinOpenAuth、HasBoundDouyin、IsFollowDouyin 也存在于 TikTok 官方程序集，不能仅据名称判定混入抖音插件。

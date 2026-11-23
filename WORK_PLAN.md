@@ -56,3 +56,11 @@ Editor 检查源码保存在 tests/SdkEditorChecks.cs.txt，可复制到空白�
 新增独立平台清单策略、UPM 包版本匹配、Player 程序集检查和 BuildReport 来源审计。测试覆盖非目标程序集、JS/资源、路径边界、目录跳转、浮动版本。审计目前仅针对登记内容，原生二进制/最终合并 JS/StreamingAssets 完整覆盖待实现，尚无真实平台裁剪验收证据。
 
 隔离增量验证：核心测试、独立隔离策略测试通过；Unity 2022.3 编辑器批处理输出 SDK_EDITOR_CHECKS_PASS 并正常 exit 0。未执行真实目标平台构建。
+
+### 登录凭证与服务端会话分离
+
+新增 IPlatformCredentialProvider、ISessionExchange、VerifiedAuth：平台 code 必须经服务端交换才返回会话；拒绝空会话、重复授权/交换回调，释放后不派发旧结果。错误区分 PlatformAuthorization 与 SessionExchange。
+
+新增可选 UPM 包 com.erdon.unitysdk.transport.http，使用 HTTPS POST 交换协议，禁止重定向和凭证日志；核心不强制依赖 UnityWebRequest。网络请求未做实际 HTTPS 联调，取消 SDK 本地等待不保证取消服务端处理。
+
+验证：tests/run-all-tests.ps1 的核心、登录编排及隔离测试全部通过。Unity 双包导入/编译、Editor 检查通过并退出码0。官方凭证适配、服务端真实校验、真机登录仍未完成。

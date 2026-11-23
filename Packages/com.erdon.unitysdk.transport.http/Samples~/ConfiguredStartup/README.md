@@ -26,4 +26,6 @@ SDK 日志未指定上层回调，因此走默认 Unity 输出；会话和凭证
 
 ## 验证范围
 
-本示例已用 Unity 2022.3.14f1c1 的实际核心/HTTP 程序集及 Unity 类型编译，覆盖默认编译和排除登录/网络的编译分支。未将编译成功视为真实平台启动、后端兑换或独立游戏全流程验收。
+本示例已用 Unity 2022.3.14f1c1 的实际核心/HTTP 程序集及 Unity 类型编译，覆盖默认编译和排除登录/网络的编译分支。另在独立 Unity 工程以真实组件运行 Play Mode，使用平台注册替身验证 JSON 游戏/环境绑定、启动前拒绝登录、启动不自动登录、重复组件不抢占或关闭 SDK、成功后按钮登录、会话不写日志及所属组件销毁清理。未将这些结果视为真实平台启动、后端兑换或独立游戏全流程验收。
+
+可将仓库 `tests/ConfiguredSamplePlayChecks.cs.txt` 复制为隔离工程的 `Assets/Editor/ConfiguredSamplePlayChecks.cs`，并导入本示例，以 `-executeMethod ConfiguredSamplePlayChecks.Run` 运行（不要传 `-quit`）。测试会新建空场景、进入 Play Mode 并自行退出 Unity，只能在独立测试工程执行，不能在业务工程运行。成功标记为 `SDK_CONFIGURED_SAMPLE_PLAY_PASS`。

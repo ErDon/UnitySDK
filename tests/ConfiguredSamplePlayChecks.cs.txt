@@ -1,0 +1,101 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+// Copy with the imported ConfiguredSdkExample into an isolated core+HTTP project.
+// Tests the actual sample component; fake platform registration sends no HTTP.
+[InitializeOnLoad]
+public static class ConfiguredSamplePlayChecks {
+    const string Key = "ErDon.Tests.ConfiguredSample";
+    sealed class Runtime : IPlatformRuntime {
+        public string Platform { get { return "WeChat"; } }
+        public bool IsReady { get { return true; } }
+        public Action<SdkError> Done;
+        public int Disposes;
+        public void Initialize(Action<SdkError> callback) { Done = callback; }
+        public void Dispose() { Disposes++; }
+    }
+    sealed class Auth : IAuth {
+        public int Calls, Disposes;
+        public void Login(Action<LoginResult> callback) { Calls++; callback(LoginResult.Ok("sample-test-secret")); }
+        public void Dispose() { Disposes++; }
+    }
+    sealed class Factory : IPlatformSdkProviderFactory {
+        public string Platform { get { return "WeChat"; } }
+        public IAuth CreateAuth(Action<Action> dispatch) { return auth; }
+        public IStorage CreateStorage() { throw new Exception("Storage was disabled"); }
+    }
+    static Runtime runtime;
+    static Auth auth;
+    static ConfiguredSdkExample sample, duplicate;
+    static int phase, frames, factories;
+    static bool sessionFactorySupplied, leakedSession;
+    static double deadline;
+    static ConfiguredSamplePlayChecks() { EditorApplication.playModeStateChanged += Changed; }
+    public static void Run() {
+        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        SessionState.SetBool(Key, true);
+        EditorApplication.isPlaying = true;
+    }
+    static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
+    static void Changed(PlayModeStateChange state) {
+        if (state != PlayModeStateChange.EnteredPlayMode || !SessionState.GetBool(Key, false)) return;
+        SessionState.SetBool(Key, false);
+        runtime = new Runtime(); auth = new Auth(); phase = frames = factories = 0;
+        sessionFactorySupplied = leakedSession = false;
+        Application.logMessageReceived += Log;
+        SdkPlatformRegistry.Register("WeChat", () => runtime, (game, environment, exchange) => {
+            Check(game == "sample-game" && environment == "test", "JSON binding mismatch");
+            factories++; sessionFactorySupplied = exchange != null; return new Factory();
+        });
+        sample = Create(); deadline = EditorApplication.timeSinceStartup + 30;
+        EditorApplication.update += Step;
+    }
+    static ConfiguredSdkExample Create() {
+        var component = new GameObject("Sample probe").AddComponent<ConfiguredSdkExample>();
+        component.configurationJson = new TextAsset(JsonUtility.ToJson(new SdkRuntimeConfiguration {
+            platform = "WeChat", gameId = "sample-game", appId = "sample-app", login = true
+        }));
+        component.sessionEndpoint = "https://example.invalid/session";
+        return component;
+    }
+    static void Log(string text, string stack, LogType type) { if (text.Contains("sample-test-secret")) leakedSession = true; }
+    static void Next() { phase++; frames = 0; }
+    static void Step() {
+        try {
+            if (EditorApplication.timeSinceStartup > deadline) throw new Exception("sample test deadline");
+            if (++frames < 4) return;
+            if (phase == 0) {
+                if (runtime.Done == null) return;
+                Check(factories == 1 && sessionFactorySupplied && auth.Calls == 0, "startup did not stay login-idle");
+                sample.LoginFromGame(); Check(auth.Calls == 0, "login ran before ready");
+                duplicate = Create(); Next();
+            } else if (phase == 1) {
+                Check(!duplicate.enabled && factories == 1, "duplicate initialized SDK");
+                UnityEngine.Object.Destroy(duplicate.gameObject); Next();
+            } else if (phase == 2) {
+                Check(runtime.Disposes == 0 && auth.Disposes == 0, "duplicate destroyed owner's pending startup");
+                runtime.Done(null); Next();
+            } else if (phase == 3) {
+                if (SDK.ActivePlatform != "WeChat") return;
+                Check(runtime.Disposes == 1 && auth.Calls == 0, "startup cleanup or automatic login mismatch");
+                sample.LoginFromGame(); Next();
+            } else if (phase == 4) {
+                Check(auth.Calls == 1 && !leakedSession, "login call count or session logging mismatch");
+                UnityEngine.Object.Destroy(sample.gameObject); Next();
+            } else {
+                Check(auth.Disposes == 1 && SDK.ActivePlatform != "WeChat", "owner destruction did not shut down SDK");
+                Finish(null);
+            }
+        } catch (Exception ex) { Finish(ex); }
+    }
+    static void Finish(Exception error) {
+        EditorApplication.update -= Step;
+        Application.logMessageReceived -= Log;
+        UnitySdkHost.Shutdown();
+        if (error == null) { Debug.Log("SDK_CONFIGURED_SAMPLE_PLAY_PASS"); EditorApplication.Exit(0); }
+        else { Debug.LogError("SDK_CONFIGURED_SAMPLE_PLAY_FAIL: " + error.Message); EditorApplication.Exit(1); }
+    }
+}

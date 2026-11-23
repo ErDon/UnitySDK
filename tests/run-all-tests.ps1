@@ -21,6 +21,10 @@ try {
     if($LASTEXITCODE -ne 0){throw 'Async analytics compile failed'}
     & .\.tests\AnalyticsAsyncTests.exe
     if($LASTEXITCODE -ne 0){throw 'Async analytics tests failed'}
+    & $compiler /nologo /out:.tests\OperationLifecycleTests.exe $registryCore .\tests\OperationLifecycleTests.cs
+    if($LASTEXITCODE -ne 0){throw 'Operation lifecycle compile failed'}
+    & .\.tests\OperationLifecycleTests.exe
+    if($LASTEXITCODE -ne 0){throw 'Operation lifecycle tests failed'}
     & $compiler /nologo /out:.tests\NetworkFacadeTests.exe $registryCore .\tests\NetworkFacadeTests.cs
     if($LASTEXITCODE -ne 0){throw 'Network facade compile failed'}
     & .\.tests\NetworkFacadeTests.exe

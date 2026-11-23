@@ -23,13 +23,16 @@ namespace ErDon.UnitySDK
             {
                 operation = value;
                 if (abort || Epoch != generation) Abort();
+                else if (Volatile.Read(ref completed) != 0) operation = null;
             }
-            internal bool Complete(AnalyticsResult result)
+            internal bool Complete(AnalyticsResult result, bool cancelOperation = false)
             {
                 if (Epoch != generation || Interlocked.Exchange(ref completed, 1) != 0) return false;
                 var snapshot = result == null ? AnalyticsResult.Fail("ANALYTICS.INVALID_RESULT", "Analytics provider returned no result") : result.Snapshot();
-                PostCompletion(Post, Epoch, Id, "SDK.ReportEvent", () => {
-                    analyticsCalls.Remove(this);
+                if (cancelOperation) Abort();
+                var post = Post; Post = null;
+                PostCompletion(post, Epoch, Id, "SDK.ReportEvent", () => {
+                    analyticsCalls.Remove(this); operation = null;
                     var callback = Callback; Callback = null;
                     FinishAnalytics(callback, snapshot, Id);
                 });
@@ -44,13 +47,13 @@ namespace ErDon.UnitySDK
             public void Cancel()
             {
                 EnsureNotLogging();
-                if (Complete(AnalyticsResult.Fail("ANALYTICS.CANCELLED", "Local event observation was cancelled"))) Abort();
+                Complete(AnalyticsResult.Fail("ANALYTICS.CANCELLED", "Local event observation was cancelled"), true);
             }
             internal void Tick()
             {
-                if (Timer.ElapsedMilliseconds >= Timeout && Complete(AnalyticsResult.Fail("ANALYTICS.TIMEOUT", "Local event observation timed out"))) Abort();
+                if (Timer.ElapsedMilliseconds >= Timeout) Complete(AnalyticsResult.Fail("ANALYTICS.TIMEOUT", "Local event observation timed out"), true);
             }
-            internal void Abandon() { Interlocked.Exchange(ref completed, 1); Callback = null; Abort(); }
+            internal void Abandon() { Interlocked.Exchange(ref completed, 1); Callback = null; Post = null; Abort(); }
         }
         sealed class FinishedAnalyticsCall : IAnalyticsOperation { public void Cancel() { } }
 

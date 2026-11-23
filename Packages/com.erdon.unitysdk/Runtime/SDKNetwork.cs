@@ -24,13 +24,16 @@ namespace ErDon.UnitySDK
             {
                 operation=value;
                 if(abort||Epoch!=generation)Abort();
+                else if(Volatile.Read(ref completed)!=0)operation=null;
             }
-            internal bool Complete(NetworkResult result)
+            internal bool Complete(NetworkResult result,bool cancelOperation=false)
             {
                 if(Epoch!=generation||Interlocked.Exchange(ref completed,1)!=0)return false;
                 var snapshot=result==null?NetworkResult.Fail("NETWORK.INVALID_RESPONSE","Network provider returned no result"):result.Snapshot();
-                PostCompletion(Post,Epoch,Id,"SDK.Request",()=>{
-                    networkCalls.Remove(this);
+                if(cancelOperation)Abort();
+                var post=Post;Post=null;
+                PostCompletion(post,Epoch,Id,"SDK.Request",()=>{
+                    networkCalls.Remove(this);operation=null;
                     var callback=Callback;Callback=null;
                     FinishNetwork(callback,snapshot,Id);
                 });
@@ -44,10 +47,10 @@ namespace ErDon.UnitySDK
             public void Cancel()
             {
                 EnsureNotLogging();
-                if(Complete(NetworkResult.Fail("NETWORK.CANCELLED","Caller cancelled network request")))Abort();
+                Complete(NetworkResult.Fail("NETWORK.CANCELLED","Caller cancelled network request"),true);
             }
-            internal void Tick(){if(Timer.ElapsedMilliseconds>=Timeout&&Complete(NetworkResult.Fail("NETWORK.TIMEOUT","Network request timed out")))Abort();}
-            internal void Abandon(){Interlocked.Exchange(ref completed,1);Callback=null;Abort();}
+            internal void Tick(){if(Timer.ElapsedMilliseconds>=Timeout)Complete(NetworkResult.Fail("NETWORK.TIMEOUT","Network request timed out"),true);}
+            internal void Abandon(){Interlocked.Exchange(ref completed,1);Callback=null;Post=null;Abort();}
         }
         sealed class FinishedNetworkCall : INetworkOperation {public void Cancel() {}}
         public static INetworkOperation Request(NetworkRequest request,Action<NetworkResult> callback)

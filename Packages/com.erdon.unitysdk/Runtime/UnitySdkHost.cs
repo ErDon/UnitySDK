@@ -31,13 +31,13 @@ namespace ErDon.UnitySDK
             next.Start();
         }
         public static void BeginConfiguredStartup(SdkRuntimeConfiguration configuration, Func<ISessionExchange> createSessionExchange,
-            Action<StartupResult> callback, Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000)
+            Action<StartupResult> callback, Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000, Func<INetwork> createNetwork = null)
         {
             SDK.CheckHostLifecycleEntry();
             var host = GetOrCreate();
             if(host.replacingStartup)throw new InvalidOperationException("Startup replacement cannot be reentered");
             var next = SdkPlatformRegistry.CreateStartup(configuration, createSessionExchange,
-                a => host.queue.Enqueue(a), WriteLog, callback, logCallback, timeoutMilliseconds);
+                a => host.queue.Enqueue(a), WriteLog, callback, logCallback, timeoutMilliseconds, createNetwork);
             host.ReplaceStartup(next);
             next.Start();
         }

@@ -53,7 +53,8 @@
 - [x] Unity 网络取消、释放抑制回调、宿主不可用和连接超时的本机 Play Mode 检查。
 - [x] SDK.Request 并发聚合、独立取消/超时、所有权和脱敏日志；公共及 Unity 回归。
 - [x] 网络 Mock 配置工厂/面板接入与 Play Mode 验证。
-- [ ] 真实平台网络工厂、正常 HTTPS 响应及小游戏平台验证。
+- [x] 微信可选网络工厂配置装配；平台就绪后按需创建及缺工厂预检。
+- [ ] 抖音/TikTok 网络工厂、正常 HTTPS 响应及小游戏平台验证。
 - [ ] 数据上报能力与逐接口文档/失败示例。
 - [ ] 三个平台分享/存储的真机行为、配额及重启持久性验收。
 
@@ -501,3 +502,10 @@ EditorMockNetwork 支持本地 200/401、连接失败和无回调超时；按 Ne
 
 公共回归与 network-mock-play.log 的 SDK_PLAY_CHECKS_PASS 通过：验证 200/401 区分、连接失败、超时、取消及禁用，并回归原登录/存储/分享/支付/广告流程。没有任何真实外部请求。视觉交互、真实平台和正常 HTTPS 仍未验收。
 network-mock-editor.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0；配置映射及构建阻断检查通过。
+
+### 微信可选网络通信装配
+
+核对本地微信包 C# 类型和 CHANGELOG：通用网络通过 UnityWebRequest，无可用通用 WX.Request C# 方法。通过 NetworkProviderFactory 装饰平台工厂注入可选通信实现，不让平台包强依赖 HTTP 包。BeginConfiguredStartup 与 EditorPlatformBootstrap 可接收网络构造器；平台就绪才创建，关闭不创建，缺失提前失败。
+
+公共回归通过，新增工厂预检、延迟构建、单次创建/释放及关闭模块零构建测试。JSON 仅放行 Mock/微信网络。未进行微信导出或真机请求，不据此解除构建阻断。
+重开后 network-composition-confirm.log 无 C# 错误，SDK_EDITOR_CHECKS_PASS，退出码 0。

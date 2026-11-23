@@ -54,7 +54,7 @@ var config = data.ToSdkConfig();
 // 创建目标平台工厂，然后调用 UnitySdkHost.InitializeWithFactory(config, factory)。
 ```
 
-Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道暂未实现，网络/上报仍被拒绝；三平台广告已支持，真实平台支付尚无收银台适配。数据校验通过不代表官方依赖、启动或构建已验收。
+Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道和上报暂未实现，网络仅放行 Mock/微信；三平台广告已支持，真实平台支付尚无收银台适配。数据校验通过不代表官方依赖、启动或构建已验收。
 
 可使用下述运行时配置入口自动等待平台初始化并装配，面板已接入平台启动按钮；真实平台构建阻断继续保留。Unity 检查覆盖设置转换、JSON 往返与导出对象独立性，界面导出交互尚未视觉验收。
 
@@ -78,7 +78,7 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 统一入口根据 platform 选择微信/抖音/TikTok 注册项，将 gameId 和 production/test 交给平台工厂，只创建勾选模块。appId 必须配置，但这里不会修改官方插件的 App ID；插件配置和后端应用绑定仍须与它一致。
 
-配置错误在启动前抛出 InvalidOperationException：CONFIG.PLATFORM_NOT_REGISTERED（包未安装、宏未启用或调用过早）、CONFIG.SESSION_EXCHANGE_REQUIRED（启用登录但没有后端工厂）、CONFIG.PAYMENT_UNIMPLEMENTED（真实平台支付未接入）。这类同步错误不调用启动结果回调；平台初始化后的异步失败由 StartupResult 返回。无效配置不会替换已有启动任务或已初始化 SDK。生产 Mock、未实现网络/上报继续拒绝。
+配置错误在启动前抛出 InvalidOperationException：CONFIG.PLATFORM_NOT_REGISTERED（包未安装、宏未启用或调用过早）、CONFIG.SESSION_EXCHANGE_REQUIRED（启用登录但没有后端工厂）、CONFIG.PAYMENT_UNIMPLEMENTED（真实平台支付未接入）。这类同步错误不调用启动结果回调；平台初始化后的异步失败由 StartupResult 返回。无效配置不会替换已有启动任务或已初始化 SDK。生产 Mock、未实现平台网络和上报继续拒绝。
 
 重复注册同平台抛 CONFIG.DUPLICATE_PLATFORM；每次 Unity Play 会话先清空注册项，再由平台包注册。自定义平台接入可调用 SdkPlatformRegistry.Register，但注册项应只保存构造器，返回新实例；生命周期、错误日志与模块隔离规则不变。现有 JSON 白名单仍只允许首批三平台和 Mock。
 
@@ -94,9 +94,9 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面板下拉框不会改变当前运行平台，必须重新初始化；当前平台标识为只读诊断值，Shutdown 后返回 null。此保护避免切回 Mock 配置后把测试参数发给仍在运行的真实 provider。
 
-## 通用网络接口（配置工厂接入待完成）
+## 通用网络接口
 
-新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志和 Mock 配置面板；真实平台网络工厂仍待接入，因此真实平台 network 勾选仍拒绝；下面是底层接入示例，不是已完成的配置接入流程。
+新增 INetwork.Send(NetworkRequest, callback)，返回可 Cancel 的 INetworkOperation。UnityNetwork 位于可选 HTTP 包，使用游戏提供的活动 MonoBehaviour 驱动协程。当前已接 SDK 聚合日志和 Mock 配置面板；微信可注入网络工厂，抖音/TikTok 暂不开放；下面是底层接入示例。
 
 ```csharp
 // 在 MonoBehaviour 内调用；字段保留 provider，并在 OnDestroy 中 Dispose。
@@ -145,7 +145,7 @@ var operation = SDK.Request(new NetworkRequest("https://your-api.example.com/con
 
 SDK.Request 支持并发，每个返回句柄仅取消自己的请求。首个终态胜出，重复取消、迟到回调不重复通知。NetworkRequest.TimeoutSeconds 同时用于 SDK 本地等待超时；本地超时返回 NETWORK.TIMEOUT 并尝试取消底层。底层先返回连接失败时可能是 NETWORK.UNAVAILABLE。取消只能终止客户端等待，不能撤销服务端操作。
 
-SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创建网络对象；未安装 provider 返回 CAPABILITY.NOT_SUPPORTED。SDK.InitializeWithFactory 支持自定义 INetworkProviderFactory，现有三平台工厂暂未提供网络，因此面板和运行时 JSON 只对 Mock 放行 network 开关。直接注入示例用于验证，不能代替平台网络兼容检查。
+SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创建网络对象；未安装 provider 返回 CAPABILITY.NOT_SUPPORTED。SDK.InitializeWithFactory 支持自定义 INetworkProviderFactory，微信通过可选通信工厂装饰平台工厂；面板和运行时 JSON 对 Mock/微信放行 network 开关。直接注入示例用于验证，不能代替平台网络兼容检查。
 
 结果带 CallId/TraceId，错误包含 Operation=SDK.Request、Stage=Network。日志由 SDK 生成，不输出 URL、查询参数、Headers 或 Body；完成记录 HTTP 状态或统一错误码。用户回调在 Unity 宿主队列派发，因此 Cancel 后不要假定结果已同步送达。Shutdown/重新初始化后旧回调不交给游戏。
 
@@ -158,4 +158,8 @@ SDK 配置关闭网络时返回 MODULE.DISABLED，INetworkProviderFactory 不创
 - ConnectionFailed：返回 NETWORK.UNAVAILABLE。
 - Timeout：保持请求等待，面板使用 1 秒超时；点击“取消最近一次网络请求”可提前返回 NETWORK.CANCELLED。
 
-取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；真实三平台的网络配置和未实现的数据上报继续拒绝。
+取消网络勾选后重新初始化，调用返回 MODULE.DISABLED，不创建网络 provider。多次点击可以创建多个请求，取消按钮仅取消最近的句柄。所有结果本地生成，地址 mock.invalid 不会被请求。关闭或重新初始化 Mock 会清理等待任务。JSON 配置映射 NetworkEnabled；抖音/TikTok 网络配置和未实现的数据上报继续拒绝。
+
+### 微信可选网络工厂
+
+网络配置现对 Mock 和微信开放；抖音/TikTok 网络仍拒绝。微信使用 `BeginConfiguredStartup(..., createNetwork: () => new UnityNetwork(host))` 注入可选 HTTP 实现，面板对应 EditorPlatformBootstrap.NetworkFactory。缺失时返回 CONFIG.NETWORK_PROVIDER_REQUIRED；真实请求兼容性仍待验证。Mock 预览行为不变。

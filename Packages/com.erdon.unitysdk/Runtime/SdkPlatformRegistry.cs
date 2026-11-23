@@ -23,7 +23,7 @@ namespace ErDon.UnitySDK
         internal static void Reset(){bindings.Clear();}
         public static SdkStartup CreateStartup(SdkRuntimeConfiguration configuration, Func<ISessionExchange> createSessionExchange,
             Action<Action> dispatch, Action<SdkLogLevel,string> engineLog, Action<StartupResult> callback,
-            Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000)
+            Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000, Func<INetwork> createNetwork = null)
         {
             SDK.CheckHostLifecycleEntry();
             if(configuration==null||dispatch==null||engineLog==null||callback==null)throw new ArgumentNullException();
@@ -34,9 +34,11 @@ namespace ErDon.UnitySDK
             if(!bindings.TryGetValue(config.Platform,out binding))throw new InvalidOperationException("CONFIG.PLATFORM_NOT_REGISTERED");
             if(config.PayEnabled&&!binding.Payments)throw new InvalidOperationException("CONFIG.PAYMENT_UNIMPLEMENTED");
             if(config.LoginEnabled&&createSessionExchange==null)throw new InvalidOperationException("CONFIG.SESSION_EXCHANGE_REQUIRED");
+            if(config.NetworkEnabled&&createNetwork==null)throw new InvalidOperationException("CONFIG.NETWORK_PROVIDER_REQUIRED");
             // Disabled login cannot accidentally construct an exchange via the factory.
             var factory=binding.Factory(gameId,environment,config.LoginEnabled?createSessionExchange:null);
             if(factory==null||factory.Platform!=config.Platform)throw new InvalidOperationException("CONFIG.PLATFORM_MISMATCH");
+            if(config.NetworkEnabled)factory=new NetworkProviderFactory(factory,createNetwork);
             var runtime=binding.Runtime();
             if(runtime==null)throw new InvalidOperationException("CONFIG.RUNTIME_REQUIRED");
             try {return new SdkStartup(config,runtime,factory,dispatch,engineLog,callback,timeoutMilliseconds);}

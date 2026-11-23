@@ -10,6 +10,9 @@ class PlatformRegistryTests {
   public IAuth CreateAuth(Action<Action> post){throw new Exception("login should remain disabled");}
   public IStorage CreateStorage(){throw new Exception("storage should remain disabled");}
  }
+ sealed class Network:INetwork {
+  public int Disposes;public INetworkOperation Send(NetworkRequest r,Action<NetworkResult> cb){throw new Exception("No network call expected");}public void Dispose(){Disposes++;}
+ }
  static void Check(bool value,string reason){if(!value)throw new Exception(reason);}
  static void Reject(Action action,string code){try{action();}catch(InvalidOperationException e){Check(e.Message==code,"wrong rejection: "+e.Message);return;}throw new Exception("Expected "+code);}
  static void Main(){
@@ -29,6 +32,14 @@ class PlatformRegistryTests {
   SdkPlatformRegistry.Register("WeChat",()=>runtime=new Runtime{Platform="Douyin"},(g,e,x)=>new Factory());
   Reject(()=>create(),"CONFIG.PLATFORM_MISMATCH");Check(runtime.Disposes==1,"mismatched runtime released");
   SdkPlatformRegistry.Reset();Reject(()=>create(),"CONFIG.PLATFORM_NOT_REGISTERED");
+  int networkCreated=0;var transport=new Network();
+  SdkPlatformRegistry.Register("WeChat",()=>new Runtime{Platform="WeChat"},(g,e,x)=>new Factory());data.network=true;
+  Reject(()=>create(),"CONFIG.NETWORK_PROVIDER_REQUIRED");
+  var networkStartup=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,createNetwork:()=>{networkCreated++;return transport;});
+  Check(networkCreated==0,"transport deferred until runtime ready");networkStartup.Start();networkStartup.Tick();
+  Check(done&&networkCreated==1,"configured network created once");SDK.Shutdown();Check(transport.Disposes==1,"SDK owns injected transport");
+  data.network=false;var disabledStartup=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,createNetwork:()=>{throw new Exception("disabled transport constructed");});
+  disabledStartup.Start();disabledStartup.Tick();Check(done,"disabled network does not invoke constructor");SDK.Shutdown();SdkPlatformRegistry.Reset();
   Console.WriteLine("PASS: configured platform selection, preflight, snapshot, ownership and session reset");
  }
 }

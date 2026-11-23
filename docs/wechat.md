@@ -134,3 +134,25 @@ UnitySdkHost.BeginStartup(
 初始化期间再次调用同一桥接返回 INIT.IN_PROGRESS；已就绪重复初始化不再调用官方入口。失败后可以显式重试；释放后拒绝调用，忽略迟到结果。桥接本身不计时，BeginStartup 默认等待 15 秒并由宿主驱动；不要从多个桥接或其他插件同时调用 WX.InitSDK，因为本地官方实现保存单个初始化回调。
 
 Dispose 只结束桥接生命周期，不卸载微信官方 SDK。该实现已用官方程序集编译与注入返回码验证，不代表真机初始化、账号授权或后端联调完成。官方包来源完整性仍需独立核验。
+
+## 网络通信配置
+
+本地 0.1.23 的 C# 接口没有通用 WX.Request/RequestOption；Unity 网络走 UnityWebRequest。随包 CHANGELOG.md 第 336 行记录 UnityWebRequest timeout 支持，第 71 行记录请求头缓存控制。当前沿用可选 HTTP 包的 UnityNetwork，不虚构独立的 WX.Request C# 签名。
+
+```csharp
+// 位于游戏 MonoBehaviour 的 Awake/Start 中；需安装 com.erdon.unitysdk.transport.http。
+var data = new SdkRuntimeConfiguration {
+    platform = "WeChat", gameId = "your-game", appId = "your-app",
+    login = false, network = true
+};
+UnitySdkHost.BeginConfiguredStartup(data, null, result => {
+    if (!result.Success) return;
+    // 此后可调用 SDK.Request。
+}, createNetwork: () => new UnityNetwork(this));
+```
+
+工厂仅在平台就绪且 network=true 时调用，应每次创建新 provider。SDK 负责其释放，宿主应覆盖 SDK 使用周期；销毁宿主前调用 UnitySdkHost.Shutdown。省略网络工厂返回 CONFIG.NETWORK_PROVIDER_REQUIRED，预检不调用平台初始化。关闭网络时即使提供工厂也不会创建它。
+
+面板使用同一路径：在 Editor Play Mode 的游戏代码中设置 `EditorPlatformBootstrap.NetworkFactory = () => new UnityNetwork(this)`（包裹 UNITY_EDITOR 条件编译），选择微信并勾选网络后启动。退出 Play 会清除工厂引用。核心和微信适配包不依赖 HTTP 包，未使用网络的游戏无需安装它。
+
+该接线已通过公共所有权/开关测试和 Unity 编译，尚未证明微信导出网络桥接的域名白名单、响应头、二进制响应、超时、取消、重定向和分块限额行为。正式构建仍阻断，后续需在微信开发者工具和真机验收。

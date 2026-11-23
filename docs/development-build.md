@@ -97,3 +97,15 @@ $env:PYTHONIOENCODING = "utf-8"
 检查器扫描所有链接程序集的类型定义和类型引用，拒绝所选平台的排除能力残留，并继续要求平台注册方法存在。它不是官方 SDK 内部代码或最终 JS/Wasm 的完整审计。本轮 TikTok 实际构建通过全部五项检查，且保存的场景开关全部为关闭；同一检查器对未裁剪的抖音旧构建要求 Login 排除时正确失败。
 
 七类关闭增量：TikTok 实际构建已通过，检查额外确认 UnityNetwork、NetworkProviderFactory、BoundedResponseBuffer、VerifiedPayment、UnityOrderClient、OrderResponsePolicy 均无类型或引用残留。登录会话兑换不受 NETWORK 排除符号控制；部分启用组合仍需独立验证。
+
+### 登录开启、通用网络关闭
+
+构建探针现在可在登录开启时装配 UnitySessionExchange，因此隔离工程必须安装 `com.erdon.unitysdk.transport.http`（本轮三平台工程均已安装）。它使用保留的 `https://example.invalid/session` 占位地址，不调用 SDK.Login，也不发送会话兑换请求；不要将它当作可登录的业务示例。
+
+先执行 `MiniGameDevelopmentBuild.ConfigureLoginOnly`，退出后执行 Build。场景保存 login=true、network=false、payments=false。检查命令：
+
+```powershell
+./tools/check-linked-platform.ps1 -ManagedDirectory '<隔离工程>/Library/Bee/artifacts/WebGL/ManagedStripped' -Platform TikTok -ExcludedCapabilities Storage,Share,Ads,Analytics,Network,Payments -RequiredTypes ErDon.UnitySDK.TikTok.TikTokCredentialProvider,ErDon.UnitySDK.VerifiedAuth,ErDon.UnitySDK.UnitySessionExchange
+```
+
+RequiredTypes 只接受真实类型定义作为保留证据，单纯类型引用不算保留。TikTok 实际 Development Build 和上述检查通过，证明网络能力裁剪没有删除登录 HTTP 依赖；不证明真实平台登录、HTTPS 接口或后端联调成功。负例使用已移除登录的微信构建要求 CredentialProvider 保留，检查器正确拒绝。

@@ -680,3 +680,7 @@ network-https.log 输出 SDK_NETWORK_HTTPS_PASS，无 C# 编译错误。未修�
 ### 网络与支付实现的编译排除（2026-11-23）
 
 面板及构建/运行时配置校验扩展 NETWORK、PAYMENTS；条件排除 UnityNetwork、NetworkProviderFactory、BoundedResponseBuffer 和 VerifiedPayment、UnityOrderClient、OrderResponsePolicy，保留公共接口/DTO，登录 UnitySessionExchange 不受网络排除控制。七项禁用的 C# 专项及 run-all-tests.ps1 默认模式全量公共回归通过。tiktok-seven-off-build.log 构建成功退出 0，七项链接类型/引用排除检查及注册保留通过。支付能力仍无真实收银台实现；部分开启组合、其他平台新组合及官方内部代码最终审计继续待完成。
+
+### 登录开启、网络关闭的共享依赖检查（2026-11-23）
+
+新增 ConfigureLoginOnly，构建探针在登录开启时提供 UnitySessionExchange 工厂，但不调用登录或 HTTP 请求。tiktok-login-only-build.log 成功退出 0，场景 login=1、network/payments=0。链接检查确认 TikTokCredentialProvider、VerifiedAuth、UnitySessionExchange 定义保留，其余六类能力实现/引用排除；平台注册仍在。RequiredTypes 工具对已裁剪登录的微信产物正确拒绝保留断言。仅证明此构建组合及通信依赖，未发生真实登录联调。

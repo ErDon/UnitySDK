@@ -24,6 +24,13 @@ public static class MiniGameDevelopmentBuild {
   s.ApplyCapabilityDefines();
   Debug.Log("SDK_ALL_CAPABILITIES_OFF_CONFIGURED");
  }
+ public static void ConfigureLoginOnly() {
+  var s=SdkProjectSettings.instance;
+  if(s.platform==DistributionPlatform.Mock || s.production)throw new Exception("Configure an isolated non-production platform project first");
+  s.login=true;s.storage=s.share=s.rewardedAds=s.analytics=s.network=s.payments=false;
+  s.ApplyCapabilityDefines();
+  Debug.Log("SDK_LOGIN_ONLY_CONFIGURED");
+ }
  public static void Build() {
   if(EditorUserBuildSettings.activeBuildTarget!=BuildTarget.WebGL)throw new Exception("Run with -buildTarget WebGL");
   var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);

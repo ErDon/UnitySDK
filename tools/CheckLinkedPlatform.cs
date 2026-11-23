@@ -5,12 +5,14 @@ using Mono.Cecil;
 // Inspect linked managed metadata; this is not a native/JS payload audit.
 class CheckLinkedPlatform {
  static int Main(string[] args) {
-  if(args.Length<2 || args.Length>3 || !new[]{"WeChat","Douyin","TikTok"}.Contains(args[1])) {
-   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok> [Login,Storage,Share,Ads,Analytics,Network,Payments]");return 2;
+  if(args.Length<2 || args.Length>4 || !new[]{"WeChat","Douyin","TikTok"}.Contains(args[1])) {
+   Console.Error.WriteLine("Usage: CheckLinkedPlatform <ManagedStripped directory> <WeChat|Douyin|TikTok> [excluded capabilities or -] [required fully qualified types]");return 2;
   }
   try {
    var target="ErDon.UnitySDK."+args[1];
-   var excluded=args.Length==3?args[2].Split(','):new string[0];
+   var excluded=args.Length>=3 && args[2]!="-"?args[2].Split(','):new string[0];
+   var required=new System.Collections.Generic.HashSet<string>(args.Length==4?args[3].Split(','):new string[0],StringComparer.Ordinal);
+   if(required.Any(string.IsNullOrWhiteSpace))throw new Exception("Empty required type");
    var names=new System.Collections.Generic.Dictionary<string,string> {
     {"Login","CredentialProvider"},{"Storage","Storage"},{"Share","Share"},
     {"Ads","RewardedAds"},{"Analytics","Analytics"}
@@ -30,6 +32,7 @@ class CheckLinkedPlatform {
      if(name==forbidden || assembly.MainModule.AssemblyReferences.Any(x=>x.Name==forbidden))
       throw new Exception("Foreign platform adapter retained: "+forbidden);
     }
+    foreach(var definition in assembly.MainModule.GetTypes())required.Remove(definition.FullName);
     foreach(var type in assembly.MainModule.GetTypes().Select(t=>t.FullName).Concat(assembly.MainModule.GetTypeReferences().Select(t=>t.FullName)))
      if(forbiddenTypes.Contains(type))throw new Exception("Excluded capability type or reference retained: "+type);
     if(name=="ErDon.UnitySDK.Editor")throw new Exception("Editor SDK retained");
@@ -41,6 +44,8 @@ class CheckLinkedPlatform {
      found=true;
     }
    }
+   if(required.Count>0)throw new Exception("Required linked types missing: "+string.Join(",",required));
+   if(args.Length==4)Console.WriteLine("LINKED_REQUIRED_TYPES_PASS");
    if(!found)throw new Exception("Target adapter missing after linking: "+target);
    if(excluded.Length>0)Console.WriteLine("LINKED_EXCLUDED_CAPABILITIES_PASS: "+string.Join(",",excluded));
    Console.WriteLine("LINKED_PLATFORM_REGISTRATION_PASS (managed adapters only; not final JS/Wasm isolation)");return 0;

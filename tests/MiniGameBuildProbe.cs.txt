@@ -5,7 +5,13 @@ public sealed class MiniGameBuildProbe : MonoBehaviour {
  public SdkRuntimeConfiguration configuration;
  public void Start() {
   if(configuration==null) { Debug.LogError("SDK_BUILD_PROBE_CONFIG_MISSING"); return; }
-  UnitySdkHost.BeginConfiguredStartup(configuration, null,
+  System.Func<ISessionExchange> exchange=null;
+#if !ERDON_EXCLUDE_LOGIN || UNITY_EDITOR
+  // Compile/integration probe only: no Login call is made, so no HTTP request is sent.
+  if(configuration.login)exchange=()=>new UnitySessionExchange(this,"https://example.invalid/session",
+   configuration.gameId,configuration.appId,configuration.Environment);
+#endif
+  UnitySdkHost.BeginConfiguredStartup(configuration, exchange,
    result => Debug.Log(result.Success ? "SDK_BUILD_PROBE_READY" : result.Error.Code));
  }
  void OnDestroy() { UnitySdkHost.Shutdown(); }

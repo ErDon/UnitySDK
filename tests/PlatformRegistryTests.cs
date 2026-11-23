@@ -1,6 +1,11 @@
 using System;
 using ErDon.UnitySDK;
 class PlatformRegistryTests {
+ sealed class Payment:IPay {
+  public int Disposes;
+  public void Pay(PaymentRequest request,Action<PaymentResult> callback){callback(PaymentResult.Fail("TEST.PENDING","No real payment"));}
+  public void Dispose(){Disposes++;}
+ }
  sealed class Runtime:IPlatformRuntime {
   public int Disposes,Starts;public string Platform{get;set;}public bool IsReady{get;private set;}
   public void Initialize(Action<SdkError> cb){Starts++;IsReady=true;cb(null);}public void Dispose(){Disposes++;}
@@ -50,6 +55,20 @@ class PlatformRegistryTests {
    }
    SDK.Shutdown();Check(platformTransport.Disposes==1,"platform transport ownership");SdkPlatformRegistry.Reset();
   }
-  Console.WriteLine("PASS: configured platform selection, preflight, snapshot, ownership and session reset");
+  data.platform="TikTok";data.network=false;data.payments=true;int paymentCreated=0,runtimeCreated=0;
+  SdkPlatformRegistry.Register("TikTok",()=>{runtimeCreated++;return new Runtime{Platform="TikTok"};},(g,e,x)=>new Factory{Platform="TikTok"},true,true);
+  Reject(()=>create(),"CONFIG.PAYMENT_PROVIDER_REQUIRED");Check(runtimeCreated==0,"missing payment dependency rejected before runtime");
+  var payment=new Payment();transport=new Network();data.network=true;
+  var paidStartup=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,
+   createNetwork:()=>transport,createPayment:post=>{paymentCreated++;return payment;});
+  Check(paymentCreated==0,"payment deferred until platform readiness");paidStartup.Start();paidStartup.Tick();
+  Check(done&&paymentCreated==1&&SDK.ActivePlatform=="TikTok","payment and network compose without changing platform");
+  PaymentResult paymentResult=null;SDK.Pay(new PaymentRequest("session","product","request"),r=>paymentResult=r);
+  Check(paymentResult.Error.Code=="TEST.PENDING","configured payment routes to backend factory");
+  SDK.Shutdown();Check(payment.Disposes==1&&transport.Disposes==1,"both composed providers owned");
+  data.payments=false;data.network=false;
+  var noPay=SdkPlatformRegistry.CreateStartup(data,null,a=>a(),(l,s)=>{},r=>done=r.Success,createPayment:post=>{throw new Exception("disabled payment constructed");});
+  noPay.Start();noPay.Tick();Check(done,"disabled payment does not invoke factory");SDK.Shutdown();SdkPlatformRegistry.Reset();
+  Console.WriteLine("PASS: configured platform selection, preflight, ownership, network/payment composition and session reset");
  }
 }

@@ -10,7 +10,7 @@ namespace ErDon.UnitySDK.TikTok
         static void Register()
         {
             SdkPlatformRegistry.Register("TikTok", () => new TikTokRuntime(),
-                (game, environment, exchange) => new TikTokProviderFactory(game, environment, exchange));
+                (game, environment, exchange) => new TikTokProviderFactory(game, environment, exchange), supportsPayments:true, requiresPaymentFactory:true);
         }
     }
 }

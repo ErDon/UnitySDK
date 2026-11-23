@@ -266,7 +266,13 @@ var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
     });
 ```
 
-工厂重载实现 ISessionPaymentLauncher。VerifiedPayment 将本次 PaymentRequest 传给它；每次实际发起预支付时使用 request.Session 创建全新客户端，流程终态或 Dispose 释放它。没有请求/会话、商品不匹配会拒绝，不会沿用上一次会话。单次流程内会话固定，换账号后的新 PaymentRequest 使用新的会话；上层仍须管理退出登录时取消旧流程及清除旧会话。直接调用此启动器应使用 Launch(request, order, callback)，旧的 Launch(order, callback) 在动态模式会返回 PAY.INVALID_REQUEST。固定客户端构造方式仍兼容。此改动尚不包括配置面板的后端自动装配。
+工厂重载实现 ISessionPaymentLauncher。VerifiedPayment 将本次 PaymentRequest 传给它；每次实际发起预支付时使用 request.Session 创建全新客户端，流程终态或 Dispose 释放它。没有请求/会话、商品不匹配会拒绝，不会沿用上一次会话。单次流程内会话固定，换账号后的新 PaymentRequest 使用新的会话；上层仍须管理退出登录时取消旧流程及清除旧会话。直接调用此启动器应使用 Launch(request, order, callback)，旧的 Launch(order, callback) 在动态模式会返回 PAY.INVALID_REQUEST。固定客户端构造方式仍兼容。
+
+### 配置启动注入支付
+
+`SdkPlatformRegistry.CreateStartup` 与 `UnitySdkHost.BeginConfiguredStartup` 新增可选 `createPayment` 参数，类型为 `Func<Action<Action>, IPay>`；可传入上面的动态会话组合构造函数。TikTok 自动注册声明支持显式支付装配且要求该工厂。配置勾选 payments 但未提供时，在创建平台运行时前返回 CONFIG.PAYMENT_PROVIDER_REQUIRED；关闭支付时忽略工厂，不创建支付客户端或网关。微信/抖音尚未声明此支持，不能通过传入工厂绕过 CONFIG.PAYMENT_UNIMPLEMENTED。
+
+支付工厂在平台就绪后才调用，返回对象由 SDK 持有；可与 createNetwork 同时使用，平台身份保持不变。PAYMENTS 编译裁剪时不包含包装实现，运行时配置仍须与编译模块匹配。此入口允许项目使用面板导出的配置，但面板本身尚未提供真实后端支付工厂的自动创建控件。
 
 ```csharp
 using ErDon.UnitySDK;

@@ -4,11 +4,11 @@ Unity 菜单：Tools → ErDon SDK → 配置与预览。
 
 设置存储在接入游戏的 ProjectSettings/ErDonSdk.asset，可随游戏版本管理。只填写 Game ID / App ID，禁止填写服务端密钥。平台只能选择一个，模块可以勾选；界面实时显示缺失参数与未实现能力。
 
-配置现已连接 Editor Mock：进入 Play Mode，选择模拟结果，点击“按配置初始化 Mock”，再点击“调用 SDK.Login”。登录未勾选则返回 MODULE.DISABLED。真实平台配置仍未装配，不能认为已接入。可以模拟成功、取消、拒绝、限流和超时；不生成真实账号或订单。
+配置现已连接 Editor Mock：进入 Play Mode，选择模拟结果，点击“按配置初始化 Mock”，再点击“调用 SDK.Login”。登录未勾选则返回 MODULE.DISABLED。微信、抖音、TikTok 已支持按配置装配，实际能力仍需各平台真机验收。可以模拟成功、取消、拒绝、限流和超时；不生成真实账号或订单。
 
-当前开发版本主动阻止所有 Player 构建：Mock 只支持 Editor，其余平台适配尚未实现。后续接入真实适配后才开放对应目标。阻断发生在 IPreprocessBuildWithReport，不修改其他项目的编译宏、插件导入设置或资源。
+当前允许微信、抖音、TikTok 的非生产 Development Build 技术验证，Mock Player 和正式/生产构建仍由 IPreprocessBuildWithReport 阻断。三平台已完成独立开发构建及官方小游戏导出，见 [构建证据与边界](development-build.md)；这些结果不代替真机和正式发布验收。
 
-此版本不宣称已完成平台裁剪。后续要补：独立平台程序集/依赖包、运行时配置生成、模块注册、插件资源过滤、构建后产物检查。未知平台能力不能静默降级为成功。
+独立平台程序集、运行时 JSON 导出、模块注册和已登记依赖审计已经实现；完整最终产物隔离仍待验收。模块开关控制运行时创建与调用，不保证对应实现从 Player 移除。实际关闭登录的 TikTok 构建在 ManagedStripped 中仍包含 TikTokCredentialProvider 和 VerifiedAuth，因此能力编译裁剪尚未完成。未知平台能力不能静默降级为成功。
 
 
 ## 按配置创建运行时对象
@@ -82,7 +82,7 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 重复注册同平台抛 CONFIG.DUPLICATE_PLATFORM；每次 Unity Play 会话先清空注册项，再由平台包注册。自定义平台接入可调用 SdkPlatformRegistry.Register，但注册项应只保存构造器，返回新实例；生命周期、错误日志与模块隔离规则不变。现有 JSON 白名单仍只允许首批三平台和 Mock。
 
-已验证公共预检/所有权行为及微信、抖音的 Unity 自动注册。TikTok 注册代码与对应桥接已提供，干净插件工程验证仍待办。自动注册不代表构建裁剪或真机通过，真实平台构建阻断暂不解除。
+已验证公共预检/所有权行为及三平台的 Unity 自动注册；TikTok 干净官方插件工程、三平台链接后注册检查均已通过。自动注册不代表完整构建裁剪或真机通过，正式/生产构建阻断仍保留。
 
 ## 面板启动平台 SDK
 

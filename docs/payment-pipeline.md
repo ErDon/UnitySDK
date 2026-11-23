@@ -77,7 +77,7 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 订单接口装配时传入 `createOrderHandler(orders, { prepayments: prepaymentService })`，启用 `POST /v1/orders/{orderId}/prepare`。prepaymentService 必须使用同一个 orders 实例；不传时路由返回 404。请求使用游戏会话 `Authorization: Bearer ...`，JSON 正文为 `{}`；请求正文的额外字段全部不用于下单。成功响应为 `{ prepayment: { orderId, tradeOrderId }, callId }`，没有平台令牌。服务器仍须配置凭证提供器和商品目录，默认 start.mjs 未装配它。
 
-该路由复用订单接口的限流、请求限额、HTTP 错误和脱敏日志，接口名为 Order.Prepare。其他玩家订单返回 404，会话无效/撤销返回 401；服务端不接受通过正文换订单、改价或换平台身份。Unity IPrepaymentClient 的 HTTPS 实现仍待接入。
+该路由复用订单接口的限流、请求限额、HTTP 错误和脱敏日志，接口名为 Order.Prepare。其他玩家订单返回 404，会话无效/撤销返回 401；服务端不接受通过正文换订单、改价或换平台身份。UnityPrepaymentClient 已实现该协议，HTTPS 运行联调仍待完成。
 
 `createTikTokPaymentWebhookHandler(payments, options)` 位于 server/src/tiktok-webhook-http.mjs；options 必须包含服务端 binding、isSandbox、clientSecret，可注入 log、limiter 和不超过 65536 的 bodyLimit。只接收 `POST /v1/webhooks/tiktok/payment`，拒绝查询参数、非 JSON 及压缩正文；逐块限长保留原始字节，拒绝重复签名头。该 handler 需要由部署程序挂载，未自动加入默认 start.mjs。
 
@@ -103,11 +103,11 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 响应策略验证返回的游戏订单号与请求一致，平台单号非空且长度/控制字符合法；预支付不确定、冲突、凭证不可用和令牌拒绝按允许的状态码/错误码组合识别，未知正文不透传。服务器调用号经 GUID 校验后保存。连接失败保留 PAY.PREPAYMENT_UNCERTAIN，不自动重发下单；响应过大也不能推断平台未创建订单。
 
-客户端已完成公共策略测试与真实 Unity 引用的独立程序集编译；尚未进行 Unity HTTPS/主线程生命周期实测和平台真机验证。
+客户端已完成公共策略测试、真实 Unity 引用的独立程序集编译及独立工程 Play Mode 的失活/禁用/销毁宿主与释放后调用检查（SDK_HTTP_HOST_PLAY_PASS）。尚未进行在途请求释放、Unity HTTPS 成功/失败响应联调和平台真机验证。
 
 `PreparedPaymentLauncher` 实现 IPaymentLauncher，拥有 IPrepaymentClient 与 IPlatformPaymentGateway。前者绑定当前游戏会话，通过 Prepare(orderId, callback) 返回 PrepaymentResult；返回订单号必须与输入一致，平台单号必须合法，才允许调用网关。重复预支付回调和重复终态均忽略，在途新调用返回 PAY.IN_PROGRESS，释放后抑制回调并释放依赖。两个接口的调用和回调均须在 Unity 主线程，HTTP 接入层负责派发。
 
-它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排仅查询服务器状态，不调用 Confirm；查询为 Created 返回 PAY.NOT_PAID，Paid 返回 PAY.FULFILLMENT_PENDING，Fulfilled 才成功。当前只查询一次，不自动轮询或重新拉起收银台。IPrepaymentClient 的 HTTPS 实现与服务端受认证入口尚待接入，不能仅构造启动器就认为完整支付可用。
+它可以传给 VerifiedPayment。网关返回 RequiresServerQuery=true 时，编排仅查询服务器状态，不调用 Confirm；查询为 Created 返回 PAY.NOT_PAID，Paid 返回 PAY.FULFILLMENT_PENDING，Fulfilled 才成功。当前只查询一次，不自动轮询或重新拉起收银台。IPrepaymentClient 的 HTTPS 实现与服务端受认证入口已具备；尚未完成令牌托管、平台工厂装配和真实支付联调，不能仅构造启动器就认为完整支付可用。
 
 1. 使用游戏 session、productId、稳定 requestId 创建或恢复订单。
 2. 订单为 Fulfilled：直接返回成功，不再打开收银台。

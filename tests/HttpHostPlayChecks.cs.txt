@@ -20,24 +20,29 @@ public static class HttpHostPlayChecks {
             UnitySdkHost.Initialize(new SdkConfig{LoginEnabled=false},null);
             var host=UnityEngine.Object.FindObjectOfType<UnitySdkHost>();
             using(var exchange=new UnitySessionExchange(host,"https://example.invalid/session","game","app","test"))
-            using(var orders=new UnityOrderClient(host,"https://example.invalid/orders")){
-                host.gameObject.SetActive(false);Verify(exchange,orders,"inactive object");
-                host.gameObject.SetActive(true);host.enabled=false;Verify(exchange,orders,"disabled component");
-                UnityEngine.Object.DestroyImmediate(host.gameObject);Verify(exchange,orders,"destroyed host");
-                exchange.Dispose();orders.Dispose();
+            using(var orders=new UnityOrderClient(host,"https://example.invalid/orders"))
+            using(var prepayments=new UnityPrepaymentClient(host,"https://example.invalid/orders",new string('a',43))){
+                host.gameObject.SetActive(false);Verify(exchange,orders,prepayments,"inactive object");
+                host.gameObject.SetActive(true);host.enabled=false;Verify(exchange,orders,prepayments,"disabled component");
+                UnityEngine.Object.DestroyImmediate(host.gameObject);Verify(exchange,orders,prepayments,"destroyed host");
+                exchange.Dispose();orders.Dispose();prepayments.Dispose();
                 LoginResult login=null;exchange.Exchange(new PlatformCredential("WeChat","probe"),r=>login=r);
                 OrderResult order=null;orders.Create(new string('a',43),"product","request",r=>order=r);
                 Check(login!=null&&login.Error.Code=="SDK.DISPOSED","disposed exchange precedence");
                 Check(order!=null&&order.Error.Code=="SDK.DISPOSED","disposed order precedence");
+                PrepaymentResult prepared=null;prepayments.Prepare("invalid",r=>prepared=r);
+                Check(prepared!=null&&prepared.Error.Code=="SDK.DISPOSED","disposed prepayment precedence");
             }
             Debug.Log("SDK_HTTP_HOST_PLAY_PASS");EditorApplication.Exit(0);
         }catch(Exception ex){Debug.LogError("SDK_HTTP_HOST_PLAY_FAIL: "+ex.Message);EditorApplication.Exit(1);}
     }
-    static void Verify(UnitySessionExchange exchange,UnityOrderClient orders,string scenario){
+    static void Verify(UnitySessionExchange exchange,UnityOrderClient orders,UnityPrepaymentClient prepayments,string scenario){
         int callbacks=0;LoginResult login=null;
         exchange.Exchange(new PlatformCredential("WeChat","probe"),r=>{callbacks++;login=r;});
         Check(callbacks==1&&login!=null&&login.Error.Code=="NETWORK.HOST_UNAVAILABLE",scenario+": login did not fail immediately");
         string session=new string('a',43),id="11111111-1111-1111-1111-111111111111";
+        callbacks=0;PrepaymentResult prepared=null;prepayments.Prepare(id,r=>{callbacks++;prepared=r;});
+        Check(callbacks==1&&prepared!=null&&prepared.Error.Code=="NETWORK.HOST_UNAVAILABLE",scenario+": prepayment did not fail immediately");
         foreach(var operation in new Action<Action<OrderResult>>[]{
             cb=>orders.Create(session,"product","request",cb),cb=>orders.Get(session,id,cb),cb=>orders.Confirm(session,id,"probe",cb)}){
             callbacks=0;OrderResult result=null;operation(r=>{callbacks++;result=r;});

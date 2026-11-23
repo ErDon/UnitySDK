@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### Unity 预支付宿主生命周期实测
+
+扩展 HttpHostPlayChecks，将 UnityPrepaymentClient 纳入实际 Play Mode 检查。在确认空闲的独立 BuildChecksProject 中重新编译并运行：宿主 GameObject 失活、组件禁用、对象销毁均立即且仅回调一次 NETWORK.HOST_UNAVAILABLE；Dispose 后即使订单号无效也优先返回 SDK.DISPOSED。
+
+本机 prepayment-host-play.log 第 420 行为 SDK_HTTP_HOST_PLAY_PASS，Unity 检查进程已退出，无 error CS。本轮没有发出网络请求，不能证明在途请求取消或 HTTPS 响应链路；修正文档中客户端/服务端入口“尚未实现”的旧描述。真机与完整支付仍未验收，66/78。
+
 ### Unity 预支付 HTTPS 客户端与响应策略
 
 实现会话绑定的 UnityPrepaymentClient：固定 prepare 路径、HTTPS 校验、Bearer 头、禁止重定向、15 秒超时及 64 KiB 流式限额；释放抑制回调。响应策略校验订单/平台单号，限制错误映射和服务器调用号，连接失败不自动重发预支付。

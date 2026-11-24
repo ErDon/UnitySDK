@@ -10,6 +10,17 @@ class WeChatStorageTests
         Func<string,string,string> get=(k,d)=>values.ContainsKey(k)?values[k]:d;
         Func<string,bool> has=k=>values.ContainsKey(k);
         Action<string> remove=k=>values.Remove(k);
+        // Same physical backend and logical key: game and environment must both isolate data.
+        var first=new WeChatStorage("first-game","test",set,get,has,remove);
+        var second=new WeChatStorage("independent-second-game","test",set,get,has,remove);
+        var production=new WeChatStorage("independent-second-game","production",set,get,has,remove);
+        Check(first.Set("save","first").Success && second.Set("save","second").Success && production.Set("save","production").Success,"three scopes write");
+        Check(first.Get("save").Value=="first" && second.Get("save").Value=="second" && production.Get("save").Value=="production","game and environment isolation");
+        second.Dispose();
+        second=new WeChatStorage("independent-second-game","test",set,get,has,remove);
+        Check(second.Get("save").Value=="second","second game reopen retains its own value");
+        Check(second.Remove("save").Success && first.Get("save").Value=="first" && production.Get("save").Value=="production","delete cannot affect other scopes");
+        first.Dispose();second.Dispose();production.Dispose();
         var a=new WeChatStorage("a:b","test",set,get,has,remove);
         var b=new WeChatStorage("a","b:test",set,get,has,remove);
         Check(a.Set("private-key","").Success && a.Get("private-key").Value=="","empty preserved");

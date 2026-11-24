@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "artifacts": [
+    {
+      "fileName": "DevelopmentWebGL.data",
+      "bytes": 3355953,
+      "sha256": "e3547060167007026284a2a30ad254eb8247aacd20909c7befe76b1d58d7440d",
+      "evidence": [
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    },
+    {
+      "fileName": "DevelopmentWebGL.wasm",
+      "bytes": 21483746,
+      "sha256": "e917b1b3172eaacf08f99889213079b36bfe1bfe681525786d57bb75a2ac84cd",
+      "evidence": [
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    },
+    {
+      "fileName": "DevelopmentWebGL.framework.js",
+      "bytes": 789065,
+      "sha256": "39ae46c7767febc72f992fdc50761fbda356fff90a77f21eae7ce75c2bf62d7b",
+      "evidence": [
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    },
+    {
+      "fileName": "DevelopmentWebGL.loader.js",
+      "bytes": 46217,
+      "sha256": "acfc3aba5050728bd3a15a537dbc42482bce2aaf645b31d60c0af55ee066ac20",
+      "evidence": [
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Android",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "com.erdon.sdk",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "erdon-android.aar",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.Douyin",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "ascii",
+          "count": 0,
+          "firstOffsets": []
+        },
+        {
+          "marker": "ErDon.UnitySDK.TikTok",
+          "encoding": "utf-16-le",
+          "count": 0,
+          "firstOffsets": []
+        }
+      ]
+    }
+  ],
+  "references": [],
+  "isolation": "not-assessed",
+  "limitation": "Literal bytes only, not semantic attribution. A reference match does not prove which file produced the artifact. Missing markers do not prove absent code. Decoding and reference provenance must be verified separately."
+}

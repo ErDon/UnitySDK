@@ -1,0 +1,30 @@
+using System;
+using ErDon.UnitySDK.Editor;
+using UnityEditor;
+using UnityEngine;
+public static class SecondGameBuildChecks
+{
+    public static void Build()
+    {
+        MiniGameDevelopmentBuild.ConfigureWeChat();
+        // The pinned official fixture exposes ReportEvent(Dictionary<string,string>).
+        PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.WebGL,
+            "ERDON_PLATFORM_WECHAT;ERDON_WECHAT_STRING_ANALYTICS");
+        var settings = SdkProjectSettings.instance;
+        settings.gameId = "independent-second-game";
+        settings.appId = "second-game-build-placeholder";
+        settings.SaveSettings();
+        PlayerSettings.companyName = "ErDon Integration Tests";
+        PlayerSettings.productName = "Independent Second Game";
+        // Check the real guard, then restore the supported configuration even on failure.
+        bool rejected = false;
+        PlayerSettings.WebGL.threadsSupport = true;
+        try { new SdkBuildGuard().OnPreprocessBuild(null); }
+        catch (UnityEditor.Build.BuildFailedException error)
+        { rejected = error.Message.Contains("WEBGL.THREADS_UNSUPPORTED"); }
+        finally { PlayerSettings.WebGL.threadsSupport = false; }
+        if (!rejected) throw new Exception("Threaded WebGL configuration was accepted");
+        Debug.Log("SDK_WEBGL_THREAD_GUARD_PASS");
+        MiniGameDevelopmentBuild.Build();
+    }
+}

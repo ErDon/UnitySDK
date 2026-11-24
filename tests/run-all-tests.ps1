@@ -1,6 +1,7 @@
 $ErrorActionPreference='Stop'
 Push-Location (Split-Path $PSScriptRoot -Parent)
 try {
+    & ./tests/run-webgl-thread-tests.ps1
     & ./tests/run-inventory-tests.ps1
     & ./tests/run-core-tests.ps1
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'

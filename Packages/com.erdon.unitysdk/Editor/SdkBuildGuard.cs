@@ -14,6 +14,9 @@ namespace ErDon.UnitySDK.Editor
             var settings = SdkProjectSettings.instance;
             var developmentBuild = report != null && (report.summary.options & BuildOptions.Development) != 0;
             var errors = settings.Validate(developmentBuild);
+            // 小游戏使用主循环驱动超时和回调，不能依赖 WebGL worker。
+            if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.WebGL && PlayerSettings.WebGL.threadsSupport)
+                errors.Add("WEBGL.THREADS_UNSUPPORTED: 请关闭 Player Settings 的 WebGL Threads Support。");
             errors.AddRange(CheckDefines(settings.platform.ToString()));
             errors.AddRange(settings.ValidateCapabilityDefines(PlayerSettings.GetScriptingDefineSymbolsForGroup(
                 BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget))));

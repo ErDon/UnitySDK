@@ -27,7 +27,7 @@ class CheckLinkedPlatform {
    foreach(var file in files)using(var assembly=AssemblyDefinition.ReadAssembly(file)) {
     var name=assembly.Name.Name;
     Console.WriteLine("ASSEMBLY "+name);
-    foreach(var foreign in new[]{"WeChat","Douyin","TikTok"}.Where(x=>x!=args[1])) {
+    foreach(var foreign in new[]{"WeChat","Douyin","TikTok","Android"}.Where(x=>x!=args[1])) {
      var forbidden="ErDon.UnitySDK."+foreign;
      if(name==forbidden || assembly.MainModule.AssemblyReferences.Any(x=>x.Name==forbidden))
       throw new Exception("Foreign platform adapter retained: "+forbidden);

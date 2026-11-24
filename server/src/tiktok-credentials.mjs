@@ -14,6 +14,7 @@ export class TikTokCredentials {
   }
   get(binding, subject) {
     if (bindingKey(binding)!==this.scope) return Promise.reject(new OrderError('PAY.CREDENTIAL_UNAVAILABLE',503));
+    // 仅合并当前服务实例的刷新；这不是跨进程锁，不能阻止多个进程同时请求上游。
     if (this.running.has(subject)) return this.running.get(subject);
     const operation=this.load(subject).finally(()=>this.running.delete(subject));
     this.running.set(subject,operation);return operation;
@@ -27,6 +28,7 @@ export class TikTokCredentials {
       if (!refresh) return current;
       const next=await this.client.refresh(this.binding,subject,refresh.refreshToken);
       if (!next||next.subject!==subject) throw new Error();
+      // revision 是读取刷新令牌时的版本：并发新登录/删除后不得用旧结果覆盖新状态。
       await this.store.put(this.binding,subject,next,refresh.revision);
       // A concurrent login/removal wins; never return a refresh result that failed CAS.
       return await this.store.get(this.binding,subject);

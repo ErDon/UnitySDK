@@ -23,6 +23,7 @@ namespace ErDon.UnitySDK
             bindings.Add(platform,new Binding{Runtime=runtime,Factory=factory,Payments=supportsPayments,RequiresPaymentFactory=requiresPaymentFactory});
         }
         internal static void Reset(){bindings.Clear();}
+        /// <summary>校验配置并创建启动对象；调用方仍需 Start，并在所属线程持续 Tick。</summary>
         public static SdkStartup CreateStartup(SdkRuntimeConfiguration configuration, Func<ISessionExchange> createSessionExchange,
             Action<Action> dispatch, Action<SdkLogLevel,string> engineLog, Action<StartupResult> callback,
             Action<SdkLogLevel,string> logCallback = null, int timeoutMilliseconds = 15000, Func<INetwork> createNetwork = null,
@@ -48,6 +49,8 @@ namespace ErDon.UnitySDK
 #if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
             if(config.PayEnabled&&createPayment!=null)factory=new PaymentProviderFactory(factory,createPayment);
 #endif
+            // 运行时模块开关决定是否实例化；编译宏决定实现能否进入产物，两者不能互相替代。
+            // 工厂仅装配依赖，官方 runtime 就绪后才创建各项能力。
             var runtime=binding.Runtime();
             if(runtime==null)throw new InvalidOperationException("CONFIG.RUNTIME_REQUIRED");
             try {return new SdkStartup(config,runtime,factory,dispatch,engineLog,callback,timeoutMilliseconds);}

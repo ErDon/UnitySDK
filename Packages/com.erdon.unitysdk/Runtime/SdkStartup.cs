@@ -12,6 +12,7 @@ namespace ErDon.UnitySDK
         public bool Success {get{return Error==null;}}
     }
     /// <summary>Owns one startup attempt and runtime bridge. Start/Tick/Cancel/Dispose on its creating thread.</summary>
+    // 启动对象只管理本次初始化桥接；成功后能力实例的生命周期由 SDK 管理。
     public sealed class SdkStartup : IDisposable
     {
         readonly SdkConfig config;
@@ -32,6 +33,7 @@ namespace ErDon.UnitySDK
         {
             if(config==null||runtime==null||factory==null||dispatch==null||engineLog==null||callback==null)throw new ArgumentNullException();
             if(timeoutMilliseconds<=0)throw new ArgumentOutOfRangeException("timeoutMilliseconds");
+            // 在接管 runtime 前拒绝不可能完成的配置，避免失败启动破坏已有实例。
             SdkCompiledModules.Validate(config);
             if(config.Platform!=runtime.Platform||config.Platform!=factory.Platform)throw new InvalidOperationException("CONFIG.PLATFORM_MISMATCH");
             this.config=new SdkConfig{Platform=config.Platform,LoginEnabled=config.LoginEnabled,StorageEnabled=config.StorageEnabled,
@@ -49,6 +51,7 @@ namespace ErDon.UnitySDK
                 if(Interlocked.Exchange(ref received,1)!=0)return;
                 var snapshot=error==null?null:error.Snapshot();
                 if(timer.ElapsedMilliseconds>=timeout)snapshot=new SdkError("INIT.TIMEOUT","Platform initialization timed out");
+                // 官方回调可能同步或来自其他线程；统一留到创建线程 Tick 时装配能力。
                 completions.Enqueue(()=>CompletePlatform(snapshot));
             };
             try{runtime.Initialize(done);}catch{done(new SdkError("INIT.PROVIDER_EXCEPTION","Platform initialization invocation failed"));}
@@ -77,6 +80,7 @@ namespace ErDon.UnitySDK
             Release();Log("Complete",error==null?"Success":error.Code);
             try{callback(new StartupResult{CallId=call,Error=error});}catch{Log("Callback","CALLBACK.EXCEPTION");}
         }
+        // 取消本地启动等待，不承诺中止官方初始化；迟到结果由 finished 拦截。
         public void Cancel(){CheckThread();if(!finished)Finish(new SdkError("INIT.CANCELLED","Caller cancelled local startup wait"));}
         public void Dispose(){CheckThread();finished=true;Release();}
     }

@@ -22,6 +22,8 @@ namespace ErDon.UnitySDK.Douyin
             this.createSessionExchange = createSessionExchange;
             this.createPayment = createPayment;
         }
+        // 必须显式注入服务端支付组合；勾选支付不等于拥有平台签名和发货能力。
+        // 返回全新实例交 SDK 释放，避免跨启动共享已释放的支付对象。
         public IPay CreatePay(Action<Action> mainThreadDispatch) {
 #if ERDON_EXCLUDE_PAYMENTS && !UNITY_EDITOR
             throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: PAYMENTS");

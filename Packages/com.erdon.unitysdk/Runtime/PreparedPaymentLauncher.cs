@@ -25,6 +25,7 @@ namespace ErDon.UnitySDK
         public PreparedRequest<T> WithServerCallId(string value){Guid id;ServerCallId=Guid.TryParseExact(value,"D",out id)?id.ToString("D"):null;if(Error!=null)Error.ServerCallId=ServerCallId;return this;}
         public override string ToString(){return "PreparedRequest([REDACTED])";}
     }
+    /// <summary>绑定一个游戏会话的预支付客户端；调用和完成回调均在主线程执行。</summary>
     public interface IPreparedRequestClient<T>:IDisposable {void Prepare(string orderId,Action<PreparedRequest<T>> callback);}
 #if !ERDON_EXCLUDE_PAYMENTS || UNITY_EDITOR
     // Typed platform payloads share the same aggregate payment and ownership lifecycle.
@@ -55,16 +56,20 @@ namespace ErDon.UnitySDK
                 if(disposed||Interlocked.Exchange(ref prepared,1)!=0)return;
                 if(result==null){finish(Fail("PAY.INVALID_RESPONSE","Missing preparation response"));return;}
                 if(result.Error!=null){finish(PaymentLaunchResult.Fail(result.Error));return;}
+                // 既核对订单 ID，也由平台适配核对金额等字段，不能直接信任反序列化成功。
                 bool matches=false;
                 try{matches=result.OrderId==order.OrderId&&matchesOrder(order,result.Value);}catch{}
                 if(!matches){finish(Fail("PAY.INVALID_RESPONSE","Prepared parameters do not match order"));return;}
                 try{gateway.Launch(result.Value,finish);}catch{finish(Fail("PAY.LAUNCH_FAILED","Platform gateway invocation failed"));}
             };
             try{
+                // 每次使用本次请求的会话创建客户端，避免切换账号后继续使用旧凭据。
+                // launcher 接管客户端，完成或释放时清理；gateway 在整个 launcher 生命周期内复用。
                 var client=createClient(request.Session);
                 if(disposed){try{if(client!=null)client.Dispose();}catch{}return;}
                 if(client==null){finish(Fail("PAY.PREPARATION_UNAVAILABLE","Preparation factory returned no client"));return;}
                 active=client;client.Prepare(order.OrderId,ready);
+            // 请求异常不代表平台未创建订单，交由上层保留原订单对账，不能自动重下单。
             }catch{ready(PreparedRequest<T>.Fail(new SdkError("PAY.PREPAYMENT_UNCERTAIN","Preparation failed; preserve order for reconciliation")));}
         }
         void Release(){var client=active;active=null;if(client!=null)try{client.Dispose();}catch{}}

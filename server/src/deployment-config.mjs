@@ -13,6 +13,8 @@ function object(value, allowed, field) {
 }
 
 // Pure inspection: no filesystem writes, database connections, network or secret printing.
+// 纯配置解析：不打开数据库、不监听端口、不向平台发请求。
+// requireSecrets=false 仅用于缺密钥预览；启动入口仍检查 preview.ready。
 export function resolveDeploymentConfig(raw, { env = process.env, baseDir = '.', requireSecrets = true } = {}) {
   object(raw, ['schemaVersion', 'platform', 'gameId', 'environment', 'appIdEnv', 'secretEnv', 'port', 'storage', 'payments'], 'root');
   if (raw.schemaVersion !== 1) reject('schemaVersion');
@@ -84,6 +86,7 @@ export function resolveDeploymentConfig(raw, { env = process.env, baseDir = '.',
   const paths = [config.authPath, config.orderPath, config.credentialPath].filter(Boolean);
   if (new Set(paths.map(value => process.platform === 'win32' ? value.toLowerCase() : value)).size !== paths.length) reject('storage', 'CONFIG.STORAGE_COLLISION');
   if (requireSecrets && missing.size) reject('environment', 'CONFIG.ENV_MISSING');
+  // configuration 含真实凭据，仅供服务内部装配；对外诊断只能输出下面的白名单 preview。
   return { configuration: config, paymentsEnabled: raw.payments.enabled, port,
     preview: Object.freeze({ platform: raw.platform, environment: raw.environment, paymentsEnabled: raw.payments.enabled,
       port, productCount: config.catalog?.length ?? 0, requiredVariables: [...required], missingVariables: [...missing],

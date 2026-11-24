@@ -138,6 +138,7 @@ namespace ErDon.UnitySDK
         public bool RewardedAdsEnabled;
         public bool NetworkEnabled;
         public bool AnalyticsEnabled;
+        /// <summary>接收 SDK 已格式化的完整日志；未设置或回调抛异常时使用引擎输出。</summary>
         public Action<SdkLogLevel, string> LogCallback;
     }
     public interface ISdkProviderFactory
@@ -305,6 +306,8 @@ namespace ErDon.UnitySDK
                 try { engineLog(level,line); } catch {}
             } finally {writingLog=false;}
         }
+        // callId/traceId 串联一次操作，logId 唯一标识一条日志；parameters 须由调用点脱敏。
+        // 上层接管与引擎兜底使用同一行内容，回调重入日志时直接忽略，避免递归。
         static void Log(SdkLogLevel level, string api, string call, string stage, string parameters, string result)
         {
             if (writingLog) return;

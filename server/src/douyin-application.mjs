@@ -29,6 +29,7 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
     const orderStore = new SqliteOrderStore(orderPath); owned.push(orderStore);
     const auth = new AuthService({ bindings: [binding], store: authStore, now,
       verifiers: { Douyin: createDouyinVerifier({ fetchImpl }) } });
+    // 当前由签名通知确认 Paid；客户端 confirm 不能凭收银台成功回调把订单标记为已付款。
     const orders = new OrderService({ binding, auth, store: orderStore, catalog, now,
       verifyPayment: async () => ({ paid: false }) });
     const payments = new DouyinPayments({ orders, catalog, route, zoneId });
@@ -44,6 +45,8 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
       if (request.url?.split('?')[0] === '/v1/webhooks/douyin/payment') return webhookHandler(request, response);
       return orderHandler(request, response);
     };
+    // 未注入游戏发货处理时保留 Paid；不得仅为返回成功而伪造 Fulfilled。
+    // deliver 必须按订单幂等入库，工作器重试不能导致重复发放权益。
     if (deliver !== null) {
       worker = new DeliveryWorker({ orders, deliver, intervalMs: deliveryIntervalMs, batchSize: deliveryBatchSize, log }); worker.start();
     }

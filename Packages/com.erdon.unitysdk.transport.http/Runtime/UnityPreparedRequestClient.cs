@@ -35,6 +35,7 @@ namespace ErDon.UnitySDK
                 request.uploadHandler=new UploadHandlerRaw(Encoding.UTF8.GetBytes("{}"));
                 request.SetRequestHeader("Content-Type","application/json");request.SetRequestHeader("Authorization","Bearer "+session);
                 var download=new BoundedJsonDownload();request.downloadHandler=download;request.timeout=15;request.redirectLimit=0;
+                // 释放后中止请求并忽略迟到结果；HTTP 取消不能回滚服务端已发生的预下单。
                 active.Add(request);yield return request.SendWebRequest();active.Remove(request);if(disposed)yield break;
                 PreparedRequest<T> result;
                 if(download.Exceeded)result=Fail("NETWORK.RESPONSE_TOO_LARGE","Prepayment response exceeds 65536 bytes; preserve order for reconciliation");
@@ -42,6 +43,7 @@ namespace ErDon.UnitySDK
                 else {
                     var json=download.ReadText();
                     if(request.responseCode==200){
+                        // parser 只负责平台载荷格式；这里绑定订单，launcher 再核对商品/金额。
                         result=null;try{result=parseSuccess(json);}catch{}
                         if(result==null||result.Error!=null||result.OrderId!=orderId)
                             result=Fail("PAY.INVALID_RESPONSE","Invalid or mismatched prepared request");

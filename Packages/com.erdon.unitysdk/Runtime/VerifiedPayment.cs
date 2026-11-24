@@ -6,6 +6,7 @@ namespace ErDon.UnitySDK
     {
         public string Session { get; private set; }
         public string ProductId { get; private set; }
+        /// <summary>同一次购买及其恢复必须复用此幂等键；换键表示新的购买意图。</summary>
         public string RequestId { get; private set; }
         public PaymentRequest(string session,string productId,string requestId) { Session=session;ProductId=productId;RequestId=requestId; }
         public override string ToString() { return "PaymentRequest([REDACTED])"; }
@@ -15,6 +16,7 @@ namespace ErDon.UnitySDK
         internal PaymentResult Snapshot() { var copy = (PaymentResult)MemberwiseClone(); copy.Error = Error == null ? null : Error.Snapshot(); return copy; }
         public string CallId { get; internal set; }
         public string TraceId { get { return CallId; } }
+        // Paid 仅说明付款已核验；权益发放完成（Fulfilled）才是对游戏上层的成功。
         public bool Success { get { return Error==null && Order!=null && Order.State==OrderState.Fulfilled; } }
         public GameOrder Order { get; private set; }
         public SdkError Error { get; private set; }
@@ -78,6 +80,7 @@ namespace ErDon.UnitySDK
                 callback(PaymentResult.Fail("PAY.INVALID_REQUEST","Session, product and stable request identifier are required"));return;
             }
             if(busy){callback(PaymentResult.Fail("PAY.IN_PROGRESS","Another payment is still in progress"));return;}
+            // epoch 隔离取消前的回调；每阶段的原子标记拦截第三方重复回调。
             busy=true;int completed=0,created=0,launched=0,epoch=++operation;
             Action<PaymentResult> finish=result=>{
                 if(disposed||epoch!=operation||Interlocked.Exchange(ref completed,1)!=0)return;
@@ -90,6 +93,7 @@ namespace ErDon.UnitySDK
                     if(result==null||!result.Success){finish(PaymentResult.FromOrder(result));return;}
                     var order=result.Order;
                     if(!ValidOrder(order,request.ProductId)){finish(PaymentResult.Fail("PAY.INVALID_RESPONSE","Invalid created order"));return;}
+                    // 幂等创建可能返回已付款/已发货订单，不能再次拉起收银台。
                     if(order.State!=OrderState.Created){finish(PaymentResult.FromOrder(result));return;}
                     Action<PaymentLaunchResult> onLaunched=launch=>{
                         if(Interlocked.Exchange(ref launched,1)!=0)return;
@@ -144,6 +148,7 @@ namespace ErDon.UnitySDK
                 order.AmountMinor<=9007199254740991L&&!string.IsNullOrWhiteSpace(order.Currency)&&Enum.IsDefined(typeof(OrderState),order.State);
         }
         public void Tick(){if(disposed||pendingQuery==null||clock()<nextQuery)return;var query=pendingQuery;pendingQuery=null;query();}
+        /// <summary>只停止本地查单和结果派发，不撤销交易、不退款；保留原购买幂等键以便恢复。</summary>
         public void CancelWait(){operation++;busy=false;pendingQuery=null;}
         public void Dispose(){if(disposed)return;disposed=true;CancelWait();try{orders.Dispose();}finally{if(!ReferenceEquals(orders,launcher))launcher.Dispose();}}
     }

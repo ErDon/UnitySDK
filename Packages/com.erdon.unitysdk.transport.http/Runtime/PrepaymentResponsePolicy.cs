@@ -22,6 +22,8 @@ namespace ErDon.UnitySDK
                 error=new SdkError(code,"Prepayment is unresolved; preserve the order for reconciliation").WithRetry(RetryPolicy.UserAction);
             else if(status==409&&(code=="PAY.PREPAYMENT_CONFLICT"||code=="PAY.ORDER_ALREADY_PAID"))
                 error=new SdkError(code,"Prepayment or order state conflicts with this request").WithRetry(RetryPolicy.UserAction);
+            else if(status==409&&code=="PAY.PRODUCT_CHANGED")
+                error=new SdkError(code,"Product configuration changed before payment preparation; reconcile the existing order").WithRetry(RetryPolicy.UserAction);
             else if(status==503&&code=="PAY.CREDENTIAL_UNAVAILABLE")
                 error=new SdkError(code,"Server platform credential is unavailable; re-authentication may be required").WithRetry(RetryPolicy.UserAction);
             else if(status==401&&code=="PAY.PLATFORM_TOKEN_REJECTED")

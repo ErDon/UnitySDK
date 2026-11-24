@@ -10,7 +10,8 @@ namespace ErDon.UnitySDK.Douyin
         static void Register()
         {
             SdkPlatformRegistry.Register("Douyin", () => new DouyinRuntime(),
-                (game, environment, exchange) => new DouyinProviderFactory(game, environment, exchange));
+                (game, environment, exchange) => new DouyinProviderFactory(game, environment, exchange),
+                supportsPayments: true, requiresPaymentFactory: true);
         }
     }
 }

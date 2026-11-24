@@ -56,7 +56,7 @@ var config = data.ToSdkConfig();
 // 创建目标平台工厂，然后调用 UnitySdkHost.InitializeWithFactory(config, factory)。
 ```
 
-Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道仅保留扩展接口，网络支持 Mock 与首批三平台的可选工厂；三平台广告与上报已实现适配，真实平台支付尚无收银台适配。数据校验通过不代表官方依赖、启动或构建已验收。
+Environment 固定映射 production/test，平台身份必须与所选择的工厂和后端受信应用绑定一致。ToSdkConfig 返回独立配置，后续改动数据对象不影响已返回的开关。schemaVersion 必须为 1；未知版本不会静默降级。原生渠道仅保留扩展接口，网络支持 Mock 与首批三平台的可选工厂；三平台广告与上报已实现适配，三平台收银台网关已有适配，抖音/TikTok 支持显式支付工厂，微信服务端链路未完成。数据校验通过不代表官方依赖、启动或构建已验收。
 
 可使用下述运行时配置入口自动等待平台初始化并装配，面板已接入平台启动按钮；正式/生产构建阻断继续保留。Unity 检查覆盖设置转换、跨进程恢复、JSON 往返与导出对象独立性；已观察有效导出和取消/无效配置导出交互，完整面板视觉验收仍待完成。
 
@@ -82,7 +82,7 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 统一入口根据 platform 选择微信/抖音/TikTok 注册项，将 gameId 和 production/test 交给平台工厂，只创建勾选模块。appId 必须配置，但这里不会修改官方插件的 App ID；插件配置和后端应用绑定仍须与它一致。
 
-配置错误在启动前抛出 InvalidOperationException：CONFIG.PLATFORM_NOT_REGISTERED（包未安装、宏未启用或调用过早）、CONFIG.SESSION_EXCHANGE_REQUIRED（启用登录但没有后端工厂）、CONFIG.PAYMENT_UNIMPLEMENTED（真实平台支付未接入）。这类同步错误不调用启动结果回调；平台初始化后的异步失败由 StartupResult 返回。无效配置不会替换已有启动任务或已初始化 SDK。生产 Mock 与真实平台支付继续拒绝；网络开启却未提供工厂时返回 CONFIG.NETWORK_PROVIDER_REQUIRED。三平台上报已实现适配，实际后台入库仍待验收。
+配置错误在启动前抛出 InvalidOperationException：CONFIG.PLATFORM_NOT_REGISTERED（包未安装、宏未启用或调用过早）、CONFIG.SESSION_EXCHANGE_REQUIRED（启用登录但没有后端工厂）、CONFIG.PAYMENT_UNIMPLEMENTED（该平台未声明支付支持）、CONFIG.PAYMENT_PROVIDER_REQUIRED（抖音/TikTok 支付未注入工厂）。这类同步错误不调用启动结果回调；平台初始化后的异步失败由 StartupResult 返回。无效配置不会替换已有启动任务或已初始化 SDK。生产 Mock 与尚未声明支付支持的平台继续拒绝；网络开启却未提供工厂时返回 CONFIG.NETWORK_PROVIDER_REQUIRED。三平台上报已实现适配，实际后台入库仍待验收。
 
 重复注册同平台抛 CONFIG.DUPLICATE_PLATFORM；每次 Unity Play 会话先清空注册项，再由平台包注册。自定义平台接入可调用 SdkPlatformRegistry.Register，但注册项应只保存构造器，返回新实例；生命周期、错误日志与模块隔离规则不变。现有 JSON 白名单仍只允许首批三平台和 Mock。
 
@@ -94,7 +94,7 @@ UnitySdkHost.BeginConfiguredStartup(data, null, result => {
 
 开启登录时，游戏需在 Editor Play Mode 的 Awake/Start 中设置 `ErDon.UnitySDK.Editor.EditorPlatformBootstrap.SessionExchangeFactory`，值为每次返回新 ISessionExchange 的构造函数。仅在 Editor 执行的游戏组件代码须用 `#if UNITY_EDITOR` 保护对 Editor 包的引用；也可由 Editor 专用入口注入。Editor 包不会进入 Player；退出 Play Mode 会清除该工厂引用。只想检查平台启动时可取消勾选登录；面板不创建假登录会话。
 
-真实平台支付尚未接入，会被预检拒绝；网络需要注入工厂，上报由对应平台工厂创建。官方 SDK 在 Editor 的能力可能受限，失败或超时不能当作真机结果；面板启动不会自动开启广告或收银台。构建检查仍阻断未验收的真实平台产物。
+抖音/TikTok 支付需要显式注入工厂，微信支付仍被预检拒绝；网络需要注入工厂，上报由对应平台工厂创建。官方 SDK 在 Editor 的能力可能受限，失败或超时不能当作真机结果；面板启动不会自动开启广告或收银台。构建检查仍阻断未验收的真实平台产物。
 
 Mock 区域的业务按钮只在 SDK.ActivePlatform 为 Mock 时可用。改面板下拉框不会改变当前运行平台，必须重新初始化；当前平台标识为只读诊断值，Shutdown 后返回 null。此保护避免切回 Mock 配置后把测试参数发给仍在运行的真实 provider。
 

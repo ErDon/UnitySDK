@@ -2,6 +2,7 @@ using System;
 using ErDon.UnitySDK;
 using ErDon.UnitySDK.Douyin;
 class DouyinFactoryTests {
+ sealed class MockPay:IPay {public int Disposes;public void Pay(PaymentRequest request,Action<PaymentResult> callback){throw new Exception("No live payment expected");}public void Dispose(){Disposes++;}}
  sealed class MockExchange:ISessionExchange {
   public int Disposes;
   public void Exchange(PlatformCredential credential,Action<LoginResult> cb){throw new Exception("No live calls expected");}
@@ -22,6 +23,14 @@ class DouyinFactoryTests {
   Check(rejected,"missing backend rejected");
   rejected=false;try{new DouyinProviderFactory("game","test",()=>null).CreateAuth(z=>z());}catch(InvalidOperationException){rejected=true;}
   Check(rejected,"null backend rejected");
+  int payments=0;MockPay payment=null;
+  factory=new DouyinProviderFactory("game","test",createPayment:dispatch=>{payments++;return payment=new MockPay();});
+  SDK.InitializeWithFactory(new SdkConfig{Platform="Douyin",LoginEnabled=false,PayEnabled=false},factory,z=>z(),(l,s)=>{});
+  Check(payments==0,"Disabled payment creates nothing");SDK.Shutdown();
+  SDK.InitializeWithFactory(new SdkConfig{Platform="Douyin",LoginEnabled=false,PayEnabled=true},factory,z=>z(),(l,s)=>{});
+  Check(payments==1,"Enabled payment uses explicit factory");SDK.Shutdown();Check(payment.Disposes==1,"SDK owns payment provider");
+  rejected=false;try{new DouyinProviderFactory("game","test").CreatePay(z=>z());}catch(InvalidOperationException){rejected=true;}
+  Check(rejected,"No implicit mock payment fallback");
   Console.WriteLine("DOUYIN_FACTORY_TESTS_PASS (configuration and ownership; no platform calls)");
  }
 }

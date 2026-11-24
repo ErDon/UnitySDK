@@ -110,3 +110,8 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 运行 `node --test test/multi-game.test.mjs`，分别验证 Memory 与 SQLite 存储。六个已授权绑定覆盖游戏、环境、App ID 和平台差异；即使平台用户标识、商品 ID、幂等请求 ID 相同，会话与订单仍须按绑定隔离。测试逐对拒绝跨绑定会话使用、读单及确认，并验证撤销一个会话不影响其他绑定。同平台同应用的 code 不能通过切换游戏或环境再次兑换；不同应用或平台可独立使用相同的不透明 code 文本。
 
 这项回归使用 SQLite 内存数据库和注入的平台身份，证明服务端边界，不证明第二个实际游戏、真机登录、真实支付或生产部署。完整后端回归 `node --test` 在 Node 24.20.0 下共 39 项通过（2026-11-24）。HTTP 测试需要允许连接自身启动的本机回环端口。
+
+
+## 抖音道具直购服务
+
+`createDouyinApplication` 组合持久化登录会话、订单、受认证预支付、官方签名通知与可选发货工作器。使用独立回调 Token；未提供 deliver 时订单保持 Paid，由游戏业务完成权益入库。完整配置、HTTP 路由及安全边界见 [抖音支付接入](../docs/douyin-payments.md)。仅有本机协议/流程验证，未进行真实支付与公网部署，主动平台查单及游戏币扣币尚未实现。

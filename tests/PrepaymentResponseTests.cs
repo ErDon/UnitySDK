@@ -13,6 +13,8 @@ class PrepaymentResponseTests
         var error=PrepaymentResponsePolicy.Evaluate(409,data,id).Error;
         Check(error.Code==data.errorCode&&error.ServerCallId==call&&error.Retry==RetryPolicy.UserAction,"Uncertain is not automatic retry");
         Check(PrepaymentResponsePolicy.Evaluate(200,data,id).Error.Code=="PAY.INVALID_RESPONSE","Contradictory status rejected");
+        data.errorCode="PAY.PRODUCT_CHANGED";error=PrepaymentResponsePolicy.Evaluate(409,data,id).Error;
+        Check(error.Code=="PAY.PRODUCT_CHANGED"&&error.Retry==RetryPolicy.UserAction&&error.ServerCallId==call,"Changed catalog retains safe actionable code");
         data.errorCode="private-upstream-error";data.callId="private";error=PrepaymentResponsePolicy.Evaluate(500,data,id).Error;
         Check(error.Code=="PAY.SERVER_REJECTED"&&error.ServerCallId==null&&!error.Reason.Contains("private"),"Unknown text not forwarded");
         error=PrepaymentResponsePolicy.Evaluate(429,null,id,"7").Error;Check(error.RetryAfterSeconds==7,"Rate limit delay");

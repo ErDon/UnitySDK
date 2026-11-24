@@ -25,7 +25,7 @@ class CompiledModuleTests {
   foreach(var call in attempts){bool rejected=false;try{call();}catch(InvalidOperationException e){rejected=e.Message.StartsWith("CONFIG.MODULE_NOT_COMPILED:");}if(!rejected)throw new Exception("Factory did not reject excluded capability");}
   foreach(var name in new[]{"CredentialProvider","Storage","Share","RewardedAds","Analytics"})
    if(typeof(TikTokProviderFactory).Assembly.GetType("ErDon.UnitySDK.TikTok.TikTok"+name)!=null)throw new Exception("Excluded type remains: "+name);
-  foreach(var name in new[]{"VerifiedPayment","NetworkProviderFactory"})
+  foreach(var name in new[]{"VerifiedPayment","NetworkProviderFactory","PreparedPaymentLauncher","PreparedPaymentLauncher`1"})
    if(typeof(SDK).Assembly.GetType("ErDon.UnitySDK."+name)!=null)throw new Exception("Excluded core implementation remains: "+name);
   Console.WriteLine("COMPILED_MODULE_TESTS_PASS");
  }

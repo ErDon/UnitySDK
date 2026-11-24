@@ -1,8 +1,8 @@
 # 支付编排（开发中）
 
-VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。已接 SDK.Pay 聚合及 Editor Mock 配置预览，真实平台收银台尚未接入。
+VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。已接 SDK.Pay 聚合、Editor Mock 预览及三平台收银台网关。抖音/TikTok 已有显式支付工厂和服务端组合，微信服务端链路与全部真实扣款仍待验证。
 
-## TikTok 服务端验签基础（尚未接通订单）
+## TikTok 服务端验签基础
 
 `server/src/tiktok-webhook.mjs` 提供 `verifyTikTokWebhook`，按 [TikTok 官方验签协议](https://developers.tiktok.com/docs/en/webhooks-verification)使用时间戳、点号和原始请求体计算 HMAC-SHA256，以恒定时间比较摘要。以下是服务器代码，不能放进 Unity 客户端：
 
@@ -97,7 +97,7 @@ TikTok 组合服务可通过 `createTikTokApplication({ ..., deliver, deliveryIn
 
 DouyinPaymentRequest 为不可变参数快照：OrderId、ZoneId、ExtraInfo，以及游戏币数量 BuyQuantity 或直购价格 AmountMinor / ProductName / DirectPurchase。直购必须 BuyQuantity=0；游戏币模式不填直购金额/商品名。订单号、数量和价格必须取自认证后的游戏服务端，不能以客户端商品输入为准。网关不会换算价格档位或验证后台开通资格；直购会检查相应 CanIUse 能力，缺能力返回 CAPABILITY.NOT_SUPPORTED，不自动降级为其他付费场景。
 
-成功回调仅返回 AwaitServerConfirmation，不生成支付证据。取消码 -2 映射 PAY.USER_CANCELLED，其余失败返回 PAY.PLATFORM_REJECTED 并保留数字平台码，原始文本不传给上层。并发/重复回调与 Dispose 后迟到回调受保护，关闭网关不撤销平台交易。此阶段未完成抖音服务端交易核验、游戏订单到参数的受认证映射和工厂装配；配置入口仍阻断抖音支付，不代表已可上线。既有非泛型 IPlatformPaymentGateway 保留为字符串请求特化，TikTok 调用方式不变。
+成功回调仅返回 AwaitServerConfirmation，不生成支付证据。取消码 -2 映射 PAY.USER_CANCELLED，其余失败返回 PAY.PLATFORM_REJECTED 并保留数字平台码，原始文本不传给上层。并发/重复回调与 Dispose 后迟到回调受保护，关闭网关不撤销平台交易。抖音道具直购已完成受认证参数映射、签名通知入账、服务装配与显式支付工厂，完整示例见 [抖音支付接入](douyin-payments.md)。主动平台查单、游戏币扣除与真实支付仍待完成，不代表已可上线。既有非泛型 IPlatformPaymentGateway 保留为字符串请求特化，TikTok 调用方式不变。
 
 ### 平台查单传输
 

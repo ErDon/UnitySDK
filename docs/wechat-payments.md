@@ -59,7 +59,7 @@ SDK.Pay(new PaymentRequest(gameSession, "your-platform-product-id", requestId), 
 
 ## 查单、错误与恢复
 
-`POST /v1/orders/{id}/query` 需要 Bearer 游戏会话。服务器用稳定令牌普通模式、session_key 和 AppKey 调用 `pay_v2.queryOrder`；返回 `platformStatus` 和本地状态。平台查单没有金额及付款人完整证据，因此不会单凭 `paid` 发货。以已验证发货通知和游戏库存为准。
+`POST /v1/orders/{id}/query` 需要 Bearer 游戏会话。服务器用稳定令牌普通模式、session_key 和 AppKey 调用 `pay_v2.queryOrder`；返回 `platformStatus` 和本地状态。平台查单没有金额及付款人完整证据，因此不会单凭 `paid` 发货。以已验证发货通知和游戏库存为准。通知缺失时使用[管理员恢复](operator-recovery.md)核查和补账。
 
 | 错误码 | 原因及处理 |
 |---|---|

@@ -18,7 +18,7 @@
 | `SDK.CancelShare()` | 无返回值 | 结束本地等待，不保证关闭分享面板 |
 | `SDK.ShowRewardedAd(request, callback, timeoutMilliseconds)` | `RewardedAdResult` 回调 | [广告](rewarded-ads.md)，默认 120 秒；提前关闭可成功但 Completed=false |
 | `SDK.CancelRewardedAd()` | 无返回值 | 不保证关闭广告；下层未结束时仍可能拒绝新展示 |
-| `SDK.Pay(request, callback, timeoutMilliseconds)` | `PaymentResult` 回调 | [支付](payment-pipeline.md)，默认 60 秒；三平台网关已有适配，微信后端未完成，真实扣款待验收 |
+| `SDK.Pay(request, callback, timeoutMilliseconds)` | `PaymentResult` 回调 | [支付](payment-pipeline.md)，默认 60 秒；三平台后端/工厂已有实现；[微信直购](wechat-payments.md)、[抖音直购](douyin-payments.md)，真实扣款待验收 |
 | `SDK.CancelPay()` | 无返回值 | 不退款、不证明未扣费；保留购买编号查单 |
 | `SDK.Request(request, callback)` | `INetworkOperation` | [网络](network.md)，每个句柄独立 Cancel；HTTP 非 2xx 不一定是传输失败 |
 | `SDK.ReportEvent(event, callback, timeoutMilliseconds)` | `IAnalyticsOperation` | [上报](analytics.md)，默认 15 秒；推荐跨平台统一使用此重载 |
@@ -80,3 +80,10 @@ SDK.CancelPay();
 ```
 
 网络和异步上报的取消通过各自返回句柄 `operation.Cancel()` 执行，示例见对应能力文档；它们允许多个并发调用，没有“取消所有业务”的同名全局接口。退出游戏使用 `UnitySdkHost.Shutdown()` 统一释放。
+
+
+## 服务端支付与管理入口
+
+三平台支付通过 `createWeChatApplication`、`createDouyinApplication`、`createTikTokApplication` 装配；客户端均通过 `SDK.Pay` 使用。[微信预支付](wechat-payments.md)、[抖音预支付](douyin-payments.md)、[TikTok 支付](payment-pipeline.md) 提供工厂示例。
+
+管理员接口 `PaymentRecovery.inspect/apply`、TikTok `inspectAuthorizationRevocation/resolveAuthorizationRevocation` 不属于游戏 HTTP 路由，配置可信验证器后使用。参数、签名凭证、预览与错误码见[管理员恢复](operator-recovery.md)。

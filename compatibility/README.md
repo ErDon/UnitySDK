@@ -10,7 +10,7 @@
 | TikTok | 官方完整 1.1.6-Release；哈希见 docs/tiktok.md | 干净插件工程、Runtime/Editor 回归（含支付网关/工厂）、Play Mode 注册、开发构建/官方导出及 StreamingAssets 保留；七模块全部关闭的自有实现链接检查 | 公共契约与官方内部代码的最终保留范围、JS/Wasm/资源隔离、真机与后端联调 |
 | 抖音 | TTSDK 6.9.7 | BGDT 官方安装、八组接口/注入回归（含支付网关/工厂）、独立开发构建与官方导出、注册保留；七模块全部关闭的自有实现链接检查 | 最终产物隔离、真实初始化、后端联调及真机 |
 | BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入、cp 模式安装 TTSDK 6.9.7 | 新版本升级与真机回归 |
-| 公共服务端 | 0.1.0，Node 24.20.0 | 115 项测试：模拟三平台上游、本机 HTTP/SQLite、会话/订单隔离、抖音/TikTok 支付通知与发货、TikTok 加密令牌续期、三平台配置与统一启动 | 官方接口调用、Unity HTTPS、部署、备份与性能 |
+| 公共服务端 | 0.1.0，Node 24.20.0 | 156 项服务端回归：模拟三平台上游、本机 HTTP/SQLite、三平台支付通知/发货、微信签名与加密会话、TikTok 跨进程续期/多绑定撤销、管理员恢复及 CLI；最新数量见 WORK_PLAN.md | 官方接口调用、Unity HTTPS、部署、备份与性能 |
 | Android 原生/Unity 桥接 | SDK 0.1.0，Java 8，API 26+；编译 API 33 | Java/真实回环 HTTPS 回归、API/AAR 编译、Unity 桥接、C# 全开/全关编译、ARM64 IL2CPP/R8 开发 APK、模拟器 JNI/冷启动存储；哈希见 android/build-manifest.json 与 android/validation/development-apk.json | 物理真机、系统分享交互、真实供应商及全部 APK/AAB 组合隔离 |
 | iOS 原生渠道 | 无 | 扩展边界设计 | 本轮不接具体供应商 |
 | Godot | 无 | 协议边界设计 | 本轮不实现引擎桥接 |
@@ -61,3 +61,8 @@ v2 快照覆盖包目录全部文件；v1 历史快照仅覆盖当时选取的�
 这覆盖“五类全部关闭”的组合和适配程序集，不覆盖所有单项组合或最终 JS/Wasm/资源的完整排除。后续微信、抖音、TikTok 七项全部关闭，以及 TikTok 仅开启登录/关闭其余六项的实际构建也已通过链接检查；后者保留登录、VerifiedAuth 与 UnitySessionExchange，网络/支付等六项自有实现缺失。仍未证明整个公共核心或官方单体 SDK 内部能力完全排除。默认开启模式的官方接口回归仍需在每次升级后重跑；两种验证不能互相替代。
 
 三平台官方程序集仍保留关闭能力的方法，实际数量、官方 linker 规则及可重跑清单工具见 [官方 SDK 内部保留边界](../docs/platform-isolation.md#官方-sdk-内部保留边界2026-11-23-实测)。不能以适配类型缺失推断官方内部实现缺失。
+
+
+### 功能收尾编译复核
+
+2026-11-24：微信 SecondGameWebGLProject、抖音 DouyinBuildProject、TikTok TikTokBuildProject 使用当前本地包重新导入均退出 0。三组文档编译各通过 27 段；微信/抖音组各跳过两段 TikTok 专用示例，TikTok 组覆盖这些片段。新增微信支付解析、类型化工厂和注册已进入 UPM 清单。此轮为功能编译与文档复核，没有重新宣称真实支付或最终小游戏产物验收。

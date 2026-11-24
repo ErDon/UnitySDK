@@ -10,11 +10,12 @@ import { createWeChatPaymentWebhookHandler } from './wechat-webhook-http.mjs';
 import { DeliveryWorker } from './delivery-worker.mjs';
 import { WeChatCredentialStore } from './wechat-credential-store.mjs';
 import { createWeChatQueryClient } from './wechat-query-client.mjs';
+import { PaymentRecovery } from './payment-recovery.mjs';
 
 // One trusted application/route per instance. Drain HTTP before awaiting close().
 export function createWeChatApplication({ binding, catalog, callbackToken, authPath, orderPath, credentialPath, keys, currentKeyId,
   offerId, zoneId, appKey, isSandbox, originalId, fetchImpl = fetch, now = Date.now, log = console.info,
-  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100 } = {}) {
+  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100, verifyRecoveryEvidence = null } = {}) {
   if (binding?.platform !== 'WeChat' || typeof now !== 'function' || typeof log !== 'function' ||
       !Array.isArray(catalog) || !catalog.length || (deliver !== null && typeof deliver !== 'function'))
     throw new TypeError('Invalid WeChat application configuration');
@@ -37,6 +38,7 @@ export function createWeChatApplication({ binding, catalog, callbackToken, authP
       verifyPayment: async () => ({ paid: false }) });
     const payments = new WeChatPayments({ orders, credentialStore, offerId, zoneId, appKey, isSandbox, originalId,
       queryClient: createWeChatQueryClient({ binding, appKey, credentialStore, fetchImpl, now }) });
+    const recovery = verifyRecoveryEvidence ? new PaymentRecovery({binding,store:orderStore,verifyEvidence:verifyRecoveryEvidence,now}) : null;
     const sessionHandler = createAuthHandler(auth, { log });
     const orderHandler = createOrderHandler(orders, { prepayments: payments, log });
     const webhookHandler = createWeChatPaymentWebhookHandler(payments, { callbackToken, deliver, log });
@@ -54,6 +56,6 @@ export function createWeChatApplication({ binding, catalog, callbackToken, authP
     if (deliver !== null) {
       worker = new DeliveryWorker({ orders, deliver, intervalMs: deliveryIntervalMs, batchSize: deliveryBatchSize, log }); worker.start();
     }
-    return Object.freeze({ handler, close, orders, pendingDelivery: () => orderStore.pendingDelivery() });
+    return Object.freeze({ handler, close, orders, recovery, pendingDelivery: () => orderStore.pendingDelivery() });
   } catch (error) { close(); throw error; }
 }

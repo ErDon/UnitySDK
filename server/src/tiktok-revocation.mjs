@@ -3,12 +3,14 @@ import { AuthError, bindingKey, digest } from './auth.mjs';
 // Server-owned orchestration. Durable states block use while the remote result is uncertain.
 // Recovery that resets Sending/Finalizing requires the previous worker to be stopped.
 export class TikTokRevocation {
-  constructor({ binding, auth, credentials, managedCredentials, client } = {}) {
-    if (binding?.platform !== 'TikTok' || typeof auth?.store?.revokeSubject !== 'function' ||
+  constructor({ binding, auth, credentials, managedCredentials, client, verifyEvidence = null } = {}) {
+    if (binding?.platform !== 'TikTok' || typeof auth?.store?.revokeSubject !== 'function' || typeof auth?.store?.bindingsForApplication !== 'function' ||
         typeof credentials?.beginRevocation !== 'function' || typeof managedCredentials?.get !== 'function' || typeof client?.revoke !== 'function')
       throw new TypeError('Invalid TikTok revocation configuration');
     this.binding = Object.freeze({ ...binding }); this.scope = bindingKey(binding);
     this.auth = auth; this.credentials = credentials; this.managed = managedCredentials; this.client = client; this.running = new Map();
+    if(verifyEvidence!==null && typeof verifyEvidence!=='function')throw new TypeError('Invalid evidence verifier');
+    this.verifyEvidence=verifyEvidence;
   }
   assertAuthorized(binding, subject) {
     try {
@@ -30,6 +32,19 @@ export class TikTokRevocation {
   resume(subject, { previousWorkerStopped = false } = {}) {
     // Trusted server API, intentionally not an HTTP route.
     return this.run(subject, true, previousWorkerStopped);
+  }
+  async resolve(subject, { jobId, evidence, previousWorkerStopped = false } = {}) {
+    if(!this.verifyEvidence)throw new AuthError('RECOVERY.NOT_CONFIGURED',503);
+    if(previousWorkerStopped!==true || this.running.has(subject))throw new AuthError('AUTH.REVOCATION_PENDING',409);
+    let checked;
+    try { checked=await this.verifyEvidence(evidence); }
+    catch { throw new AuthError('RECOVERY.EVIDENCE_INVALID',400); }
+    if(!checked || checked.kind!=='authorization-revoked' || checked.platform!=='TikTok' || checked.appId!==this.binding.appId ||
+        checked.subject!==subject || checked.jobId!==jobId || checked.gameId!==this.binding.gameId || checked.environment!==this.binding.environment)
+      throw new AuthError('RECOVERY.EVIDENCE_MISMATCH',409);
+    if(this.running.has(subject))throw new AuthError('AUTH.REVOCATION_PENDING',409);
+    this.credentials.confirmRevocationEvidence(this.binding,subject,jobId,checked);
+    return this.resume(subject,{previousWorkerStopped:true});
   }
   run(subject, recovery, previousWorkerStopped = false) {
     if (this.running.has(subject)) return this.running.get(subject);
@@ -72,7 +87,9 @@ export class TikTokRevocation {
     if (!store.transitionRevocation(binding, subject, job.jobId, 'Confirmed', 'Finalizing')) throw new AuthError('AUTH.REVOCATION_PENDING', 409);
     // Keep the barrier active until both databases have committed. A crash can resume
     // local cleanup without sending another OAuth request when platform success is durable.
-    await this.auth.store.revokeSubject(this.scope, subject);
+    const scopes = new Set([this.scope, ...store.authorizationBindings(binding, subject),
+      ...await this.auth.store.bindingsForApplication(binding.appId, 'TikTok', subject)]);
+    for (const scope of scopes) await this.auth.store.revokeSubject(scope, subject);
     store.completeRevocation(binding, subject, job.jobId);
     return Object.freeze({ revoked: true, scope: 'tiktok-authorization' });
   }

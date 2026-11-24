@@ -111,7 +111,7 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 ## 订单组件
 
-新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。可使用 createOrderHandler 显式装配订单 HTTP 路由，原 npm start 登录入口不启用订单；配置化启动在抖音/TikTok 支付开启时装配订单及各自的通知验签。微信支付验签仍待实现，真实平台联调未验收；内存订单仅用于开发。
+新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。可使用 createOrderHandler 显式装配订单 HTTP 路由，原 npm start 登录入口不启用订单；配置化启动在三平台支付开启时装配订单及各自的通知验签。微信使用独立支付模板，真实平台联调未验收；内存订单仅用于开发。
 
 ## 多游戏共享存储回归
 
@@ -122,4 +122,11 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 ## 抖音道具直购服务
 
-`createDouyinApplication` 组合持久化登录会话、订单、受认证预支付、主动查单诊断、官方签名通知与可选发货工作器。使用独立回调 Token；未提供 deliver 时订单保持 Paid，由游戏业务完成权益入库。完整配置、HTTP 路由及安全边界见 [抖音支付接入](../docs/douyin-payments.md)。查单复用 App ID/Secret，应用令牌仅在服务端按需获取和缓存；平台状态不直接触发发货。仅有本机协议/流程验证，未进行真实支付与公网部署，缺失通知后的对账恢复及游戏币扣币尚未实现。
+`createDouyinApplication` 组合持久化登录会话、订单、受认证预支付、主动查单诊断、官方签名通知与可选发货工作器。使用独立回调 Token；未提供 deliver 时订单保持 Paid，由游戏业务完成权益入库。完整配置、HTTP 路由及安全边界见 [抖音支付接入](../docs/douyin-payments.md)。查单复用 App ID/Secret，应用令牌仅在服务端按需获取和缓存；平台状态不直接触发发货。仅有本机协议/流程验证，未进行真实支付与公网部署，缺失通知支持签名管理员审核恢复；游戏币扣币不在当前范围。
+
+
+## 微信支付与管理员恢复
+
+微信道具直购使用 `config/wechat-payment.example.json`，见[微信支付](../docs/wechat-payments.md)。加密 session_key、预订单签名、查单、发货推送和真实游戏发货模块均在服务端装配。
+
+三平台缺失通知、TikTok 预下单响应丢失及授权不确定的管理流程见[管理员恢复](../docs/operator-recovery.md)。`npm run recovery -- ...` 加载本地 .env，默认预览；显式执行才修改订单，管理员证据与状态同事务审计。不在客户端暴露管理员密钥或恢复路由。当前完整服务端回归为156项，早期段落中的测试数量仅描述历史子集。

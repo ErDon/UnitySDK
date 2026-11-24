@@ -35,6 +35,12 @@ export class MemoryAuthStore {
     return { ...value };
   }
   async deleteSession(hash) { this.sessions.delete(hash); }
+  async bindingsForApplication(appId, platform, subject) {
+    return [...new Set([...this.sessions.values()].filter(record => {
+      const scope = JSON.parse(record.binding);
+      return record.subject === subject && scope[1] === appId && scope[3] === platform;
+    }).map(record => record.binding))];
+  }
   async revokeSubject(binding, subject) {
     const key = JSON.stringify([binding, subject]);
     if ((!this.revocations.has(key) && this.revocations.size >= this.capacity) || this.revision >= Number.MAX_SAFE_INTEGER)

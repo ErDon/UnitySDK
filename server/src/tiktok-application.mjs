@@ -15,12 +15,13 @@ import { DeliveryWorker } from './delivery-worker.mjs';
 import { TikTokCredentials } from './tiktok-credentials.mjs';
 import { createTikTokTokenClient } from './tiktok-token-client.mjs';
 import { TikTokRevocation } from './tiktok-revocation.mjs';
+import { PaymentRecovery } from './payment-recovery.mjs';
 
 // One application binding per instance. Caller drains its HTTP server before close().
 // This composition owns its databases, but never starts a listener or grants goods.
 export function createTikTokApplication({ binding, catalog, isSandbox, authPath, orderPath, credentialPath,
   keys, currentKeyId, orderUrlPrefix = '/orders/', fetchImpl = fetch, now = Date.now, log = console.info,
-  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100 } = {}) {
+  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100, verifyRecoveryEvidence = null } = {}) {
   if (binding?.platform !== 'TikTok' || typeof isSandbox !== 'boolean' ||
       typeof now !== 'function' || typeof log !== 'function' || !Array.isArray(catalog) || !catalog.length ||
       (deliver !== null && typeof deliver !== 'function'))
@@ -48,9 +49,10 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
       verifyPayment: async () => ({ paid: false }) });
     const payments = new TikTokPrepayments(orderStore);
     const flow = new TikTokPrepaymentFlow(payments, createTikTokTradeClient({ fetchImpl }));
+    const recovery = verifyRecoveryEvidence ? new PaymentRecovery({binding:scope,store:orderStore,verifyEvidence:verifyRecoveryEvidence,now}) : null;
     const tokenClient = createTikTokTokenClient({ fetchImpl, now });
     const managedCredentials = new TikTokCredentials({ binding: scope, store: credentials, client: tokenClient, now });
-    revocation = new TikTokRevocation({ binding: scope, auth, credentials, managedCredentials, client: tokenClient });
+    revocation = new TikTokRevocation({ binding: scope, auth, credentials, managedCredentials, client: tokenClient, verifyEvidence: verifyRecoveryEvidence });
     const prepayments = new TikTokPrepaymentService({ orders, flow, catalog, credentials: managedCredentials, isSandbox, now, orderUrlPrefix });
     const sessionHandler = createAuthHandler(auth, { log, authorizationRevoker: revocation });
     const orderHandler = createOrderHandler(orders, { log, prepayments });
@@ -69,8 +71,10 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
       worker = new DeliveryWorker({ orders, deliver, intervalMs: deliveryIntervalMs, batchSize: deliveryBatchSize, log });
       worker.start();
     }
-    return Object.freeze({ handler, close, orders,
+    return Object.freeze({ handler, close, orders, recovery,
       resumeAuthorizationRevocation: (subject, options) => revocation.resume(subject, options),
+      inspectAuthorizationRevocation: subject => credentials.revocation(scope, subject),
+      resolveAuthorizationRevocation: (subject, options) => revocation.resolve(subject, options),
       pendingDelivery: () => orderStore.pendingDelivery() });
   } catch (error) { close(); throw error; }
 }

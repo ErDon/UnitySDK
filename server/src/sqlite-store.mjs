@@ -88,5 +88,10 @@ export class SqliteAuthStore {
       this.db.prepare('DELETE FROM erdon_auth_sessions WHERE binding=? AND subject=?').run(binding, subject);
     });
   }
+  async bindingsForApplication(appId, platform, subject) {
+    return this.transaction(() => this.db.prepare(`SELECT DISTINCT binding FROM erdon_auth_sessions
+      WHERE subject=? AND json_extract(binding,'$[1]')=? AND json_extract(binding,'$[3]')=?`)
+      .all(subject, appId, platform).map(row => row.binding));
+  }
   close() { if (!this.closed) { this.db.close(); this.closed = true; } }
 }

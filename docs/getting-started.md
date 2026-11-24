@@ -9,7 +9,7 @@ Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Pa
 3. **选择一个真实平台**：安装 HTTP 包、目标适配包及对应官方 SDK，按 [微信](wechat.md)、[抖音](douyin.md) 或 [TikTok](tiktok.md) 文档配置。不要在同一发行工程混装抖音/TikTok 官方 DLL。
 4. **配置服务器**：按 [账号密钥配置](server-configuration.md) 复制目标 JSON 和 .env，先运行配置检查。缺真实密钥不妨碍运行自动测试，但真实登录时必须填写有效凭据；客户端只使用公开 App ID 和自己的 HTTPS 服务地址。
 5. **接入启动与能力**：先只启用登录，等待启动成功再登录；然后逐项开启存储、分享、广告、网络与上报。开启网络需提供网络工厂。上层接口与详细示例见 [接口索引](api-reference.md)。
-6. **单独装配支付**：抖音/TikTok 需要显式支付工厂、服务器目录定价和游戏发货处理；[通用启动示例](../Packages/com.erdon.unitysdk.transport.http/Samples~/ConfiguredStartup/README.md) 没有自动注入支付工厂。按 [抖音支付](douyin-payments.md) 或 [TikTok 支付编排](payment-pipeline.md) 接入，不能仅勾选后期待收银台可用。
+6. **单独装配支付**：微信/抖音/TikTok 需要显式支付工厂、服务器目录定价和游戏发货处理；[通用启动示例](../Packages/com.erdon.unitysdk.transport.http/Samples~/ConfiguredStartup/README.md) 没有自动注入支付工厂。按 [微信支付](wechat-payments.md)、[抖音支付](douyin-payments.md) 或 [TikTok 支付编排](payment-pipeline.md) 接入，不能仅勾选后期待收银台可用。
 7. **最后做构建与真机验收**：应用模块构建选择，导出非生产 Development Build，检查目标平台包体并记录真机结果。不要为通过构建而关闭隔离检查。
 
 ## 三种配置不要混用
@@ -84,4 +84,4 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 
 默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档、接口索引、配置、启动、原生扩展及错误处理文档中的公共 C# 代码块，失败立即停止；不会运行这些调用或访问平台。完整工厂类型直接编译，调用片段包入 MonoBehaviour 方法；配置资源作为 TextAsset 参数传入，底层网络示例补入文中要求的 provider 字段及 OnDestroy 释放方法。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
 
-平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共片段；支付文档中的 TikTok 专用片段会明确输出 SKIP，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。提供 DouyinAssembly 时还会检查 douyin-payments.md 的两段接入示例；提供 TikTokAssembly 时检查支付文档中的 TikTok 工厂示例。以脚本最终 passed/skipped 汇总为准，不以历史段数判断当前覆盖率。
+平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共片段；支付文档中的 TikTok 专用片段会明确输出 SKIP，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。提供 WeChatAssembly 时还会检查 wechat-payments.md 的装配与购买示例；提供 DouyinAssembly 时还会检查 douyin-payments.md 的两段接入示例；提供 TikTokAssembly 时检查支付文档中的 TikTok 工厂示例。以脚本最终 passed/skipped 汇总为准，不以历史段数判断当前覆盖率。

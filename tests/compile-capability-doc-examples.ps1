@@ -29,6 +29,7 @@ try {
         $platformReferences += "/reference:$($platformDoc[1])"
     }
     if ($DouyinAssembly) { $documents += 'douyin-payments' }
+    if ($WeChatAssembly) { $documents += 'wechat-payments' }
     $compiledCount = 0
     $skippedCount = 0
     foreach ($name in $documents) {
@@ -56,6 +57,7 @@ try {
                 $parameters += ', UnityEngine.MonoBehaviour host, string ordersEndpoint, System.Action<ErDon.UnitySDK.SdkLogLevel,string> engineLog, System.Func<ErDon.UnitySDK.ISessionExchange> createSessionExchange'
             }
             if ($name -eq 'douyin-payments' -and $index -eq 2) { $parameters = 'string gameSession, string purchaseRequestId' }
+            if ($name -eq 'wechat-payments') { $parameters = 'string gameSession, string requestId' }
             $source = Join-Path $output.FullName "$name-$index.cs"
             $fields = ''
             if ($name -in @('wechat', 'tiktok') -and $index -eq 1) { $parameters = 'ErDon.UnitySDK.ISessionExchange sessionExchange, System.Action<System.Action> postToMainThread' }

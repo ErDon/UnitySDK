@@ -35,6 +35,11 @@ test('official HMAC test vectors match exact UTF-8 input', () => {
   assert.equal(wechatHmac('12345', '/wxa/game/getbalance&' + body), '11bac6388871d29c055c7d16fbe42e8d646855b666faf89b15c815218b1b23bd');
   assert.equal(wechatHmac('9hAb/NEYUlkaMBEsmFgzig==', body), '42fe1d3341fb1c8bd6f5014ba735ab04eacc80a2deb3ab4669eab4700b5b6729');
 });
+test('login reports credential persistence failure without leaking the session key',async()=>{
+  const verifier=createWeChatVerifier({credentialStore:{put:async()=>{throw new Error('private-session-key');}},
+    fetchImpl:async()=>Response.json({openid:'alice',session_key:'private-session-key'})});
+  await assert.rejects(verifier(binding,'code'),{code:'AUTH.CREDENTIAL_STORAGE_FAILED',status:503,message:'AUTH.CREDENTIAL_STORAGE_FAILED'});
+});
 test('prepare is owned, stable, 32-char mapped and refreshes only user signature after login', async t => {
   const f = await fixture(t);
   await assert.rejects(f.payments.prepare(f.other, f.order.orderId), { code: 'PAY.ORDER_NOT_FOUND' });

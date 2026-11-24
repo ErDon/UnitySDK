@@ -16,7 +16,10 @@ export function createWeChatVerifier({ fetchImpl = fetch, timeoutMs = 8000, cred
       if (typeof data.openid !== 'string' || !data.openid.trim() || typeof data.session_key !== 'string' || !data.session_key.trim())
         throw new AuthError('AUTH.PLATFORM_RESPONSE_INVALID', 502);
       // Payment-enabled deployments retain the key only in the encrypted backend vault.
-      if (credentialStore) await credentialStore.put(binding, data.openid, data.session_key);
+      if (credentialStore) {
+        try { await credentialStore.put(binding, data.openid, data.session_key); }
+        catch { throw new AuthError('AUTH.CREDENTIAL_STORAGE_FAILED', 503); }
+      }
       return { subject: data.openid };
     } catch (error) {
       if (error instanceof AuthError) throw error;

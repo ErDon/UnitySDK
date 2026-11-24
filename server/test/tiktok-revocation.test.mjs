@@ -12,12 +12,43 @@ import { TikTokCredentials } from '../src/tiktok-credentials.mjs';
 import { TikTokRevocation } from '../src/tiktok-revocation.mjs';
 import { createTikTokApplication } from '../src/tiktok-application.mjs';
 import { createTikTokVerifier } from '../src/tiktok.mjs';
+import { createOperatorEvidenceVerifier, signOperatorEvidence } from '../src/operator-evidence.mjs';
 
 const binding = { gameId: 'game', appId: 'app', environment: 'test', platform: 'TikTok', secret: 'private-secret' };
 const keys = new Map([['key', Buffer.alloc(32, 4)]]);
 const value = (token = 'private-access') => ({ accessToken: token, expiresAt: Date.now() + 60000,
   refreshToken: 'private-refresh', refreshExpiresAt: Date.now() + 3600000 });
-async function setup(t, { client = { revoke: async () => {}, refresh: async () => { throw new Error(); } } } = {}) {
+
+test('Client Key revocation blocks and clears all game/environment bindings but not another application', async t => {
+  let release, entered, calls=0;
+  const started=new Promise(resolve=>entered=resolve);
+  const client={refresh:async()=>{},revoke:async()=>{calls++;entered();await new Promise(resolve=>release=resolve);}};
+  const f=await setup(t,{client}), revision=f.credentials.authorizationRevision();
+  const other={...binding,gameId:'other-game',environment:'production'}, unrelated={...other,appId:'another-app'};
+  await f.credentials.put(other,'alice',value('other-game-token'));
+  await f.credentials.put(unrelated,'alice',value('unrelated-token'));
+  const auth=new AuthService({bindings:[other,unrelated],store:f.authStore,
+    assertAuthorized:(b,s)=>f.revoke.assertAuthorized(b,s),verifiers:{TikTok:async()=>({subject:'alice'})}});
+  const otherSession=(await auth.exchange({...other,code:'other-login'})).session;
+  const unrelatedSession=(await auth.exchange({...unrelated,code:'unrelated-login'})).session;
+  const pending=f.revoke.revoke(f.session);await started;
+  await assert.rejects(auth.authenticate(otherSession,other),{code:'AUTH.REVOCATION_PENDING'});
+  assert.equal(await f.credentials.get(other,'alice'),null);
+  await assert.rejects(f.credentials.put(other,'alice',value('late'),null,revision));
+  const managed=new TikTokCredentials({binding:other,store:f.credentials,client,refreshBeforeMs:0});
+  const otherRevoker=new TikTokRevocation({binding:other,auth,credentials:f.credentials,managedCredentials:managed,client});
+  await assert.rejects(otherRevoker.revoke(otherSession),{code:'AUTH.REVOCATION_UNCERTAIN'});
+  release();await pending;assert.equal(calls,1);
+  await assert.rejects(auth.authenticate(otherSession,other),{code:'AUTH.SESSION_INVALID'});
+  assert.equal(await f.credentials.getRefresh(other,'alice'),null);
+  assert.equal((await auth.authenticate(unrelatedSession,unrelated)).subject,'alice');
+  assert.equal((await f.credentials.get(unrelated,'alice')).accessToken,'unrelated-token');
+  await assert.rejects(f.credentials.put({...other,gameId:'new-binding'},'alice',value('late-new-binding'),null,revision));
+  await f.credentials.put(other,'alice',value('new-authorization'),null,f.credentials.authorizationRevision());
+  await otherRevoker.resume('alice');
+  assert.equal((await f.credentials.get(other,'alice')).accessToken,'new-authorization');
+});
+async function setup(t, { client = { revoke: async () => {}, refresh: async () => { throw new Error(); } }, verifyEvidence = null } = {}) {
   const dir = await mkdtemp(join(tmpdir(), 'erdon-revoke-platform-'));
   const credentialPath = join(dir, 'credentials.db'), authPath = join(dir, 'auth.db');
   const stores = []; t.after(async () => { for (const store of stores) store.close(); await rm(dir, { recursive: true, force: true }); });
@@ -29,7 +60,7 @@ async function setup(t, { client = { revoke: async () => {}, refresh: async () =
       assertAuthorized: (b, subject) => revoke.assertAuthorized(b, subject),
       verifiers: { TikTok: async (b, code) => ({ subject: code.split(':')[0] }) } });
     const managedCredentials = new TikTokCredentials({ binding, store: credentials, client, refreshBeforeMs: 0 });
-    revoke = new TikTokRevocation({ binding, auth, credentials, managedCredentials, client });
+    revoke = new TikTokRevocation({ binding, auth, credentials, managedCredentials, client, verifyEvidence });
     return { credentials, authStore, auth, revoke, managedCredentials };
   };
   const f = open();
@@ -52,6 +83,27 @@ test('platform revoke removes both tokens and every local session, without affec
   assert.equal(await f.credentials.get(binding, 'alice'), null); assert.equal(await f.credentials.getRefresh(binding, 'alice'), null);
   assert.ok(await f.auth.authenticate(bob, binding)); assert.equal((await f.credentials.get(binding, 'bob')).accessToken, 'bob-token');
   await f.revoke.resume('alice'); assert.equal(calls, 1);
+});
+
+test('reviewed evidence resolves uncertain revoke without another remote call and is audited',async t=>{
+  const key=Buffer.alloc(32,21),now=Date.now();let calls=0;
+  const verifyEvidence=createOperatorEvidenceVerifier({keys:new Map([['operator',key]])});
+  const f=await setup(t,{verifyEvidence,client:{refresh:async()=>{},revoke:async()=>{calls++;throw new Error('response lost');}}});
+  await assert.rejects(f.revoke.revoke(f.session),{code:'AUTH.REVOCATION_UNCERTAIN'});
+  const job=f.credentials.revocation(binding,'alice');
+  const payload={schemaVersion:1,kind:'authorization-revoked',evidenceId:'case-1',reviewer:'operator-A',sourceReference:'platform-support-case',
+    sourceSha256:'a'.repeat(64),issuedAt:now,expiresAt:now+60000,platform:'TikTok',appId:'app',gameId:'game',environment:'test',subject:'alice',jobId:job.jobId};
+  const evidence=signOperatorEvidence(payload,'operator',key);
+  await assert.rejects(f.revoke.resolve('alice',{jobId:job.jobId,evidence}),{code:'AUTH.REVOCATION_PENDING'});
+  await assert.rejects(f.revoke.resolve('bob',{jobId:job.jobId,evidence,previousWorkerStopped:true}),{code:'RECOVERY.EVIDENCE_MISMATCH'});
+  await f.revoke.resolve('alice',{jobId:job.jobId,evidence,previousWorkerStopped:true});
+  assert.equal(calls,1);assert.equal(f.credentials.revocation(binding,'alice').state,'Complete');
+  assert.equal(f.credentials.db.prepare('SELECT reviewer FROM erdon_tiktok_revocation_evidence').get().reviewer,'operator-A');
+  assert.equal(await f.credentials.getRefresh(binding,'alice'),null);
+  await assert.rejects(f.auth.authenticate(f.session,binding),{code:'AUTH.SESSION_INVALID'});
+  await f.credentials.put(binding,'alice',value('new-login'),null,f.credentials.authorizationRevision());
+  await f.revoke.resolve('alice',{jobId:job.jobId,evidence,previousWorkerStopped:true});
+  assert.equal((await f.credentials.get(binding,'alice')).accessToken,'new-login');
 });
 
 test('credential lookup failure reports its cause and does not start a revocation', async t => {
@@ -174,7 +226,7 @@ test('credential v1 migration retains encrypted tokens and revocation retains ex
   const db = new DatabaseSync(f.credentialPath);
   db.exec('DROP TABLE erdon_tiktok_authorization_revision; DROP TABLE erdon_tiktok_revocations; DROP TABLE erdon_tiktok_refresh_claims; UPDATE erdon_tiktok_credential_schema SET version=1;'); db.close();
   const next = f.open();
-  assert.equal(next.credentials.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').get().version, 3);
+  assert.equal(next.credentials.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').get().version, 4);
   assert.equal((await next.credentials.get(binding, 'alice')).accessToken, 'private-access');
   const job = next.credentials.beginRevocation(binding, 'alice');
   next.credentials.now = () => Date.now() + 7200000;

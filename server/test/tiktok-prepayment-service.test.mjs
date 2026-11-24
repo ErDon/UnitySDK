@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { AuthService, MemoryAuthStore, bindingKey } from '../src/auth.mjs';
-import { OrderService } from '../src/orders.mjs';
+import { OrderService, OrderError } from '../src/orders.mjs';
 import { SqliteOrderStore } from '../src/sqlite-orders.mjs';
 import { TikTokPrepayments } from '../src/tiktok-prepayments.mjs';
 import { TikTokPrepaymentFlow } from '../src/tiktok-prepayment-flow.mjs';
@@ -41,6 +41,14 @@ test('query authenticates before credentials, requires saved association and nev
   f.service.isSandbox=false;
   await assert.rejects(f.service.query(f.alice,id),{code:'PAY.PREPAYMENT_NOT_FOUND'});
   assert.equal(f.queries.length,1);
+});
+
+test('preparation preserves known refresh recovery codes without leaking arbitrary upstream errors',async t=>{
+  for(const code of ['PAY.CREDENTIAL_REFRESH_PENDING','PAY.CREDENTIAL_REFRESH_UNCERTAIN']){
+    const f=await fixture(t,()=>{throw new OrderError(code,503);});
+    await assert.rejects(f.service.prepare(f.alice,f.order.orderId),{code,status:503});
+    assert.equal(f.requests.length,0);
+  }
 });
 
 test('query rechecks session after credential lookup and platform response', async t => {

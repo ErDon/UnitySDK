@@ -9,11 +9,12 @@ import { createOrderHandler } from './orders-http.mjs';
 import { createDouyinPaymentWebhookHandler } from './douyin-webhook-http.mjs';
 import { DeliveryWorker } from './delivery-worker.mjs';
 import { createDouyinQueryClient } from './douyin-query-client.mjs';
+import { PaymentRecovery } from './payment-recovery.mjs';
 
 // One trusted application/route per instance. Drain HTTP before awaiting close().
 export function createDouyinApplication({ binding, catalog, callbackToken, authPath, orderPath,
   route = 'Android', zoneId = '1', fetchImpl = fetch, now = Date.now, log = console.info,
-  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100 } = {}) {
+  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100, verifyRecoveryEvidence = null } = {}) {
   if (binding?.platform !== 'Douyin' || typeof now !== 'function' || typeof log !== 'function' ||
       !Array.isArray(catalog) || !catalog.length || (deliver !== null && typeof deliver !== 'function'))
     throw new TypeError('Invalid Douyin application configuration');
@@ -35,6 +36,7 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
       verifyPayment: async () => ({ paid: false }) });
     const payments = new DouyinPayments({ orders, catalog, route, zoneId,
       queryClient: createDouyinQueryClient({ binding, fetchImpl, now }) });
+    const recovery = verifyRecoveryEvidence ? new PaymentRecovery({binding,store:orderStore,verifyEvidence:verifyRecoveryEvidence,now}) : null;
     const sessionHandler = createAuthHandler(auth, { log });
     const orderHandler = createOrderHandler(orders, { prepayments: payments, log });
     const webhookHandler = createDouyinPaymentWebhookHandler(payments, { callbackToken, log });
@@ -52,6 +54,6 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
     if (deliver !== null) {
       worker = new DeliveryWorker({ orders, deliver, intervalMs: deliveryIntervalMs, batchSize: deliveryBatchSize, log }); worker.start();
     }
-    return Object.freeze({ handler, close, orders, pendingDelivery: () => orderStore.pendingDelivery() });
+    return Object.freeze({ handler, close, orders, recovery, pendingDelivery: () => orderStore.pendingDelivery() });
   } catch (error) { close(); throw error; }
 }

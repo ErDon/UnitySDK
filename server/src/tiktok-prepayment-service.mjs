@@ -50,7 +50,10 @@ export class TikTokPrepaymentService {
   async accessToken(order) {
     let credential;
     try { credential = await this.credentials.get(this.binding, order.subject); }
-    catch { throw new OrderError('PAY.CREDENTIAL_UNAVAILABLE', 503); }
+    catch (error) {
+      if(error instanceof OrderError && ['PAY.CREDENTIAL_REFRESH_PENDING','PAY.CREDENTIAL_REFRESH_UNCERTAIN'].includes(error.code))throw error;
+      throw new OrderError('PAY.CREDENTIAL_UNAVAILABLE', 503);
+    }
     const current = this.now();
     if (!Number.isSafeInteger(current) || !credential || credential.binding !== bindingKey(this.binding) ||
         credential.subject !== order.subject || !Number.isSafeInteger(credential.expiresAt) || credential.expiresAt <= current ||

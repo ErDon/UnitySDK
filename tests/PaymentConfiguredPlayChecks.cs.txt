@@ -1,0 +1,79 @@
+using System;
+using ErDon.UnitySDK;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+
+[InitializeOnLoad]
+public static class PaymentConfiguredPlayChecks {
+    const string Key="ErDon.Tests.ConfiguredPayment";
+    static int phase,created,preparationDisposals,gatewayDisposals,orderDisposals;
+    static double clock,deadline;
+    static bool ready;static PaymentResult result;static Orders orders;
+    static readonly string OrderId="11111111-1111-1111-1111-111111111111";
+    sealed class Runtime:IPlatformRuntime {
+        public string Platform{get{return "TikTok";}}public bool IsReady{get;private set;}
+        public void Initialize(Action<SdkError> callback){IsReady=true;callback(null);}public void Dispose(){}
+    }
+    sealed class Factory:IPlatformSdkProviderFactory {
+        public string Platform{get{return "TikTok";}}
+        public IAuth CreateAuth(Action<Action> post){throw new Exception("Login disabled");}
+        public IStorage CreateStorage(){throw new Exception("Storage disabled");}
+    }
+    sealed class Orders:IOrderClient {
+        public int Gets;public bool Pending;
+        public void Create(string session,string product,string request,Action<OrderResult> callback){callback(Value(OrderState.Created));}
+        public void Get(string session,string id,Action<OrderResult> callback){Gets++;callback(Value(Pending?OrderState.Created:Gets==1?OrderState.Created:Gets==2?OrderState.Paid:OrderState.Fulfilled));}
+        public void Confirm(string session,string id,string evidence,Action<OrderResult> callback){throw new Exception("Unexpected Confirm");}
+        public void Dispose(){orderDisposals++;}
+    }
+    sealed class Preparation:IPrepaymentClient {
+        public void Prepare(string id,Action<PrepaymentResult> callback){callback(PrepaymentResult.Ready(id,"trade"));}
+        public void Dispose(){preparationDisposals++;}
+    }
+    sealed class Gateway:IPlatformPaymentGateway {
+        public void Launch(string id,Action<PaymentLaunchResult> callback){callback(PaymentLaunchResult.AwaitServerConfirmation());}
+        public void Dispose(){gatewayDisposals++;}
+    }
+    static OrderResult Value(OrderState state){return OrderResult.Ok(new GameOrder(OrderId,"coins",99,"USD",state));}
+    static void Check(bool value,string reason){if(!value)throw new Exception(reason);}
+    static PaymentConfiguredPlayChecks(){EditorApplication.playModeStateChanged+=Changed;}
+    public static void Run(){EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);SessionState.SetBool(Key,true);EditorApplication.isPlaying=true;}
+    static void Changed(PlayModeStateChange state){
+        if(state!=PlayModeStateChange.EnteredPlayMode||!SessionState.GetBool(Key,false))return;
+        SessionState.SetBool(Key,false);deadline=EditorApplication.timeSinceStartup+30;
+        try {
+            SdkPlatformRegistry.Register("TikTok",()=>new Runtime(),(g,e,x)=>new Factory(),true,true);
+            var config=new SdkRuntimeConfiguration{platform="TikTok",gameId="game",appId="app",login=false,payments=true};
+            bool rejected=false;
+            try{UnitySdkHost.BeginConfiguredStartup(config,null,r=>{});}catch(InvalidOperationException ex){rejected=ex.Message=="CONFIG.PAYMENT_PROVIDER_REQUIRED";}
+            Check(rejected,"Missing dependency preflight");
+            UnitySdkHost.BeginConfiguredStartup(config,null,r=>{Check(r.Success,"Startup");ready=true;},createPayment:post=>{
+                created++;orders=new Orders();
+                return new VerifiedPayment(orders,new PreparedPaymentLauncher(session=>{
+                    Check(session=="game-session","Request session binding");return new Preparation();
+                },new Gateway()),post,3,2000,()=>clock);
+            });
+            EditorApplication.update+=Step;
+        }catch(Exception ex){Fail(ex);}
+    }
+    static void Step(){
+        try {
+            if(EditorApplication.timeSinceStartup>deadline)throw new Exception("Play Mode deadline");
+            clock+=2000;
+            if(phase==0&&ready){Check(created==1,"One payment provider");phase=1;SDK.Pay(new PaymentRequest("game-session","coins","first"),r=>result=r);}
+            else if(phase==1&&result!=null){
+                Check(result.Success&&orders.Gets==3&&preparationDisposals==1,"Actual host polling until fulfillment");
+                result=null;orders.Gets=0;orders.Pending=true;phase=2;
+                SDK.Pay(new PaymentRequest("game-session","coins","second"),r=>result=r);
+            }else if(phase==2&&orders.Gets>0){SDK.CancelPay();phase=3;}
+            else if(phase==3&&result!=null){
+                Check(result.Error.Code=="PAY.CANCELLED","Cancellation result");
+                var before=orders.Gets;clock+=60000;SDK.Tick();Check(orders.Gets==before,"No polling after cancel");
+                UnitySdkHost.Shutdown();Check(orderDisposals==1&&gatewayDisposals==1&&preparationDisposals==2,"Owned resource cleanup");
+                EditorApplication.update-=Step;Debug.Log("SDK_CONFIGURED_PAYMENT_PLAY_PASS");EditorApplication.Exit(0);
+            }
+        }catch(Exception ex){Fail(ex);}
+    }
+    static void Fail(Exception ex){EditorApplication.update-=Step;Debug.LogError("SDK_CONFIGURED_PAYMENT_PLAY_FAIL: "+ex.Message);EditorApplication.Exit(1);}
+}

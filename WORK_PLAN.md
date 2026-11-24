@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### Unity 配置支付 Play Mode 实测
+
+新增 PaymentConfiguredPlayChecks 模板，在独立 BuildChecksProject 实际运行 Unity 2022.3 Play Mode。验证 UnitySdkHost 配置启动缺支付工厂预检、就绪后只创建一次、按请求会话创建预支付客户端、宿主 Update 驱动三次订单核验到 Fulfilled、取消停止后续查询及统一释放。
+
+进程 221760 已退出，configured-payment-play.log 第 1206 行 SDK_CONFIGURED_PAYMENT_PLAY_PASS。首次增量编译发生新文件未导入的 CS0246，随后自动导入 PaymentProviderFactory 并重编译、执行成功。平台运行时/收银台/订单为测试实现，没有真实平台初始化、HTTP 或扣款；不替代真机验收，66/78。
+
 ### 配置启动支付依赖注入
 
 SdkPlatformRegistry 与 UnitySdkHost 配置启动新增 createPayment 参数，平台注册可声明支付工厂必需。TikTok 自动注册启用此显式装配，缺依赖在平台运行时构造前拒绝；微信/抖音未声明支持仍阻断。新增受支付裁剪宏保护的工厂包装，保持其他能力及平台身份。

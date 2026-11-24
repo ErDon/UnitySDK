@@ -34,21 +34,31 @@ test('composed application authenticates, prepares, accepts signed payment and r
   const dir = await mkdtemp(join(tmpdir(), 'erdon-app-'));
   let app, server, base, creates = 0;
   const logs = [], timestamp = 1800000000;
+  let clock = timestamp * 1000, refreshes = 0;
   const binding = { gameId:'game', appId:'app', environment:'test', platform:'TikTok', secret:'private-secret' };
-  const config = { binding, isSandbox:true, now:()=>timestamp*1000, log:line=>logs.push(line),
+  const config = { binding, isSandbox:true, now:()=>clock, log:line=>logs.push(line),
     authPath:join(dir,'auth.db'), orderPath:join(dir,'orders.db'), credentialPath:join(dir,'credentials.db'),
     keys:new Map([['key',Buffer.alloc(32,9)]]), currentKeyId:'key',
     catalog:[{ productId:'coins', amountMinor:99, currency:'USD', tokenAmount:100, productName:'Coins',
       quantity:1, quantityUnit:'item', imageUrl:'https://example.com/coins.png' }],
     fetchImpl:async(url, options)=>{
-      if (url.endsWith('/oauth/token/')) return Response.json({ open_id:'player', access_token:'private-token', token_type:'Bearer', expires_in:3600 });
+      if (url.endsWith('/oauth/token/')) {
+        const form = new URLSearchParams(options.body);
+        if (form.get('grant_type') === 'refresh_token') {
+          assert.equal(form.get('refresh_token'), 'private-refresh'); refreshes++;
+          return Response.json({ open_id:'player', access_token:'private-renewed', token_type:'Bearer', expires_in:3600,
+            refresh_token:'private-rotated', refresh_expires_in:7200 });
+        }
+        return Response.json({ open_id:'player', access_token:'private-token', token_type:'Bearer', expires_in:120,
+          refresh_token:'private-refresh', refresh_expires_in:7200 });
+      }
       if (url.endsWith('/trade_order/query/')) {
-        assert.equal(options.headers.Authorization,'Bearer private-token');
+        assert.equal(options.headers.Authorization,'Bearer private-renewed');
         assert.deepEqual(JSON.parse(options.body),{trade_order_id:'trade'});
         return Response.json({data:{trade_order_id:'trade',trade_order_status:'SUCCESS'},error:{code:'ok'}});
       }
       assert.ok(url.endsWith('/trade_order/create/'));
-      assert.equal(options.headers.Authorization,'Bearer private-token'); creates++;
+      assert.equal(options.headers.Authorization,'Bearer private-renewed'); creates++;
       return Response.json({ data:{trade_order_id:'trade'}, error:{code:'ok'} });
     }
   };
@@ -71,6 +81,7 @@ test('composed application authenticates, prepares, accepts signed payment and r
   const login=await request('/v1/session',{...binding,secret:undefined,code:'login'});
   assert.equal(login.status,200);const session=login.data.session;
   assert.ok(!JSON.stringify(login).includes('private-'));
+  clock += 61000; // Payment preparation refreshes a token within its final minute.
   const created=await request('/v1/orders',{productId:'coins',requestId:'purchase'},session);
   assert.equal(created.status,200);const id=created.data.order.orderId;
   const prepared=await request(`/v1/orders/${id}/prepare`,{accessToken:'forged',tokenAmount:1},session);
@@ -79,6 +90,7 @@ test('composed application authenticates, prepares, accepts signed payment and r
   await stop();await start();
   assert.equal((await request(`/v1/orders/${id}/prepare`,{},session)).status,200);
   assert.equal(creates,1);
+  assert.equal(refreshes,1); // Restart retains the rotated token without another refresh.
   const queried=await request(`/v1/orders/${id}/query`,{tradeOrderId:'forged',accessToken:'forged'},session);
   assert.equal(queried.status,200);
   assert.deepEqual(queried.data.query,{orderId:id,platformStatus:'SUCCESS',state:'Created'});

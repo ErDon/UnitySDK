@@ -71,7 +71,7 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 凭证提供器 `credentials.get(binding, subject)` 是服务器内部依赖，返回 `{ binding: bindingKey(binding), subject, accessToken, expiresAt }`，过期时间为毫秒。服务核对应用/游戏/环境作用域、用户和有效期，不符或读取异常返回 PAY.CREDENTIAL_UNAVAILABLE。异步读取后再次认证会话，随后交给持久化编排；响应仅含 orderId、tradeOrderId。当前身份映射使用 TikTok 登录验证器的 open_id 作为 subject。
 
-该授权服务可注入下述 TikTokCredentialStore；登录兑换写入与刷新/撤销联动仍需接入。商品档位须由服务端运营配置与平台要求核对。订单 handler 的可选预支付路由见下文，默认未开启。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
+该授权服务可注入下述 TikTokCredentialStore；登录兑换写入和按需刷新已接入 TikTokApplication，授权撤销联动仍待实现。商品档位须由服务端运营配置与平台要求核对。订单 handler 的可选预支付路由见下文，默认未开启。测试 `test/tiktok-prepayment-service.test.mjs` 覆盖服务端定价快照、跨用户拒绝、会话撤销、错误/过期令牌和不泄露凭据。
 
 ## 平台令牌加密存储
 
@@ -137,7 +137,7 @@ process.once('SIGTERM', () => server.close(() => app.close()));
 
 目录需预先创建。入口提供 POST /v1/session、订单路由（含 prepare）和 POST /v1/webhooks/tiktok/payment；不会创建公开发货路由，不接受客户端成功回执作为支付依据。服务器工作进程可读取 `app.pendingDelivery()`，再调用 `app.orders.fulfill(orderId, deliver)`；deliver 必须在业务数据库中将 deliveryKey 去重和权益增加放在同一事务内。
 
-此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 await close。可选定时发货已实现；公网部署及令牌刷新尚未完成。原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
+此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 await close。可选定时发货已实现；按需令牌刷新已接入；公网部署和授权撤销联动尚未完成。原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
 
 ### TikTok 服务启动
 
@@ -155,9 +155,9 @@ npm run start:tiktok
 
 put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 字节 nonce 加密；认证附加数据绑定版本、完整作用域、用户、有效期与密钥 ID。数据库保存密文、nonce、标签及必要关联元数据，应用/用户标识不加密。get 返回未过期的冻结凭据；缺失/过期返回 null，错误密钥、篡改、存储故障统一 PAY.CREDENTIAL_UNAVAILABLE。容量满拒绝新增，写入时清理过期记录。
 
-轮换时保留旧 keyId 的密钥并设置新的 currentKeyId；旧记录可读，之后 put 使用新密钥。没有自动批量重加密或自动刷新平台 token。删除密钥前必须处理其仍在使用的记录。SQLite 是单机持久化方案，数据库备份与密钥生命周期由部署管理，不能把数据库加密等同于整个服务已完成安全验收。
+轮换时保留旧 keyId 的密钥并设置新的 currentKeyId；旧记录可读，之后 put 使用新密钥。没有自动批量重加密；TikTokCredentials 在支付读取时按需刷新平台 token。删除密钥前必须处理其仍在使用的记录。SQLite 是单机持久化方案，数据库备份与密钥生命周期由部署管理，不能把数据库加密等同于整个服务已完成安全验收。
 
-可将同一 store 作为 TikTokPrepaymentService 的 credentials，并通过 `createTikTokVerifier({ credentialStore: store })` 注入登录验证器。验证成功后先等待令牌保存，再由 AuthService 签发游戏会话；不注入时保留仅身份兑换行为。有效期从上游请求开始前计算，避免网络耗时延长令牌寿命，过期或溢出拒绝。写入异常统一返回 HTTP 503 / AUTH.CREDENTIAL_STORAGE_FAILED，客户端应稍后取得新的登录 code，不重用已经提交的 code。平台访问令牌和刷新令牌不返回客户端；当前只保存访问令牌，没有自动刷新或撤销联动。
+可将同一 store 作为 TikTokPrepaymentService 的 credentials，并通过 `createTikTokVerifier({ credentialStore: store })` 注入登录验证器。验证成功后先等待令牌保存，再由 AuthService 签发游戏会话；不注入时保留仅身份兑换行为。有效期从上游请求开始前计算，避免网络耗时延长令牌寿命，过期或溢出拒绝。写入异常统一返回 HTTP 503 / AUTH.CREDENTIAL_STORAGE_FAILED，客户端应稍后取得新的登录 code，不重用已经提交的 code。平台访问令牌和刷新令牌不返回客户端；同时加密保存上游提供的刷新令牌；撤销联动尚未完成。
 
 默认服务器尚未配置密钥或加载此存储。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭；`test/tiktok.test.mjs` 另验证保存先于签发会话、作用域隔离、写入失败不签发、凭证防重放及有效期边界。真实 OAuth 与支付联调仍待完成。
 
@@ -329,3 +329,14 @@ SDK.Pay(new PaymentRequest(gameSession, "coins", savedPurchaseRequestId), result
 SDK.Pay 对未初始化、模块关闭、缺少 provider、非法请求及并发调用返回明确错误；回调异常被隔离。超时由 SDK.Tick/Unity Update 驱动。VerifiedPayment 实现 IPaymentWait，SDK 取消/超时会停止其后续轮询并抑制迟到响应；释放也停止轮询。已经发出的 HTTP 请求和平台收银台未必被终止，底层启动器仍可能返回 PAY.IN_PROGRESS。取消本地等待不撤销交易，恢复必须使用原 requestId/orderId，不得用新编号重复扣款。其他自定义 IPay 可选择实现 IPaymentWait；未实现者维持原有本地回调取消行为。
 
 Tools → ErDon SDK → 配置与预览：勾选支付，选择支付模拟结果，再初始化 Mock。可预览 Fulfilled、Pending、Cancelled、Timeout；按钮不创建真实订单。修改开关或模拟结果后需重新初始化。生产 Mock 构建继续阻断，真实支付平台亦未放行。
+
+
+### TikTok 按需刷新与并发边界（2026-11-24）
+
+TikTokApplication 已装配 TikTokCredentials。支付预下单或查单取用访问令牌时，若令牌过期或剩余不超过 60 秒，使用加密保存的 refresh_token 调用官方 OAuth 刷新接口；校验 open_id、Bearer 类型及有效期后，在同一 SQLite 事务中写入两种新令牌。没有刷新令牌时保留原访问令牌的有效性判断，过期不会伪造刷新成功。
+
+同一管理器合并同用户并发刷新。存储以旧刷新记录的随机 revision 做条件更新：新登录或 remove 已替换/删除记录时，旧刷新结果不能写回；调用方重新读取当前凭据。两类令牌使用不同 AES-GCM AAD，不能交换密文用途。上游错误统一映射 PAY.CREDENTIAL_UNAVAILABLE，不泄露 token 或错误正文。
+
+当前参考服务按单进程运行。revision 防止跨进程旧写入，但不提供跨进程上游刷新互斥；部署多副本前必须增加共享刷新租约或集中凭据服务，避免两个进程同时轮换同一个 refresh_token。平台撤销传输方法 createTikTokTokenClient().revoke 已实现和测试，但尚未公开授权撤销路由，也未完成游戏会话失效联动；SDK.CancelLogin 不等于撤销授权。
+
+验证覆盖令牌轮换、访问令牌过期后的刷新、并发合并、新登录/删除与迟到响应竞争、密文用途校验，以及真实本机 HTTP 服务中的登录→刷新→预下单→重启后查单。平台响应使用测试替身，尚未进行真实 TikTok 授权联调。

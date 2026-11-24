@@ -12,6 +12,8 @@ import { createAuthHandler } from './http.mjs';
 import { createOrderHandler } from './orders-http.mjs';
 import { createTikTokPaymentWebhookHandler } from './tiktok-webhook-http.mjs';
 import { DeliveryWorker } from './delivery-worker.mjs';
+import { TikTokCredentials } from './tiktok-credentials.mjs';
+import { createTikTokTokenClient } from './tiktok-token-client.mjs';
 
 // One application binding per instance. Caller drains its HTTP server before close().
 // This composition owns its databases, but never starts a listener or grants goods.
@@ -43,7 +45,9 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
       verifyPayment: async () => ({ paid: false }) });
     const payments = new TikTokPrepayments(orderStore);
     const flow = new TikTokPrepaymentFlow(payments, createTikTokTradeClient({ fetchImpl }));
-    const prepayments = new TikTokPrepaymentService({ orders, flow, catalog, credentials, isSandbox, now, orderUrlPrefix });
+    const managedCredentials = new TikTokCredentials({ binding: scope, store: credentials,
+      client: createTikTokTokenClient({ fetchImpl, now }), now });
+    const prepayments = new TikTokPrepaymentService({ orders, flow, catalog, credentials: managedCredentials, isSandbox, now, orderUrlPrefix });
     const sessionHandler = createAuthHandler(auth, { log });
     const orderHandler = createOrderHandler(orders, { log, prepayments });
     const webhookHandler = createTikTokPaymentWebhookHandler(payments, { binding: scope, isSandbox,

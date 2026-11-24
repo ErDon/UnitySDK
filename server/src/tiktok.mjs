@@ -33,11 +33,18 @@ export function createTikTokVerifier({ fetchImpl = fetch, timeoutMs = 8000, cred
         // Count lifetime from before the request, never extend it by network latency.
         const expiresAt = startedAt + data.expires_in * 1000;
         const current = now();
+        const hasRefresh = data.refresh_token !== undefined || data.refresh_expires_in !== undefined;
+        const refreshExpiresAt = hasRefresh ? startedAt + data.refresh_expires_in * 1000 : null;
         if (!Number.isSafeInteger(startedAt) || startedAt < 0 || !Number.isSafeInteger(current) || current < startedAt ||
             !Number.isSafeInteger(expiresAt) || expiresAt <= current)
           throw new AuthError('AUTH.PLATFORM_RESPONSE_INVALID', 502);
+        if (hasRefresh && (typeof data.refresh_token !== 'string' || !/^[\x21-\x7e]{1,8192}$/.test(data.refresh_token) ||
+            !Number.isSafeInteger(data.refresh_expires_in) || data.refresh_expires_in <= 0 ||
+            !Number.isSafeInteger(refreshExpiresAt) || refreshExpiresAt <= current))
+          throw new AuthError('AUTH.PLATFORM_RESPONSE_INVALID', 502);
         try {
-          await credentialStore.put(binding, data.open_id, { accessToken: data.access_token, expiresAt });
+          await credentialStore.put(binding, data.open_id, { accessToken: data.access_token, expiresAt,
+            refreshToken: hasRefresh ? data.refresh_token : null, refreshExpiresAt });
         } catch {
           // Do not issue a game session when enabled commerce credentials could not be saved.
           throw new AuthError('AUTH.CREDENTIAL_STORAGE_FAILED', 503);

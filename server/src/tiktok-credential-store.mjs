@@ -6,7 +6,7 @@ import { OrderError } from './orders.mjs';
 const text = value => typeof value === 'string' && value.length > 0 && value.length <= 256 &&
   value.trim() === value && !/[\u0000-\u001f\u007f]/.test(value);
 const token = value => typeof value === 'string' && /^[\x21-\x7e]{1,8192}$/.test(value);
-const aad = (scope, subject, expiresAt, keyId) => Buffer.from(JSON.stringify(['TikTokCredential', 1, scope, subject, expiresAt, keyId]));
+const aad = (scope, subject, expiresAt, keyId, refresh = false) => Buffer.from(JSON.stringify([refresh ? 'TikTokRefreshCredential' : 'TikTokCredential', 1, scope, subject, expiresAt, keyId]));
 
 // Local durable vault. Encryption keys are supplied by deployment, never persisted here.
 export class TikTokCredentialStore {
@@ -27,6 +27,10 @@ export class TikTokCredentialStore {
       const versions = this.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').all();
       if (versions.length > 1 || (versions.length && versions[0].version !== 1)) throw new Error();
       this.db.exec(`CREATE TABLE IF NOT EXISTS erdon_tiktok_credentials (
+        binding TEXT NOT NULL, subject TEXT NOT NULL, expires_at INTEGER NOT NULL,
+        key_id TEXT NOT NULL, nonce BLOB NOT NULL, ciphertext BLOB NOT NULL, tag BLOB NOT NULL,
+        PRIMARY KEY(binding,subject));`);
+      this.db.exec(`CREATE TABLE IF NOT EXISTS erdon_tiktok_refresh_credentials (
         binding TEXT NOT NULL, subject TEXT NOT NULL, expires_at INTEGER NOT NULL,
         key_id TEXT NOT NULL, nonce BLOB NOT NULL, ciphertext BLOB NOT NULL, tag BLOB NOT NULL,
         PRIMARY KEY(binding,subject));`);
@@ -55,39 +59,67 @@ export class TikTokCredentialStore {
     }
   }
   time() { const value = this.now(); if (!Number.isSafeInteger(value) || value < 0) throw new TypeError('Invalid credential clock'); return value; }
-  async put(binding, subject, { accessToken, expiresAt }) {
+  async put(binding, subject, { accessToken, expiresAt, refreshToken = null, refreshExpiresAt = null }, expectedRefreshRevision = null) {
     const scope = this.scope(binding, subject), current = this.time();
     if (!token(accessToken) || !Number.isSafeInteger(expiresAt) || expiresAt <= current) throw new TypeError('Invalid credential value');
-    this.transaction(() => {
+    if (refreshToken !== null && (!token(refreshToken) || !Number.isSafeInteger(refreshExpiresAt) || refreshExpiresAt <= current)) throw new TypeError('Invalid refresh credential');
+    return this.transaction(() => {
+      if (expectedRefreshRevision !== null) {
+        const previous = this.db.prepare('SELECT nonce FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').get(scope, subject);
+        if (!previous || Buffer.from(previous.nonce).toString('base64') !== expectedRefreshRevision) return false;
+      }
       this.db.prepare('DELETE FROM erdon_tiktok_credentials WHERE expires_at<=?').run(current);
+      this.db.prepare('DELETE FROM erdon_tiktok_refresh_credentials WHERE expires_at<=?').run(current);
       const exists = this.db.prepare('SELECT 1 FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').get(scope, subject);
       if (!exists && this.db.prepare('SELECT COUNT(*) AS count FROM erdon_tiktok_credentials').get().count >= this.capacity) throw new Error();
+      if (refreshToken !== null) {
+        const previous = this.db.prepare('SELECT 1 FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').get(scope, subject);
+        if (!previous && this.db.prepare('SELECT COUNT(*) AS count FROM erdon_tiktok_refresh_credentials').get().count >= this.capacity) throw new Error();
+      }
+      this.write(scope, subject, accessToken, expiresAt, false);
+      if (refreshToken !== null) this.write(scope, subject, refreshToken, refreshExpiresAt, true);
+      else this.db.prepare('DELETE FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').run(scope, subject);
+      return true;
+    });
+  }
+  write(scope, subject, value, expiresAt, refresh) {
+      const table = refresh ? 'erdon_tiktok_refresh_credentials' : 'erdon_tiktok_credentials';
       const nonce = randomBytes(12), keyId = this.currentKeyId;
       const cipher = createCipheriv('aes-256-gcm', this.#keys.get(keyId), nonce);
-      cipher.setAAD(aad(scope, subject, expiresAt, keyId));
-      const ciphertext = Buffer.concat([cipher.update(accessToken, 'utf8'), cipher.final()]);
-      this.db.prepare(`INSERT INTO erdon_tiktok_credentials VALUES (?,?,?,?,?,?,?)
+      cipher.setAAD(aad(scope, subject, expiresAt, keyId, refresh));
+      const ciphertext = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()]);
+      this.db.prepare(`INSERT INTO ${table} VALUES (?,?,?,?,?,?,?)
         ON CONFLICT(binding,subject) DO UPDATE SET expires_at=excluded.expires_at,key_id=excluded.key_id,
         nonce=excluded.nonce,ciphertext=excluded.ciphertext,tag=excluded.tag`)
         .run(scope, subject, expiresAt, keyId, nonce, ciphertext, cipher.getAuthTag());
-    });
   }
   async get(binding, subject) {
+    return this.read(binding, subject, false);
+  }
+  async getRefresh(binding, subject) {
+    return this.read(binding, subject, true);
+  }
+  read(binding, subject, refresh) {
     const scope = this.scope(binding, subject), current = this.time();
     return this.transaction(() => {
-      const row = this.db.prepare('SELECT * FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').get(scope, subject);
+      const table = refresh ? 'erdon_tiktok_refresh_credentials' : 'erdon_tiktok_credentials';
+      const row = this.db.prepare(`SELECT * FROM ${table} WHERE binding=? AND subject=?`).get(scope, subject);
       if (!row || row.expires_at <= current) return null;
       if (!Number.isSafeInteger(row.expires_at) || row.nonce.length !== 12 || row.tag.length !== 16 || row.ciphertext.length > 8192) throw new Error();
       const decipher = createDecipheriv('aes-256-gcm', this.#keys.get(row.key_id), row.nonce);
-      decipher.setAAD(aad(scope, subject, row.expires_at, row.key_id)); decipher.setAuthTag(row.tag);
+      decipher.setAAD(aad(scope, subject, row.expires_at, row.key_id, refresh)); decipher.setAuthTag(row.tag);
       const accessToken = Buffer.concat([decipher.update(row.ciphertext), decipher.final()]).toString('utf8');
       if (!token(accessToken)) throw new Error();
-      return Object.freeze({ binding: scope, subject, accessToken, expiresAt: row.expires_at });
+      return Object.freeze(refresh ? { binding: scope, subject, refreshToken: accessToken, refreshExpiresAt: row.expires_at, revision: Buffer.from(row.nonce).toString('base64') }
+        : { binding: scope, subject, accessToken, expiresAt: row.expires_at });
     });
   }
   async remove(binding, subject) {
     const scope = this.scope(binding, subject);
-    this.transaction(() => this.db.prepare('DELETE FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').run(scope, subject));
+    this.transaction(() => {
+      this.db.prepare('DELETE FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').run(scope, subject);
+      this.db.prepare('DELETE FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').run(scope, subject);
+    });
   }
   close() {
     if (this.closed) return;

@@ -9,9 +9,14 @@ namespace ErDon.UnitySDK.WeChat {
         public string SignData {get;private set;}
         public string PaySignature {get;private set;}
         public string SessionSignature {get;private set;}
+        public string OrderId {get;private set;}
+        public string ProductId {get;private set;}
+        public int AmountMinor {get;private set;}
         public WeChatPaymentRequest(string signData,string paySignature,string sessionSignature){
             SignData=signData;PaySignature=paySignature;SessionSignature=sessionSignature;
         }
+        internal WeChatPaymentRequest(string orderId,string productId,int amountMinor,string signData,string paySignature,string sessionSignature)
+            :this(signData,paySignature,sessionSignature){OrderId=orderId;ProductId=productId;AmountMinor=amountMinor;}
         public override string ToString(){return "WeChatPaymentRequest([REDACTED])";}
     }
     public sealed class WeChatPaymentGateway:IPlatformPaymentGateway<WeChatPaymentRequest> {

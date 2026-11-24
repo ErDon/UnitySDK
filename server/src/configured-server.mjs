@@ -9,6 +9,7 @@ import { createDouyinVerifier } from './douyin.mjs';
 import { createTikTokVerifier } from './tiktok.mjs';
 import { createTikTokApplication } from './tiktok-application.mjs';
 import { createDouyinApplication } from './douyin-application.mjs';
+import { createWeChatApplication } from './wechat-application.mjs';
 import { DeploymentConfigError } from './deployment-config.mjs';
 
 function loginApplication(config, options) {
@@ -28,9 +29,9 @@ export async function startConfiguredServer(resolved, { fetchImpl = fetch, now =
       (deliver !== null && typeof deliver !== 'function')) throw new DeploymentConfigError('runtime');
   const config = resolved.configuration, options = { fetchImpl, now, log, deliver };
   for (const path of [config.authPath, config.orderPath, config.credentialPath].filter(Boolean)) await mkdir(dirname(path), { recursive: true });
-  // 支付关闭只创建登录服务，不加载订单库和支付凭据库；微信支付由配置解析阶段拒绝。
+  // 支付关闭只创建登录服务，不加载订单库和支付凭据库。
   const app = resolved.paymentsEnabled
-    ? (config.binding.platform === 'TikTok' ? createTikTokApplication : createDouyinApplication)({ ...config, ...options })
+    ? ({ TikTok: createTikTokApplication, Douyin: createDouyinApplication, WeChat: createWeChatApplication }[config.binding.platform])({ ...config, ...options })
     : loginApplication(config, options);
   const server = createServer({ requestTimeout: 10000, headersTimeout: 5000, maxHeaderSize: 8192 }, app.handler);
   try {

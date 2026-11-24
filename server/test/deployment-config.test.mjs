@@ -10,6 +10,7 @@ import { resolveDeploymentConfig, loadDeploymentConfig } from '../src/deployment
 import { startConfiguredServer } from '../src/configured-server.mjs';
 
 const env = { WECHAT_APP_ID: 'wx-app', WECHAT_APP_SECRET: 'private-wechat-secret',
+  WECHAT_PAYMENT_APP_KEY: 'private-payment-key', WECHAT_CALLBACK_TOKEN: 'private-wechat-callback', WECHAT_CREDENTIAL_KEY_HEX: 'ef'.repeat(32),
   DOUYIN_APP_ID: 'tt-app', DOUYIN_APP_SECRET: 'private-douyin-secret', DOUYIN_CALLBACK_TOKEN: 'private-callback-token',
   TIKTOK_APP_ID: 'tk-app', TIKTOK_APP_SECRET: 'private-tiktok-secret', TIKTOK_CREDENTIAL_KEY_HEX: 'ab'.repeat(32) };
 const template = async name => JSON.parse(await readFile(new URL(`../config/${name}.example.json`, import.meta.url), 'utf8'));
@@ -20,7 +21,7 @@ async function directory(t) {
 
 test('all templates preview missing names without credentials, files or platform calls', async t => {
   const dir = await directory(t);
-  for (const platform of ['wechat', 'douyin', 'tiktok']) {
+  for (const platform of ['wechat', 'wechat-payment', 'douyin', 'tiktok']) {
     const raw = await template(platform);
     const missing = resolveDeploymentConfig(raw, { env: {}, baseDir: dir, requireSecrets: false });
     assert.equal(missing.preview.ready, false);
@@ -49,7 +50,7 @@ test('invalid or incompatible configuration fails with field-only diagnostics', 
     assert.throws(() => resolveDeploymentConfig(raw, { env }), error => error.code.startsWith('CONFIG.') && !error.message.includes('private'));
   }
   const wx = await template('wechat'); wx.payments.enabled = true;
-  assert.throws(() => resolveDeploymentConfig(wx, { env }), { code: 'CONFIG.PAYMENT_UNIMPLEMENTED' });
+  assert.throws(() => resolveDeploymentConfig(wx, { env }), { code: 'CONFIG.INVALID' });
   const tk = await template('tiktok');
   assert.throws(() => resolveDeploymentConfig(tk, { env: { ...env, TIKTOK_CREDENTIAL_KEY_HEX: 'private-invalid-key' } }),
     { code: 'CONFIG.ENV_INVALID', message: 'CONFIG.ENV_INVALID: payments.keysEnv' });

@@ -6,7 +6,8 @@
 
 | 文件 | 配置内容 |
 | --- | --- |
-| server/config/wechat.example.json | 微信登录、应用/游戏绑定、持久化会话库；微信支付后端尚未实现 |
+| server/config/wechat.example.json | 微信登录、应用/游戏绑定、持久化会话库 |
+| server/config/wechat-payment.example.json | 微信道具直购、加密 session_key、预下单签名、查单和发货通知；见[微信支付](wechat-payments.md) |
 | server/config/douyin.example.json | 抖音登录、道具直购开关、Android/iOS 路由、区服、商品与数据库 |
 | server/config/tiktok.example.json | TikTok 登录、支付开关、沙盒选择、商品、令牌加密密钥版本与数据库 |
 | server/.env.example | App ID、App Secret、回调 Token、加密密钥和可选发货模块路径 |
@@ -38,7 +39,7 @@ npm run start:configured -- config/douyin.local.json
 - `payments.enabled=false`：仅启动所选平台登录服务，不注册订单/通知路由，也不要求支付密钥。payments 对象只保留 enabled，避免关闭后残留配置被误认为生效。
 - 抖音开启支付：填写 route（Android 或 IosCustomerService）、zoneId、callbackTokenEnv 和商品目录。道具价格单位为人民币分，productName 最长 10 个 UTF-16 字符。
 - TikTok 开启支付：显式填写 isSandbox，商品的 Beans 数量/展示字段，以及 keysEnv/currentKeyId。金额和 Beans 数量由服务器配置，不能由客户端覆盖。
-- 微信开启支付目前返回 `CONFIG.PAYMENT_UNIMPLEMENTED`。这是未完成的功能，不是缺少账号；不能用占位密钥绕过后伪装为可用。
+- 微信支付使用独立 `wechat-payment.example.json` 模板，需填对应环境的支付 AppKey、offer/分区、原始 ID、回调 Token 与凭据加密密钥；普通微信登录模板保持支付关闭。
 - test/production 是游戏数据隔离标签。抖音 test 不会自动切换官方支付沙盒；TikTok 的 isSandbox 是独立配置。
 
 商品修改不会改写已有订单价格。数据库路径不能互相重合，也不允许 `:memory:`。支付服务使用持久化会话/订单；换游戏时修改 gameId、App ID 和数据目录，不共用别的游戏数据库。

@@ -24,9 +24,8 @@ export function resolveDeploymentConfig(raw, { env = process.env, baseDir = '.',
   const port = raw.port ?? 8787;
   if (!Number.isInteger(port) || port < 0 || port > 65535) reject('port');
   object(raw.storage, ['auth', 'orders', 'credentials'], 'storage');
-  object(raw.payments, ['enabled', 'catalog', 'route', 'zoneId', 'callbackTokenEnv', 'isSandbox', 'keysEnv', 'currentKeyId', 'orderUrlPrefix'], 'payments');
+  object(raw.payments, ['enabled', 'catalog', 'route', 'zoneId', 'callbackTokenEnv', 'isSandbox', 'keysEnv', 'currentKeyId', 'orderUrlPrefix', 'offerId', 'appKeyEnv', 'originalId'], 'payments');
   if (typeof raw.payments.enabled !== 'boolean') reject('payments.enabled');
-  if (raw.payments.enabled && raw.platform === 'WeChat') reject('payments.enabled', 'CONFIG.PAYMENT_UNIMPLEMENTED');
   const required = new Set(), missing = new Set();
   const variable = (name, field, validate = value => text(value, 8192)) => {
     if (typeof name !== 'string' || !/^[A-Z][A-Z0-9_]{0,127}$/.test(name)) reject(field);
@@ -57,6 +56,7 @@ export function resolveDeploymentConfig(raw, { env = process.env, baseDir = '.',
           typeof item.currency !== 'string' || !/^[A-Z]{3}$/.test(item.currency)) reject('payments.catalog');
       ids.add(item.productId); return Object.freeze({ ...item });
     });
+    if (raw.platform !== 'WeChat' && ['offerId', 'appKeyEnv', 'originalId'].some(key => raw.payments[key] !== undefined)) reject('payments');
     if (raw.platform === 'Douyin') {
       if (!['Android', 'IosCustomerService'].includes(raw.payments.route) || !text(raw.payments.zoneId)) reject('payments.route/zoneId');
       config.route = raw.payments.route; config.zoneId = raw.payments.zoneId;
@@ -75,12 +75,21 @@ export function resolveDeploymentConfig(raw, { env = process.env, baseDir = '.',
         const value = variable(name, 'payments.keysEnv', value => typeof value === 'string' && /^[0-9a-fA-F]{64}$/.test(value));
         if (value) config.keys.set(id, Buffer.from(value, 'hex'));
       }
+      if (raw.platform === 'WeChat') {
+        if (![raw.payments.offerId, raw.payments.zoneId, raw.payments.originalId].every(value => text(value))) reject('payments.offerId/zoneId/originalId');
+        config.offerId = raw.payments.offerId; config.zoneId = raw.payments.zoneId; config.originalId = raw.payments.originalId;
+        config.appKey = variable(raw.payments.appKeyEnv, 'payments.appKeyEnv', value => text(value));
+        config.callbackToken = variable(raw.payments.callbackTokenEnv, 'payments.callbackTokenEnv', value => text(value));
+        if (config.catalog.some(item => item.currency !== 'CNY' || item.amountMinor > 2147483647)) reject('payments.catalog');
+        if (['route', 'orderUrlPrefix'].some(key => raw.payments[key] !== undefined)) reject('payments');
+      } else {
       config.orderUrlPrefix = raw.payments.orderUrlPrefix ?? '/orders/';
       if (typeof config.orderUrlPrefix !== 'string' || !config.orderUrlPrefix.startsWith('/') || config.orderUrlPrefix.startsWith('//') ||
           config.orderUrlPrefix.length > 1024 || /[\s?#]/.test(config.orderUrlPrefix)) reject('payments.orderUrlPrefix');
       try { for (const item of config.catalog) validateTikTokTradeRequest({ ...item, orderId: 'config-check', accessToken: 'config-check', orderUrl: config.orderUrlPrefix }); }
       catch { reject('payments.catalog'); }
       if (['route', 'zoneId', 'callbackTokenEnv'].some(key => raw.payments[key] !== undefined)) reject('payments');
+      }
     }
   } else if (Object.keys(raw.payments).some(key => key !== 'enabled')) reject('payments');
   const paths = [config.authPath, config.orderPath, config.credentialPath].filter(Boolean);

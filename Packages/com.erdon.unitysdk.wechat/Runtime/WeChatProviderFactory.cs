@@ -3,21 +3,35 @@ using System;
 namespace ErDon.UnitySDK.WeChat
 {
     /// <summary>Use only after official WeChat SDK initialization. Creates fresh, SDK-owned capabilities.</summary>
-    public sealed class WeChatProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory, IAnalyticsProviderFactory
+    public sealed class WeChatProviderFactory : IPlatformSdkProviderFactory, IShareProviderFactory, IRewardedAdsProviderFactory, IAnalyticsProviderFactory, IPayProviderFactory
     {
         public string Platform { get { return "WeChat"; } }
         readonly string gameId;
         readonly string environment;
         readonly Func<ISessionExchange> createSessionExchange;
+        readonly Func<Action<Action>, IPay> createPayment;
 
         // The exchange factory is optional when login is disabled. Never capture a shared exchange instance.
-        public WeChatProviderFactory(string gameId, string environment, Func<ISessionExchange> createSessionExchange = null)
+        public WeChatProviderFactory(string gameId, string environment, Func<ISessionExchange> createSessionExchange = null,
+            Func<Action<Action>, IPay> createPayment = null)
         {
             if (string.IsNullOrWhiteSpace(gameId) || string.IsNullOrWhiteSpace(environment))
                 throw new ArgumentException("Game and environment are required");
             this.gameId = gameId;
             this.environment = environment;
             this.createSessionExchange = createSessionExchange;
+            this.createPayment = createPayment;
+        }
+        public IPay CreatePay(Action<Action> mainThreadDispatch) {
+#if ERDON_EXCLUDE_PAYMENTS && !UNITY_EDITOR
+            throw new InvalidOperationException("CONFIG.MODULE_NOT_COMPILED: PAYMENTS");
+#else
+            if(mainThreadDispatch==null)throw new ArgumentNullException("mainThreadDispatch");
+            if(createPayment==null)throw new InvalidOperationException("WeChat payment requires an explicit backend payment factory");
+            var payment=createPayment(mainThreadDispatch);
+            if(payment==null)throw new InvalidOperationException("Payment factory returned null");
+            return payment;
+#endif
         }
         public IAuth CreateAuth(Action<Action> mainThreadDispatch)
         {

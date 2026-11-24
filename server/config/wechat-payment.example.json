@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "platform": "WeChat",
+  "gameId": "your-game",
+  "environment": "test",
+  "appIdEnv": "WECHAT_APP_ID",
+  "secretEnv": "WECHAT_APP_SECRET",
+  "port": 8787,
+  "storage": {
+    "auth": "data/wechat-auth.sqlite",
+    "orders": "data/wechat-orders.sqlite",
+    "credentials": "data/wechat-credentials.sqlite"
+  },
+  "payments": {
+    "enabled": true,
+    "offerId": "your-offer-id",
+    "zoneId": "1",
+    "originalId": "gh_your_game",
+    "isSandbox": true,
+    "appKeyEnv": "WECHAT_PAYMENT_APP_KEY",
+    "callbackTokenEnv": "WECHAT_CALLBACK_TOKEN",
+    "keysEnv": { "v1": "WECHAT_CREDENTIAL_KEY_HEX" },
+    "currentKeyId": "v1",
+    "catalog": [{ "productId": "your-platform-product-id", "amountMinor": 600, "currency": "CNY" }]
+  }
+}

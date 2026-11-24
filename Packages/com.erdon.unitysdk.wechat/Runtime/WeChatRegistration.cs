@@ -10,7 +10,8 @@ namespace ErDon.UnitySDK.WeChat
         static void Register()
         {
             SdkPlatformRegistry.Register("WeChat", () => new WeChatRuntime(),
-                (game, environment, exchange) => new WeChatProviderFactory(game, environment, exchange));
+                (game, environment, exchange) => new WeChatProviderFactory(game, environment, exchange),
+                supportsPayments: true, requiresPaymentFactory: true);
         }
     }
 }

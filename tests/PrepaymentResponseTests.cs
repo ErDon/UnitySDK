@@ -15,6 +15,11 @@ class PrepaymentResponseTests
         Check(PrepaymentResponsePolicy.Evaluate(200,data,id).Error.Code=="PAY.INVALID_RESPONSE","Contradictory status rejected");
         data.errorCode="PAY.PRODUCT_CHANGED";error=PrepaymentResponsePolicy.Evaluate(409,data,id).Error;
         Check(error.Code=="PAY.PRODUCT_CHANGED"&&error.Retry==RetryPolicy.UserAction&&error.ServerCallId==call,"Changed catalog retains safe actionable code");
+        foreach(var code in new[]{"PAY.CREDENTIAL_REFRESH_PENDING","PAY.CREDENTIAL_REFRESH_UNCERTAIN","PAY.SESSION_EXPIRED","PAY.CONFIG_CHANGED"}){
+            data.errorCode=code;var status=code=="PAY.SESSION_EXPIRED"?401:code=="PAY.CONFIG_CHANGED"?409:503;
+            error=PrepaymentResponsePolicy.Evaluate(status,data,id).Error;
+            Check(error.Code==code&&error.ServerCallId==call&&error.Retry==(code=="PAY.CREDENTIAL_REFRESH_PENDING"?RetryPolicy.Delayed:RetryPolicy.UserAction),"Payment recovery reason and retry policy");
+        }
         data.errorCode="private-upstream-error";data.callId="private";error=PrepaymentResponsePolicy.Evaluate(500,data,id).Error;
         Check(error.Code=="PAY.SERVER_REJECTED"&&error.ServerCallId==null&&!error.Reason.Contains("private"),"Unknown text not forwarded");
         error=PrepaymentResponsePolicy.Evaluate(429,null,id,"7").Error;Check(error.RetryAfterSeconds==7,"Rate limit delay");

@@ -26,6 +26,14 @@ namespace ErDon.UnitySDK
                 error=new SdkError(code,"Product configuration changed before payment preparation; reconcile the existing order").WithRetry(RetryPolicy.UserAction);
             else if(status==503&&code=="PAY.CREDENTIAL_UNAVAILABLE")
                 error=new SdkError(code,"Server platform credential is unavailable; re-authentication may be required").WithRetry(RetryPolicy.UserAction);
+            else if(status==503&&code=="PAY.CREDENTIAL_REFRESH_PENDING")
+                error=new SdkError(code,"Another server worker is refreshing authorization; preserve this order and retry later").WithRetry(RetryPolicy.Delayed);
+            else if(status==503&&code=="PAY.CREDENTIAL_REFRESH_UNCERTAIN")
+                error=new SdkError(code,"Authorization refresh outcome is uncertain; log in again before preparing this order").WithRetry(RetryPolicy.UserAction);
+            else if(status==401&&code=="PAY.SESSION_EXPIRED")
+                error=new SdkError(code,"Platform payment session expired; log in again and prepare the existing order").WithRetry(RetryPolicy.UserAction);
+            else if(status==409&&code=="PAY.CONFIG_CHANGED")
+                error=new SdkError(code,"Payment environment or partition changed; preserve the order and contact the game operator").WithRetry(RetryPolicy.UserAction);
             else if(status==401&&code=="PAY.PLATFORM_TOKEN_REJECTED")
                 error=new SdkError(code,"Platform token was rejected; check server order before retrying").WithRetry(RetryPolicy.UserAction);
             else error=OrderResponsePolicy.Evaluate(status,new OrderResponseData{errorCode=code,callId=data==null?null:data.callId},retryAfter:retryAfter).Error;

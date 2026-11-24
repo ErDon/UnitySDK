@@ -347,6 +347,8 @@ TikTokApplication 已装配 TikTokCredentials。支付预下单或查单取用�
 
 同一管理器合并同用户并发刷新。存储以旧刷新记录的随机 revision 做条件更新：新登录或 remove 已替换/删除记录时，旧刷新结果不能写回；调用方重新读取当前凭据。两类令牌使用不同 AES-GCM AAD，不能交换密文用途。上游错误统一映射 PAY.CREDENTIAL_UNAVAILABLE，不泄露 token 或错误正文。
 
-当前参考服务按单进程运行。revision 防止跨进程旧写入，但不提供跨进程上游刷新互斥；部署多副本前必须增加共享刷新租约或集中凭据服务，避免两个进程同时轮换同一个 refresh_token。平台撤销传输方法 createTikTokTokenClient().revoke 已实现和测试，但尚未公开授权撤销路由，也未完成游戏会话失效联动；SDK.CancelLogin 不等于撤销授权。
+共享同一凭据 SQLite 库的多个进程通过持久化 owner/revision 领取一次刷新，避免同时轮换同一个 refresh_token；各副本使用独立数据库不具备此保护。平台响应丢失或提交失败进入 Uncertain，不自动重复刷新；进程退出遗留 Sending 也不会按时间强行抢占，以免旧进程仍在调用平台。此时重新完成平台登录获取新令牌，原子清除旧领取；迟到旧刷新不能覆盖新登录。错误码分别是 `PAY.CREDENTIAL_REFRESH_PENDING` 与 `PAY.CREDENTIAL_REFRESH_UNCERTAIN`，前者可在原处理完成后重试，后者要求重新登录。凭据库升级到 schema 3，升级前停止所有旧实例并备份数据库及密钥，禁止旧代码混跑。
+
+平台撤销路由和会话联动已接入，见[授权撤销](tiktok-revocation.md)；SDK.CancelLogin 仅取消本地等待。
 
 验证覆盖令牌轮换、访问令牌过期后的刷新、并发合并、新登录/删除与迟到响应竞争、密文用途校验，以及真实本机 HTTP 服务中的登录→刷新→预下单→重启后查单。平台响应使用测试替身，尚未进行真实 TikTok 授权联调。

@@ -172,9 +172,9 @@ test('credential v1 migration retains encrypted tokens and revocation retains ex
   const f = await setup(t);
   f.credentials.close();
   const db = new DatabaseSync(f.credentialPath);
-  db.exec('DROP TABLE erdon_tiktok_authorization_revision; DROP TABLE erdon_tiktok_revocations; UPDATE erdon_tiktok_credential_schema SET version=1;'); db.close();
+  db.exec('DROP TABLE erdon_tiktok_authorization_revision; DROP TABLE erdon_tiktok_revocations; DROP TABLE erdon_tiktok_refresh_claims; UPDATE erdon_tiktok_credential_schema SET version=1;'); db.close();
   const next = f.open();
-  assert.equal(next.credentials.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').get().version, 2);
+  assert.equal(next.credentials.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').get().version, 3);
   assert.equal((await next.credentials.get(binding, 'alice')).accessToken, 'private-access');
   const job = next.credentials.beginRevocation(binding, 'alice');
   next.credentials.now = () => Date.now() + 7200000;

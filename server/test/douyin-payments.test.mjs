@@ -36,6 +36,33 @@ export async function fixture(t, { route = 'Android', path = ':memory:' } = {}) 
 export const message = (ready, overrides = {}) => ({ appid: 'app', cp_orderno: ready.orderId, cp_extra: ready.extraInfo,
   order_no_channel: 'transaction', amount_cent: ready.amountMinor, amount_coin: 0, currency: 'CNY', ...overrides });
 
+test('active query checks ownership/preparation and cannot mark paid without signed notification', async t => {
+  const f = await fixture(t); let calls = 0;
+  const payments = new DouyinPayments({ orders: f.orders, catalog: f.catalog,
+    queryClient: { query: async id => { calls++; assert.equal(id, f.order.orderId); return { status: 'success' }; } } });
+  await assert.rejects(payments.query(f.session, f.order.orderId), { code: 'PAY.PREPAYMENT_NOT_FOUND' });
+  const ready = await payments.prepare(f.session, f.order.orderId);
+  await assert.rejects(payments.query(f.other, f.order.orderId), { code: 'PAY.ORDER_NOT_FOUND' });
+  assert.equal(calls, 0);
+  assert.deepEqual(await payments.query(f.session, f.order.orderId), { orderId: f.order.orderId, platformStatus: 'success', state: 'Created' });
+  assert.equal((await f.orders.get(f.session, f.order.orderId)).state, 'Created');
+  await payments.acceptWebhook(signed(message(ready)), token);
+  assert.equal((await payments.query(f.session, f.order.orderId)).state, 'Paid');
+});
+
+test('active query rejects revoked session after pending platform call and keeps current webhook state', async t => {
+  const f = await fixture(t); let release;
+  const payments = new DouyinPayments({ orders: f.orders, catalog: f.catalog,
+    queryClient: { query: () => new Promise(resolve => { release = resolve; }) } });
+  const ready = await payments.prepare(f.session, f.order.orderId);
+  const pending = payments.query(f.session, ready.orderId);
+  while (!release) await new Promise(resolve => setImmediate(resolve));
+  await payments.acceptWebhook(signed(message(ready)), token);
+  await f.auth.revoke(f.session); release({ status: 'success' });
+  await assert.rejects(pending, { code: 'AUTH.SESSION_INVALID' });
+  assert.equal((await f.store.get(ready.orderId)).state, 'Paid');
+});
+
 test('signature authenticates exact msg and bounded fields before decoding payment', () => {
   const envelope = signed(' { "x": 1 } ');
   assert.equal(verifyDouyinWebhook(envelope, token).valid, true);
@@ -156,7 +183,12 @@ test('composed Douyin service exchanges login, prepares, receives payment and de
   const received = new Promise(resolve => { delivered = resolve; });
   const app = createDouyinApplication({ binding, callbackToken: token, authPath: ':memory:', orderPath: ':memory:',
     catalog: [{ productId: 'sword', productName: '宝剑', amountMinor: 600, currency: 'CNY' }], log: () => {},
-    fetchImpl: async () => Response.json({ error: 0, openid: 'alice', session_key: 'platform-key' }),
+    fetchImpl: async input => {
+      const url = new URL(input);
+      if (url.pathname.endsWith('/token')) return Response.json({ err_no: 0, data: { access_token: 'private-access-token', expires_in: 7200 } });
+      if (url.pathname.endsWith('/queryPayState')) return Response.json({ status: 'success' });
+      return Response.json({ error: 0, openid: 'alice', session_key: 'platform-key' });
+    },
     deliveryIntervalMs: 100, deliver: async value => { assert.equal(value.subject, 'alice'); granted++; delivered(); return true; } });
   const server = createServer(app.handler);
   t.after(async () => { await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }); await app.close(); });
@@ -171,6 +203,10 @@ test('composed Douyin service exchanges login, prepares, receives payment and de
   assert.ok(!JSON.stringify(login).includes('platform-key'));
   const order = (await post('/v1/orders', { productId: 'sword', requestId: 'one' }, login.session)).order;
   const ready = (await post(`/v1/orders/${order.orderId}/prepare`, {}, login.session)).prepayment;
+  const query = await post(`/v1/orders/${order.orderId}/query`, { access_token: 'forged', orderno: 'forged' }, login.session);
+  assert.deepEqual(query.query, { orderId: order.orderId, platformStatus: 'success', state: 'Created' });
+  assert.ok(!JSON.stringify(query).includes('private-access-token'));
+  assert.equal(granted, 0);
   await post('/v1/webhooks/douyin/payment', signed(message(ready)));
   let timer;
   try { await Promise.race([received, new Promise((resolve, reject) => { timer = setTimeout(() => reject(new Error('Delivery timed out')), 2000); })]); }

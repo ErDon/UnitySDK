@@ -116,4 +116,4 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 ## 抖音道具直购服务
 
-`createDouyinApplication` 组合持久化登录会话、订单、受认证预支付、官方签名通知与可选发货工作器。使用独立回调 Token；未提供 deliver 时订单保持 Paid，由游戏业务完成权益入库。完整配置、HTTP 路由及安全边界见 [抖音支付接入](../docs/douyin-payments.md)。仅有本机协议/流程验证，未进行真实支付与公网部署，主动平台查单及游戏币扣币尚未实现。
+`createDouyinApplication` 组合持久化登录会话、订单、受认证预支付、主动查单诊断、官方签名通知与可选发货工作器。使用独立回调 Token；未提供 deliver 时订单保持 Paid，由游戏业务完成权益入库。完整配置、HTTP 路由及安全边界见 [抖音支付接入](../docs/douyin-payments.md)。查单复用 App ID/Secret，应用令牌仅在服务端按需获取和缓存；平台状态不直接触发发货。仅有本机协议/流程验证，未进行真实支付与公网部署，缺失通知后的对账恢复及游戏币扣币尚未实现。

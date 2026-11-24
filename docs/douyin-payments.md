@@ -1,6 +1,6 @@
 # 抖音道具直购接入
 
-上层仍使用 `SDK.Pay`。本次实现道具直购：服务端生成受认证的订单参数，Unity 调起官方收银台，服务端验签通知并核对订单后标记 Paid，由发货工作器推进到 Fulfilled。只有 Fulfilled 才向上层返回支付成功。游戏币充值、扣币、退款和主动平台查单暂未接入。
+上层仍使用 `SDK.Pay`。本次实现道具直购：服务端生成受认证的订单参数，Unity 调起官方收银台，服务端验签通知并核对订单后标记 Paid，由发货工作器推进到 Fulfilled。只有 Fulfilled 才向上层返回支付成功。主动平台查单已接入诊断路由；游戏币充值、扣币、退款及缺失通知后的自动补账暂未接入。
 
 ## Unity 装配
 
@@ -86,10 +86,32 @@ server.listen(8788, '127.0.0.1');
 | POST /v1/orders | Bearer 游戏会话；只接收 productId、requestId，价格来自目录 |
 | POST /v1/orders/{id}/prepare | Bearer 会话；持久化订单、账号、价格、路由及随机 extraInfo；重复请求返回相同参数 |
 | GET /v1/orders/{id} | Bearer 会话；返回游戏订单状态，SDK 用于轮询 |
+| POST /v1/orders/{id}/query | Bearer 会话；主动查询平台状态，仅限自己的已预支付订单；不更改 Paid/Fulfilled |
 | POST /v1/orders/{id}/confirm | 客户端证据不能将 Created 改为 Paid |
 | GET/POST /v1/webhooks/douyin/payment | 平台签名验证；提交 Paid 事务后才返回 200 |
 
 ## 通知核验与错误
+
+### 主动查单
+
+使用与创建订单相同的游戏会话发送 `POST /v1/orders/{orderId}/query`，`Content-Type: application/json`，正文 `{}`。路由忽略客户端提供的 token、价格和平台订单号，只使用已认证订单及服务器配置。响应示例：
+
+```json
+{
+  "query": {
+    "orderId": "c501a92e-e11a-4d6a-857f-388295c6e926",
+    "platformStatus": "success",
+    "state": "Created"
+  },
+  "callId": "server-generated-correlation-id"
+}
+```
+
+`platformStatus` 原样保留官方 `success`/`unsuccess`；`state` 为本地已核验订单状态。按照[官方查单协议](https://developer.open-douyin.com/docs/resource/zh-CN/mini-game/develop/api/javascript-api/payment/order-status-check)，`unsuccess` 也可能代表尚未发币到账，不能作为取消订单或重新扣款的依据。响应未提供金额、付款人或交易号，因此即使 `success` 也不会绕过签名通知把 Created 改为 Paid。缺失通知的完整对账恢复仍是待办。
+
+组合服务自动装配查单客户端，不增加必填密钥；复用服务端 App ID/App Secret，首次查单才请求[小游戏应用令牌](https://developer.open-douyin.com/docs/resource/zh-CN/mini-game/develop/server/interface-request-credential/get-access-token)。同一实例共用令牌、合并并发刷新，最多缓存一小时且预留过期余量。缓存只在单进程内；多实例部署仍需应用级令牌协调，避免各实例频繁刷新。令牌请求和查单各有 8 秒超时、16 KiB 响应限额、严格 UTF-8/JSON 校验，禁止重定向，不输出上游错误正文或含令牌的 URL。
+
+Unity 的 `SDK.Pay` 仍轮询本地订单，不会自动发起该诊断查询，也不会把查询结果当作发货凭据。
 
 通知按官方 SHA-1 排序协议验签，使用原始 `msg` 字符串，不能解析后重排再计算。随后核对 App ID、订单绑定、随机 extraInfo、金额和路由币种。回调没有玩家 openid，接收方只能关联到预先认证并持久化的游戏订单，不能声称额外验证了付款人的平台身份。extraInfo 是关联字段，不是可独立证明支付成功的凭据。
 
@@ -105,7 +127,13 @@ server.listen(8788, '127.0.0.1');
 | WEBHOOK.INVALID_PAYLOAD | 已验签正文不符合协议或应用不匹配 |
 | PAY.VERIFICATION_MISMATCH | 通知金额、币种或关联字段不匹配；不入账 |
 | PAY.TRANSACTION_REUSED / PAY.TRANSACTION_CONFLICT | 同一平台交易被关联到不同订单，或订单交易号变化；人工对账 |
+| PAY.PREPAYMENT_NOT_FOUND | 订单尚无本服务生成的预支付记录，或记录不匹配；不请求平台 |
+| PAY.CREDENTIAL_UNAVAILABLE | 应用令牌请求失败、超时或本地时钟异常；稍后重试并检查服务端连通性 |
+| PAY.PLATFORM_TOKEN_REJECTED | 平台拒绝应用令牌申请；检查服务端 App ID/Secret，原始错误文本不返回客户端 |
+| PAY.CREDENTIAL_RESPONSE_INVALID | 应用令牌响应格式、有效期或大小不符合约束 |
+| PAY.QUERY_UNAVAILABLE | 平台查询传输失败/非成功 HTTP，或直接构造的支付服务未注入查单客户端 |
+| PAY.QUERY_RESPONSE_INVALID | 查询响应格式、状态值、编码或大小不合法；不修改订单 |
 
 ## 验证范围
 
-已通过 Node 本机 HTTP 登录→预支付→签名通知→发货工作器测试、重启/重复通知/篡价/跨账号测试；Unity 官方 TTSDK 6.9.7 编译及注入回调、类型化参数与工厂测试；新增 HTTP 客户端在隔离 Unity 中的宿主失效/释放检查。以上不代表真实支付、iOS 兑换规则、平台主动查单或公网部署已验收。客户端丢失通知后的平台主动查单仍待实现，当前保留 Created，不能从收银台成功回调推断到账。
+已通过 Node 本机 HTTP 登录→预支付→主动查单→签名通知→发货工作器测试、重启/重复通知/篡价/跨账号测试；新增令牌缓存/并发刷新、查询期间撤销会话、错误响应和脱敏检查。服务端全套 121 项通过。平台请求使用测试替身，不代表真实支付、iOS 兑换规则、真实查单或公网部署已验收。Unity 官方 TTSDK 6.9.7 编译与宿主检查为此前验证记录，本轮未修改 Unity 代码。

@@ -10,7 +10,7 @@ VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负�
 | Paid | 服务端已确认付款，游戏权益尚未确认入库 | 等待/恢复幂等发货，不重复拉起收银台 |
 | Fulfilled | 发货处理已确认完成 | SDK 支付可返回成功，客户端同步库存 |
 
-收银台 success、签名 valid、平台查单 SUCCESS 和游戏订单 Fulfilled 是不同层次的结果。当前 TikTok 平台查单不会单独把订单改成 Paid，抖音主动查单尚未实现。取消和超时均不代表交易已撤销。
+收银台 success、签名 valid、平台查单 SUCCESS 和游戏订单 Fulfilled 是不同层次的结果。TikTok 与抖音主动查单均不会单独把订单改成 Paid，仍须完成现有通知核验。取消和超时均不代表交易已撤销。
 
 ## TikTok 服务端验签基础
 

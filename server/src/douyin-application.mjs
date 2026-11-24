@@ -8,6 +8,7 @@ import { createAuthHandler } from './http.mjs';
 import { createOrderHandler } from './orders-http.mjs';
 import { createDouyinPaymentWebhookHandler } from './douyin-webhook-http.mjs';
 import { DeliveryWorker } from './delivery-worker.mjs';
+import { createDouyinQueryClient } from './douyin-query-client.mjs';
 
 // One trusted application/route per instance. Drain HTTP before awaiting close().
 export function createDouyinApplication({ binding, catalog, callbackToken, authPath, orderPath,
@@ -32,7 +33,8 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
     // 当前由签名通知确认 Paid；客户端 confirm 不能凭收银台成功回调把订单标记为已付款。
     const orders = new OrderService({ binding, auth, store: orderStore, catalog, now,
       verifyPayment: async () => ({ paid: false }) });
-    const payments = new DouyinPayments({ orders, catalog, route, zoneId });
+    const payments = new DouyinPayments({ orders, catalog, route, zoneId,
+      queryClient: createDouyinQueryClient({ binding, fetchImpl, now }) });
     const sessionHandler = createAuthHandler(auth, { log });
     const orderHandler = createOrderHandler(orders, { prepayments: payments, log });
     const webhookHandler = createDouyinPaymentWebhookHandler(payments, { callbackToken, log });

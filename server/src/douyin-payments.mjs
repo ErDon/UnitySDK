@@ -8,11 +8,12 @@ const text = (value, max) => typeof value === 'string' && value.trim() === value
 
 // Direct item purchase only. Server catalog is CNY cents; route determines platform tender.
 export class DouyinPayments {
-  constructor({ orders, catalog, route = 'Android', zoneId = '1' } = {}) {
+  constructor({ orders, catalog, route = 'Android', zoneId = '1', queryClient = null } = {}) {
     if (!(orders instanceof OrderService) || !(orders.store instanceof SqliteOrderStore) ||
         orders.binding.platform !== 'Douyin' || !['Android', 'IosCustomerService'].includes(route) ||
-        !text(zoneId, 256) || !Array.isArray(catalog)) throw new TypeError('Invalid Douyin payment configuration');
+        !text(zoneId, 256) || !Array.isArray(catalog) || (queryClient !== null && typeof queryClient.query !== 'function')) throw new TypeError('Invalid Douyin payment configuration');
     this.orders = orders; this.store = orders.store; this.route = route; this.zoneId = zoneId;
+    this.queryClient = queryClient;
     this.products = new Map();
     for (const item of catalog) {
       const price = orders.catalog.get(item.productId);
@@ -52,6 +53,18 @@ export class DouyinPayments {
       return Object.freeze({ orderId, route: row.route, zoneId: row.zone_id, extraInfo: row.extra_info,
         amountMinor: row.amount_minor, productName: row.product_name, buyQuantity: 0, directPurchase: true });
     });
+  }
+  async query(session, orderId) {
+    const order = await this.orders.owned(session, orderId);
+    const row = this.store.db.prepare('SELECT * FROM erdon_douyin_payments WHERE order_id=?').get(orderId);
+    if (!row || row.binding !== order.binding || row.subject !== order.subject || row.amount_minor !== order.amountMinor)
+      throw new OrderError('PAY.PREPAYMENT_NOT_FOUND', 404);
+    if (!this.queryClient) throw new OrderError('PAY.QUERY_UNAVAILABLE', 503);
+    const result = await this.queryClient.query(orderId);
+    if (!result || !['success', 'unsuccess'].includes(result.status)) throw new OrderError('PAY.QUERY_RESPONSE_INVALID', 502);
+    // Recheck authorization after I/O; a concurrent signed notification may have advanced state.
+    const current = await this.orders.owned(session, orderId);
+    return Object.freeze({ orderId, platformStatus: result.status, state: current.state });
   }
   async acceptWebhook(envelope, callbackToken) {
     const checked = readDouyinPaymentWebhook(envelope, { callbackToken, appId: this.orders.binding.appId });

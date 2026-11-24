@@ -14,6 +14,10 @@ try {
     Copy-Item -LiteralPath $CompiledWxAssembly -Destination '.tests\wechat-factory'
     $coreSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk\Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
     $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.wechat\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
+    & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-factory\WeChatPaymentGatewayTests.exe $coreSources $platformSources .\tests\WeChatPaymentGatewayTests.cs
+    if($LASTEXITCODE -ne 0){throw 'WeChat payment compile failed'}
+    & $UnityMono .\.tests\wechat-factory\WeChatPaymentGatewayTests.exe
+    if($LASTEXITCODE -ne 0){throw 'WeChat payment tests failed'}
     & $compiler /nologo "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" /out:.tests\wechat-factory\WeChatFactoryTests.exe $coreSources $platformSources .\tests\WeChatFactoryTests.cs
     if($LASTEXITCODE -ne 0){throw 'WeChat factory compile failed'}
     & $UnityMono .\.tests\wechat-factory\WeChatFactoryTests.exe

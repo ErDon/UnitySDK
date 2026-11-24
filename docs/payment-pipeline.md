@@ -75,6 +75,14 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 平台令牌加密存储
 
+### 微信道具直购网关
+
+`WeChatPaymentGateway` 实现 `IPlatformPaymentGateway<WeChatPaymentRequest>`，调用 WX.RequestMidasPaymentGameItem。请求包含服务器返回的 SignData、PaySignature、SessionSignature，不可变且 ToString 脱敏；签名原文不裁剪、不解析重排，价格和签名均由服务器负责。此网关不覆盖游戏币充值、好友代付或其他虚拟支付 API。
+
+支付签名按官方类型文档中的 SHA-256 十六进制格式校验；用户态签名仅检查非空、可见 ASCII 和长度上限，作为不透明服务端数据传递。成功回调要求非空且 errCode=0，仅返回 AwaitServerConfirmation；其他结果保留数值平台码并返回 PAY.PLATFORM_REJECTED，不透传原始 errMsg。并发、重复回调、异常及关闭后回调均受保护。
+
+已对本地 0.1.23 和官方固定提交 915d4bf 的 0.1.1 转换包分别运行官方类型/入口编译与注入行为测试。接口依据 [官方 API 类型声明](https://github.com/wechat-miniprogram/minigame-api-typings/blob/master/types/wx/lib.wx.api.d.ts) 和固定 SDK 的 WX.cs；当前官方网页及其用户态签名参考链接访问失败，用户态签名服务尚未实现，未猜测算法。服务端签名/凭据托管、订单映射、通知核验及工厂装配仍待完成，配置入口仍阻断微信支付。
+
 ### 抖音支付网关
 
 `DouyinPaymentGateway` 实现 `IPlatformPaymentGateway<DouyinPaymentRequest>`，显式选择 Android 或 IosCustomerService 路由；前者使用 TT.RequestGamePayment，后者使用 TT.OpenAwemeCustomerService。参数和回调已对照 [官方 C# 支付文档](https://developer.open-douyin.com/docs/resource/zh-CN/mini-game/develop/api/c-api/payment/payment-request) 及本地官方 6.9.7 DLL 核验。

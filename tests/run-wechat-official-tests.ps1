@@ -14,7 +14,7 @@ try {
     $compiler=Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
     $sources=@(Get-ChildItem 'Packages\com.erdon.unitysdk\Runtime' -Filter '*.cs' | Where-Object {$_.Name -ne 'UnitySdkHost.cs'} | ForEach-Object {$_.FullName})
     $platformSources=@(Get-ChildItem 'Packages\com.erdon.unitysdk.wechat\Runtime' -Filter '*.cs' | ForEach-Object {$_.FullName})
-    foreach($testName in @('WeChatCredentialTests','WeChatFactoryTests','WeChatStorageTests','WeChatShareTests','WeChatAdsTests','WeChatRuntimeTests','WeChatStringAnalyticsTests')) {
+    foreach($testName in @('WeChatCredentialTests','WeChatFactoryTests','WeChatStorageTests','WeChatShareTests','WeChatAdsTests','WeChatRuntimeTests','WeChatStringAnalyticsTests','WeChatPaymentGatewayTests')) {
         & $compiler /nologo /define:ERDON_WECHAT_STRING_ANALYTICS,ERDON_WECHAT_REAL_WX "/reference:$dll" "/reference:$CompiledWxAssembly" "/reference:$NetStandardFacade" "/out:$output\$testName.exe" $sources $platformSources ".\tests\$testName.cs"
         if($LASTEXITCODE -ne 0){throw "$testName official compile failed"}
         & $UnityMono "$output\$testName.exe"

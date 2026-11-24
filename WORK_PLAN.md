@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 面板支付工厂注入与退出清理
+
+EditorPlatformBootstrap 增加 PaymentFactory，传入统一配置启动；面板显示注入状态、支付依赖错误说明，支付开关不再标成仅 Editor Mock。退出 Play Mode 清除工厂引用，启动按钮不会主动发起交易。
+
+扩展 PaymentConfiguredPlayChecks 经过真实 EditorPlatformBootstrap 启动，临时配置在调用后还原。独立 Unity 进程 341812 已退出，editor-payment-play.log 第 499 行 SDK_CONFIGURED_PAYMENT_PLAY_PASS，含轮询/取消/释放及退出清理。新增面板状态行未做视觉复核，真实平台支付仍待验收，66/78。
+
 ### Unity 配置支付 Play Mode 实测
 
 新增 PaymentConfiguredPlayChecks 模板，在独立 BuildChecksProject 实际运行 Unity 2022.3 Play Mode。验证 UnitySdkHost 配置启动缺支付工厂预检、就绪后只创建一次、按请求会话创建预支付客户端、宿主 Update 驱动三次订单核验到 Fulfilled、取消停止后续查询及统一释放。

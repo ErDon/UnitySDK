@@ -8,10 +8,11 @@ namespace ErDon.UnitySDK.Editor
         // Application-owned constructor only; never retain an exchange instance in the editor.
         public static Func<ISessionExchange> SessionExchangeFactory { get; set; }
         public static Func<INetwork> NetworkFactory { get; set; }
+        public static Func<Action<Action>,IPay> PaymentFactory { get; set; }
         static EditorPlatformBootstrap()
         {
             EditorApplication.playModeStateChanged += state => {
-                if(state == PlayModeStateChange.ExitingPlayMode) { SessionExchangeFactory = null; NetworkFactory = null; }
+                if(state == PlayModeStateChange.ExitingPlayMode) { SessionExchangeFactory = null; NetworkFactory = null; PaymentFactory = null; }
             };
         }
         public static void Begin(Action<StartupResult> callback, Action<SdkLogLevel,string> logCallback = null)
@@ -22,7 +23,7 @@ namespace ErDon.UnitySDK.Editor
             if(settings.platform==DistributionPlatform.Mock)throw new InvalidOperationException("CONFIG.REAL_PLATFORM_REQUIRED");
             if(PlatformDependencyCatalog.CheckVendorInstallations(settings.platform.ToString()).Count!=0)
                 throw new InvalidOperationException("CONFIG.FOREIGN_VENDOR_INSTALLED");
-            UnitySdkHost.BeginConfiguredStartup(settings.CreateRuntimeConfiguration(),SessionExchangeFactory,callback,logCallback,createNetwork:NetworkFactory);
+            UnitySdkHost.BeginConfiguredStartup(settings.CreateRuntimeConfiguration(),SessionExchangeFactory,callback,logCallback,createNetwork:NetworkFactory,createPayment:PaymentFactory);
         }
     }
 }

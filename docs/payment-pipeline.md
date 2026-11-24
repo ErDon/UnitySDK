@@ -272,7 +272,9 @@ var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
 
 `SdkPlatformRegistry.CreateStartup` 与 `UnitySdkHost.BeginConfiguredStartup` 新增可选 `createPayment` 参数，类型为 `Func<Action<Action>, IPay>`；可传入上面的动态会话组合构造函数。TikTok 自动注册声明支持显式支付装配且要求该工厂。配置勾选 payments 但未提供时，在创建平台运行时前返回 CONFIG.PAYMENT_PROVIDER_REQUIRED；关闭支付时忽略工厂，不创建支付客户端或网关。微信/抖音尚未声明此支持，不能通过传入工厂绕过 CONFIG.PAYMENT_UNIMPLEMENTED。
 
-支付工厂在平台就绪后才调用，返回对象由 SDK 持有；可与 createNetwork 同时使用，平台身份保持不变。PAYMENTS 编译裁剪时不包含包装实现，运行时配置仍须与编译模块匹配。此入口允许项目使用面板导出的配置，但面板本身尚未提供真实后端支付工厂的自动创建控件。
+支付工厂在平台就绪后才调用，返回对象由 SDK 持有；可与 createNetwork 同时使用，平台身份保持不变。PAYMENTS 编译裁剪时不包含包装实现，运行时配置仍须与编译模块匹配。
+
+Editor 面板通过 `ErDon.UnitySDK.Editor.EditorPlatformBootstrap.PaymentFactory` 接收同类型委托，显示“支付后端工厂：已注入/未注入”。在 Play Mode 中设置此属性，再勾选支付并点击“按配置启动平台 SDK”，即可走同一配置启动流程。不要在面板代码中保存会话、密钥或已经创建的 provider；注入构造函数即可。退出 Play Mode 自动清除工厂引用。面板不自动推测后端地址，不会主动拉起收银台；支付预览仍使用独立 Mock 区域。新增状态行尚未做逐项视觉验收，启动和清理已通过实际 Play Mode 验证。
 
 ```csharp
 using ErDon.UnitySDK;

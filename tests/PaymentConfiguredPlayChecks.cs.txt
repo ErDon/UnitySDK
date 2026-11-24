@@ -1,5 +1,6 @@
 using System;
 using ErDon.UnitySDK;
+using ErDon.UnitySDK.Editor;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -48,12 +49,19 @@ public static class PaymentConfiguredPlayChecks {
             bool rejected=false;
             try{UnitySdkHost.BeginConfiguredStartup(config,null,r=>{});}catch(InvalidOperationException ex){rejected=ex.Message=="CONFIG.PAYMENT_PROVIDER_REQUIRED";}
             Check(rejected,"Missing dependency preflight");
-            UnitySdkHost.BeginConfiguredStartup(config,null,r=>{Check(r.Success,"Startup");ready=true;},createPayment:post=>{
+            EditorPlatformBootstrap.PaymentFactory=post=>{
                 created++;orders=new Orders();
                 return new VerifiedPayment(orders,new PreparedPaymentLauncher(session=>{
                     Check(session=="game-session","Request session binding");return new Preparation();
                 },new Gateway()),post,3,2000,()=>clock);
-            });
+            };
+            var settings=SdkProjectSettings.instance;var saved=EditorJsonUtility.ToJson(settings);
+            try {
+                settings.platform=DistributionPlatform.TikTok;settings.gameId="game";settings.appId="app";
+                settings.production=false;settings.login=false;settings.payments=true;
+                settings.network=false;settings.share=false;settings.storage=false;settings.analytics=false;settings.rewardedAds=false;
+                EditorPlatformBootstrap.Begin(r=>{Check(r.Success,"Editor configured startup");ready=true;});
+            }finally{EditorJsonUtility.FromJsonOverwrite(saved,settings);}
             EditorApplication.update+=Step;
         }catch(Exception ex){Fail(ex);}
     }
@@ -71,9 +79,15 @@ public static class PaymentConfiguredPlayChecks {
                 Check(result.Error.Code=="PAY.CANCELLED","Cancellation result");
                 var before=orders.Gets;clock+=60000;SDK.Tick();Check(orders.Gets==before,"No polling after cancel");
                 UnitySdkHost.Shutdown();Check(orderDisposals==1&&gatewayDisposals==1&&preparationDisposals==2,"Owned resource cleanup");
-                EditorApplication.update-=Step;Debug.Log("SDK_CONFIGURED_PAYMENT_PLAY_PASS");EditorApplication.Exit(0);
+                EditorApplication.update-=Step;EditorApplication.playModeStateChanged+=Exited;
+                EditorApplication.isPlaying=false;
             }
         }catch(Exception ex){Fail(ex);}
+    }
+    static void Exited(PlayModeStateChange state){
+        if(state!=PlayModeStateChange.EnteredEditMode)return;
+        try{Check(EditorPlatformBootstrap.PaymentFactory==null,"Editor payment factory reset on exit");Debug.Log("SDK_CONFIGURED_PAYMENT_PLAY_PASS");EditorApplication.Exit(0);}
+        catch(Exception ex){Fail(ex);}
     }
     static void Fail(Exception ex){EditorApplication.update-=Step;Debug.LogError("SDK_CONFIGURED_PAYMENT_PLAY_FAIL: "+ex.Message);EditorApplication.Exit(1);}
 }

@@ -35,7 +35,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("能力模块", EditorStyles.boldLabel);
             settings.login = EditorGUILayout.Toggle("登录", settings.login);
             settings.rewardedAds = EditorGUILayout.Toggle("激励广告", settings.rewardedAds);
-            settings.payments = EditorGUILayout.Toggle("支付（Editor Mock）", settings.payments);
+            settings.payments = EditorGUILayout.Toggle("支付", settings.payments);
             settings.share = EditorGUILayout.Toggle("分享", settings.share);
             settings.storage = EditorGUILayout.Toggle("存储", settings.storage);
             settings.network = EditorGUILayout.Toggle("网络（可选通信工厂）", settings.network);
@@ -95,6 +95,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("真实平台启动（仅 Play Mode）", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("需安装对应官方 SDK 和适配包并启用平台宏。这里只启动平台，不展示广告或发起支付；Editor 能力取决于官方 SDK。构建阻断仍生效。", MessageType.Info);
             EditorGUILayout.LabelField("网络工厂", EditorPlatformBootstrap.NetworkFactory == null ? "未注入（真实平台网络开启时需要）" : "已注入");
+            EditorGUILayout.LabelField("支付后端工厂", EditorPlatformBootstrap.PaymentFactory == null ? "未注入（TikTok 支付开启时需要）" : "已注入");
             EditorGUILayout.LabelField("登录后端工厂", EditorPlatformBootstrap.SessionExchangeFactory == null ? "未注入（关闭登录可测试启动）" : "已注入");
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying)) {
                 using (new EditorGUI.DisabledScope(settings.platform == DistributionPlatform.Mock)) {
@@ -207,6 +208,8 @@ namespace ErDon.UnitySDK.Editor
                     case "CONFIG.PRODUCTION_MOCK": reason = "生产环境不能使用 Mock，请切换真实平台或关闭生产环境。"; break;
                     case "CONFIG.SESSION_EXCHANGE_REQUIRED": reason = "请注入登录后端工厂，或关闭登录后测试平台启动。"; break;
                     case "CONFIG.NETWORK_PROVIDER_REQUIRED": reason = "请注入网络工厂，或关闭网络模块。"; break;
+                    case "CONFIG.PAYMENT_PROVIDER_REQUIRED": reason = "请注入支付后端工厂，或关闭支付模块。"; break;
+                    case "CONFIG.PAYMENT_UNIMPLEMENTED": reason = "当前平台尚未开放配置支付接入，请关闭支付模块。"; break;
                     case "CONFIG.PLATFORM_NOT_REGISTERED": reason = "请安装所选平台适配包和官方 SDK，并启用对应平台宏。"; break;
                     case "CONFIG.FOREIGN_VENDOR_INSTALLED": reason = "检测到其他平台官方依赖，请按目标平台整理依赖后重试。"; break;
                     default: reason = "请根据错误码检查配置、平台包及依赖工厂。"; break;

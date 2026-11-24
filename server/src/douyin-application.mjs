@@ -43,7 +43,7 @@ export function createDouyinApplication({ binding, catalog, callbackToken, authP
         response.writeHead(503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Connection': 'close' });
         response.end(JSON.stringify({ errorCode: 'SERVER.CLOSED' })); return;
       }
-      if (request.url === '/v1/session') return sessionHandler(request, response);
+      if (request.url === '/v1/session' || request.url === '/v1/session/revoke-all') return sessionHandler(request, response);
       if (request.url?.split('?')[0] === '/v1/webhooks/douyin/payment') return webhookHandler(request, response);
       return orderHandler(request, response);
     };

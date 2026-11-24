@@ -5,7 +5,7 @@ import { MemoryRateLimiter } from './rate-limit.mjs';
 export function createAuthHandler(service, { log = console.info, bodyLimit = 8192, limiter = new MemoryRateLimiter() } = {}) {
   return async (request, response) => {
     const callId = randomUUID();
-    let result = 'OK';
+    let result = 'OK', operation = 'Login.Exchange';
     response.setHeader('Cache-Control', 'no-store');
     response.setHeader('Content-Type', 'application/json; charset=utf-8');
     response.setHeader('X-Content-Type-Options', 'nosniff');
@@ -19,7 +19,11 @@ export function createAuthHandler(service, { log = console.info, bodyLimit = 819
           response.setHeader('Retry-After', String(allowance.retryAfterSeconds));
         throw new AuthError('AUTH.RATE_LIMITED', 429);
       }
-      if (request.method !== 'POST' || request.url !== '/v1/session') throw new AuthError('REQUEST.NOT_FOUND', 404);
+      const revoke = request.url === '/v1/session/revoke-all';
+      if (request.method !== 'POST' || (!revoke && request.url !== '/v1/session')) throw new AuthError('REQUEST.NOT_FOUND', 404);
+      if (revoke) operation = 'Session.RevokeAll';
+      const authorization = revoke ? /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.authorization ?? '') : null;
+      if (revoke && !authorization) throw new AuthError('AUTH.SESSION_INVALID');
       if (request.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') throw new AuthError('REQUEST.CONTENT_TYPE', 415);
       let size = 0; const chunks = [];
       // destroyOnReturn:false allows a bounded error response instead of destroying the socket.
@@ -34,14 +38,15 @@ export function createAuthHandler(service, { log = console.info, bodyLimit = 819
       let input;
       try { input = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
       catch { throw new AuthError('REQUEST.INVALID', 400); }
-      send(200, await service.exchange(input));
+      send(200, revoke ? await service.revokeAll(authorization[1], input) : await service.exchange(input));
     } catch (error) {
       const known = error instanceof AuthError;
       result = known ? error.code : 'SERVER.INTERNAL';
+      response.setHeader('Connection', 'close');
       send(known ? error.status : 500, { errorCode: result });
     } finally {
-      const line = JSON.stringify({ time: new Date().toISOString(), interface: 'Login.Exchange', callId,
-        logId: randomUUID(), stage: 'SessionExchange', params: '[REDACTED]', result });
+      const line = JSON.stringify({ time: new Date().toISOString(), interface: operation, callId,
+        logId: randomUUID(), stage: operation === 'Session.RevokeAll' ? 'SessionRevocation' : 'SessionExchange', params: '[REDACTED]', result });
       try { log(line); } catch { /* Logging must not change authentication results. */ }
     }
   };

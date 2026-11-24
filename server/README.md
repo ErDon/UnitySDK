@@ -46,9 +46,13 @@ async function verify(binding, temporaryCode) {
 | 方法 | 必须满足的语义 |
 | --- | --- |
 | claim(hash, expiresAt) | 全实例原子 create-if-absent；未过期记录存在返回 false；新记录写入返回 true；失败抛错 |
-| putSession(hash, record) | 持久写入后才 resolve；记录包含 binding、subject、expiresAt |
+| sessionRevision() | 返回当前撤销序号；登录在请求平台前读取 |
+| putSession(hash, record, revision) | 原子拒绝该账号撤销之后的旧登录，再持久写入；记录包含 binding、subject、expiresAt |
 | getSession(hash) | 不存在/过期返回 null；不能返回已过期记录 |
 | deleteSession(hash) | 幂等撤销 |
+| revokeSubject(binding, subject) | 原子递增撤销版本并删除绑定下该账号全部会话 |
+
+新增认证路由与 SQLite v2 迁移注意事项见 [游戏会话撤销](../docs/session-revocation.md)。它只撤销游戏会话，不撤销平台授权或支付。
 
 重放键按 platform/appId/code 隔离，防止同一平台应用在不同游戏/环境绑定重复消费同一个 code。即使上游超时也保留 claim，因为上游可能已经消费；客户端应重新获取 code。记录从不包含原始 code。MemoryAuthStore 有容量限制与访问时过期清理，但进程重启数据丢失、多实例不共享，故只能用于测试。
 

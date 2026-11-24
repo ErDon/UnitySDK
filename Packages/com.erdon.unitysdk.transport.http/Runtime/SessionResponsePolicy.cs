@@ -37,6 +37,7 @@ namespace ErDon.UnitySDK
             if (status == 429) return Error("AUTH.RATE_LIMITED", "Session endpoint rate limited", RetryPolicy.Delayed);
             if (status == 403 && code == "AUTH.APP_NOT_ALLOWED") return Error(code, "Game, application or environment is not allowed by server configuration", RetryPolicy.Never);
             if (status == 409 && code == "AUTH.CODE_REUSED") return Error(code, "Temporary credential was already submitted; obtain a new login code", RetryPolicy.UserAction);
+            if (status == 409 && code == "AUTH.LOGIN_REVOKED") return Error(code, "Game sessions were revoked during login; explicitly start a new login", RetryPolicy.UserAction);
             if (status == 401 && code == "AUTH.PLATFORM_REJECTED") return Error(code, "Platform rejected the temporary credential", RetryPolicy.UserAction);
             if (status == 400 && code == "AUTH.PLATFORM_UNSUPPORTED") return Error(code, "Server has no verifier for this platform", RetryPolicy.Never);
             if (status == 400 && code == "REQUEST.INVALID") return Error(code, "Session request fields are invalid", RetryPolicy.Never);

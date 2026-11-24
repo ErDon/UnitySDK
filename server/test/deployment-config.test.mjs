@@ -96,6 +96,13 @@ for (const platform of ['wechat', 'douyin', 'tiktok']) test(`${platform} configu
     const prepared = await post(`/v1/orders/${order.data.order.orderId}/prepare`, {}, login.data.session);
     assert.equal(prepared.status, 200); assert.ok(prepared.data.prepayment);
   }
+  const beforeRevoke = requests;
+  const scope = { ...config.configuration.binding, secret: undefined };
+  const revoked = await post('/v1/session/revoke-all', scope, login.data.session);
+  assert.equal(revoked.status, 200); assert.equal(revoked.data.scope, 'game-sessions');
+  assert.equal(requests, beforeRevoke, 'local revoke must not call OAuth or payment endpoints');
+  const again = await post('/v1/session/revoke-all', scope, login.data.session);
+  assert.equal(again.status, 401); assert.equal(again.data.errorCode, 'AUTH.SESSION_INVALID');
   const stopping = running.stop(); assert.equal(stopping, running.stop()); await stopping;
 });
 

@@ -16,6 +16,9 @@ class SessionResponseTests
         var result=SessionResponsePolicy.Evaluate(409,response);
         Check(!result.Success && result.Error.Code=="AUTH.CODE_REUSED" && result.Error.Retry==RetryPolicy.UserAction,"Replay diagnosis");
         Check(result.ServerCallId==id && result.Error.ServerCallId==id,"Server correlation retained");
+        var revoked=SessionResponsePolicy.Evaluate(409,new SessionResponseData{errorCode="AUTH.LOGIN_REVOKED",callId=id});
+        Check(revoked.Error.Code=="AUTH.LOGIN_REVOKED" && revoked.Error.Retry==RetryPolicy.UserAction && revoked.ServerCallId==id,"Revocation during login requires user action");
+        Check(SessionResponsePolicy.Evaluate(401,new SessionResponseData{errorCode="AUTH.LOGIN_REVOKED"}).Error.Code=="AUTH.SERVER_REJECTED","Revocation status is allowlisted");
         Check(SessionResponsePolicy.Evaluate(403,new SessionResponseData{errorCode="AUTH.APP_NOT_ALLOWED"}).Error.Retry==RetryPolicy.Never,"Binding configuration failure");
         Check(SessionResponsePolicy.Evaluate(502,new SessionResponseData{errorCode="AUTH.PLATFORM_UNAVAILABLE"}).Error.Retry==RetryPolicy.Delayed,"Upstream failure");
         Check(SessionResponsePolicy.Evaluate(429,null).Error.Code=="AUTH.RATE_LIMITED","Non JSON 429 still diagnosed");

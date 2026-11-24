@@ -11,6 +11,7 @@ export const bindingKey = ({ gameId, appId, environment, platform }) =>
 export class MemoryAuthStore {
   constructor({ now = Date.now, capacity = 10000 } = {}) {
     this.now = now; this.capacity = capacity; this.claims = new Map(); this.sessions = new Map();
+    this.revision = 0; this.revocations = new Map();
   }
   prune(map) { for (const [key, value] of map) if (value.expiresAt <= this.now()) map.delete(key); }
   async claim(key, expiresAt) {
@@ -19,7 +20,11 @@ export class MemoryAuthStore {
     if (this.claims.size >= this.capacity) throw new AuthError('SERVER.CAPACITY', 503);
     this.claims.set(key, { expiresAt }); return true;
   }
-  async putSession(hash, record) {
+  async sessionRevision() { return this.revision; }
+  async putSession(hash, record, revision = 0) {
+    if (!Number.isSafeInteger(revision) || revision < 0 || revision > this.revision) throw new AuthError('SERVER.STORAGE_UNAVAILABLE', 503);
+    if ((this.revocations.get(JSON.stringify([record.binding, record.subject])) ?? 0) > revision)
+      throw new AuthError('AUTH.LOGIN_REVOKED', 409);
     this.prune(this.sessions);
     if (this.sessions.size >= this.capacity) throw new AuthError('SERVER.CAPACITY', 503);
     this.sessions.set(hash, Object.freeze({ ...record }));
@@ -30,11 +35,19 @@ export class MemoryAuthStore {
     return { ...value };
   }
   async deleteSession(hash) { this.sessions.delete(hash); }
+  async revokeSubject(binding, subject) {
+    const key = JSON.stringify([binding, subject]);
+    if ((!this.revocations.has(key) && this.revocations.size >= this.capacity) || this.revision >= Number.MAX_SAFE_INTEGER)
+      throw new AuthError('SERVER.CAPACITY', 503);
+    this.revocations.set(key, ++this.revision);
+    for (const [hash, record] of this.sessions)
+      if (record.binding === binding && record.subject === subject) this.sessions.delete(hash);
+  }
 }
 
 export class AuthService {
   constructor({ bindings, verifiers, store, now = Date.now, sessionTtlMs = 3600000, codeTtlMs = 600000 }) {
-    if (!Array.isArray(bindings) || !store || !verifiers || !Number.isSafeInteger(sessionTtlMs) || sessionTtlMs <= 0 || !Number.isSafeInteger(codeTtlMs) || codeTtlMs <= 0)
+    if (!Array.isArray(bindings) || typeof store?.sessionRevision !== 'function' || typeof store?.revokeSubject !== 'function' || !verifiers || !Number.isSafeInteger(sessionTtlMs) || sessionTtlMs <= 0 || !Number.isSafeInteger(codeTtlMs) || codeTtlMs <= 0)
       throw new Error('Invalid auth configuration');
     this.bindings = new Map();
     for (const binding of bindings) {
@@ -55,6 +68,8 @@ export class AuthService {
     if (!binding) throw new AuthError('AUTH.APP_NOT_ALLOWED', 403);
     const verify = this.verifiers.get(binding.platform);
     if (!verify) throw new AuthError('AUTH.PLATFORM_UNSUPPORTED', 400);
+    // Snapshot before platform I/O. A later subject revocation rejects this login at commit.
+    const revision = await this.store.sessionRevision();
     // Platform codes belong to the application, not a single game/environment binding.
     const claimKey = digest(JSON.stringify([binding.platform, binding.appId, request.code]));
     if (!await this.store.claim(claimKey, this.now() + this.codeTtlMs)) throw new AuthError('AUTH.CODE_REUSED', 409);
@@ -65,7 +80,7 @@ export class AuthService {
     const expiresAt = this.now() + this.sessionTtlMs;
     await this.store.putSession(digest(session), {
       binding: bindingKey(binding), subject: identity.subject, expiresAt
-    });
+    }, revision);
     return { session, expiresAt };
   }
   async authenticate(session, expectedBinding) {
@@ -76,5 +91,16 @@ export class AuthService {
   }
   async revoke(session) {
     if (typeof session === 'string') await this.store.deleteSession(digest(session));
+  }
+  async revokeAll(session, expectedBinding) {
+    if (!expectedBinding || typeof expectedBinding !== 'object' || Array.isArray(expectedBinding) ||
+        !['gameId', 'appId', 'environment', 'platform'].every(key => typeof expectedBinding[key] === 'string' && expectedBinding[key].trim() && expectedBinding[key].length <= 1024))
+      throw new AuthError('REQUEST.INVALID', 400);
+    const binding = this.bindings.get(bindingKey(expectedBinding));
+    if (!binding) throw new AuthError('AUTH.APP_NOT_ALLOWED', 403);
+    const identity = await this.authenticate(session, binding);
+    // Identity comes only from the authenticated session, never from request subject/userId.
+    await this.store.revokeSubject(bindingKey(binding), identity.subject);
+    return Object.freeze({ revoked: true, scope: 'game-sessions' });
   }
 }

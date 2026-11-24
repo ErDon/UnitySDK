@@ -34,6 +34,7 @@
 | AUTH.PLATFORM_EXCEPTION | 调用平台接口时抛异常，原文不输出 |
 | AUTH.APP_NOT_ALLOWED | 后端不允许当前游戏、应用或环境组合；检查服务端绑定 |
 | AUTH.CODE_REUSED | 临时登录凭证已提交过；获取新凭证，不重复使用旧 code |
+| AUTH.LOGIN_REVOKED | 登录进行中发生了同账号游戏会话撤销；旧登录不会签发会话，需用户重新发起登录并获取新 code |
 | AUTH.PLATFORM_REJECTED | 服务端向平台兑换凭证被拒绝；重新授权或排查应用绑定 |
 | AUTH.PLATFORM_CONFIGURATION | 平台拒绝服务端应用配置；由运营/开发检查密钥等配置 |
 | AUTH.PLATFORM_UNAVAILABLE | 服务端无法连通平台；恢复后使用新的临时凭证 |

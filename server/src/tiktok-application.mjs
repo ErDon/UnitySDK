@@ -57,7 +57,7 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
         response.writeHead(503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Connection': 'close' });
         response.end(JSON.stringify({ errorCode: 'SERVER.CLOSED' })); return;
       }
-      if (request.url === '/v1/session') return sessionHandler(request, response);
+      if (request.url === '/v1/session' || request.url === '/v1/session/revoke-all') return sessionHandler(request, response);
       if (request.url === '/v1/webhooks/tiktok/payment') return webhookHandler(request, response);
       return orderHandler(request, response); // Existing strict router rejects all other paths.
     };

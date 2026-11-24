@@ -19,6 +19,7 @@
 - [Android 原生 AAR 与 Unity 桥接接入](docs/android.md)
 - [原生渠道扩展边界](docs/native-extension.md)
 - [WebGL 单线程与独立工程验证](docs/webgl-validation.md)
+- [游戏会话撤销与认证库升级](docs/session-revocation.md)
 
 原则：模块可选、配置可预览、每个公开接口有文档与可运行示例；依赖版本可锁定；不依赖任何特定游戏的业务框架。第一阶段支持 Unity，保留跨引擎协议边界，不提前实现 Godot。
 

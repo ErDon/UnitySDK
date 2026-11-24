@@ -1,0 +1,2 @@
+# Keep manifest/proguard bytes and source hashes stable across Windows checkouts.
+* text eol=lf

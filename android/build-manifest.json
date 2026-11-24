@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0",
+  "protocolVersion": 1,
+  "minSdk": 26,
+  "aarSha256": "65e195ee8a559f64f3588eac27107d9d3b5321612f1902fe80e87b00db455c25",
+  "sources": {
+    "core/src/com/erdon/sdk/NativeSdk.java": "83039f035b59c530fae63b52b923c6986d241a4c8e72d76bb7a7eb42d5559d2a",
+    "library/src/com/erdon/sdk/android/AndroidSdk.java": "9862a7494a48efd7a9a45a8f19f00b27cbfbaff14a6384768b049de9819de052",
+    "library/src/com/erdon/sdk/android/UnityBridge.java": "d0ffaffd6bc04325b4223c473e5bd2d569c31f963d98a90808044aac98cb0271"
+  },
+  "androidApiSha256": "14261d2817d558e7fbbf9848216c4f6ec37c134353325eab230acf2af0c25fe7"
+}

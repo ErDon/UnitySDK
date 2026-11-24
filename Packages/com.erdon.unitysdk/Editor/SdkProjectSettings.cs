@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 namespace ErDon.UnitySDK.Editor
 {
-    public enum DistributionPlatform { Mock, WeChat, Douyin, TikTok, AndroidChannel, IOSChannel }
+    public enum DistributionPlatform { Mock, WeChat, Douyin, TikTok, AndroidChannel, IOSChannel, Android }
     [FilePath("ProjectSettings/ErDonSdk.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class SdkProjectSettings : ScriptableSingleton<SdkProjectSettings>
     {
@@ -21,7 +21,7 @@ namespace ErDon.UnitySDK.Editor
         public void ApplyCapabilityDefines()
         {
             var group = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
-            if (group != BuildTargetGroup.WebGL) throw new InvalidOperationException("Switch to WebGL before applying capability selection");
+            if (group != BuildTargetGroup.WebGL && group != BuildTargetGroup.Android) throw new InvalidOperationException("Switch to WebGL or Android before applying capability selection");
             var defines = new List<string>(PlayerSettings.GetScriptingDefineSymbolsForGroup(group).Split(';'));
             string[] symbols = { "ERDON_EXCLUDE_LOGIN", "ERDON_EXCLUDE_STORAGE", "ERDON_EXCLUDE_SHARE", "ERDON_EXCLUDE_ADS", "ERDON_EXCLUDE_ANALYTICS", "ERDON_EXCLUDE_NETWORK", "ERDON_EXCLUDE_PAYMENTS" };
             bool[] enabled = { login, storage, share, rewardedAds, analytics, network, payments };

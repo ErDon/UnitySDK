@@ -1,0 +1,1 @@
+{"name":"ErDon.UnitySDK.Android","references":["ErDon.UnitySDK"],"includePlatforms":["Editor","Android"],"defineConstraints":["ERDON_PLATFORM_ANDROID"],"autoReferenced":true}

@@ -1,0 +1,19 @@
+{
+  "name": "com.erdon.unitysdk.android",
+  "version": "0.1.0",
+  "displayName": "ErDon Android Native Bridge",
+  "description": "Android AAR bridge. Built-in storage and text sharing; explicit vendor providers for login, ads and payments.",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.erdon.unitysdk": "0.1.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.androidjni": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Android Startup",
+      "description": "Storage and system text sharing without a vendor account",
+      "path": "Samples~/Startup"
+    }
+  ]
+}

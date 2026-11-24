@@ -1,6 +1,6 @@
 # Android/iOS 渠道扩展边界
 
-本轮交付原生渠道扩展契约，不集成任何 Android/iOS 供应商。Android 与 iOS 是运行系统，渠道登录、广告、支付供应商应分别确定。本文中的 ExampleChannel 是说明用标识，不是已实现的平台。
+现有通用扩展契约继续保留；新增的 Android 原生 AAR 与 Unity 桥接见 [Android 接入](android.md)。目前不集成具体 Android/iOS 供应商。Android 与 iOS 是运行系统，渠道登录、广告、支付供应商应分别确定。本文中的 ExampleChannel 是说明用标识，不是已实现的平台。
 
 ## 下层适配，上层保持聚合
 
@@ -37,7 +37,7 @@
 
 ## 当前能用的启动路径
 
-当前 `SdkRuntimeConfiguration` 及面板仅支持 Mock、微信、抖音、TikTok。即使调用 SdkPlatformRegistry.Register 注册自定义名字，也不会绕过配置校验；AndroidChannel/IOSChannel 面板选项不是可发布适配。不要把原生渠道伪装成微信以绕过校验。
+当前 `SdkRuntimeConfiguration` 及面板支持 Mock、微信、抖音、TikTok 和 Android。Android 是新增原生包的固定身份，不代表任意渠道名字都可通过校验。即使调用 SdkPlatformRegistry.Register 注册自定义名字，也不会绕过配置校验；AndroidChannel/IOSChannel 面板选项不是可发布适配。不要把原生渠道伪装成微信以绕过校验。
 
 扩展开发可使用已存在的手动启动入口，不修改公共配置白名单：
 
@@ -70,4 +70,4 @@ UnitySdkHost.BeginStartup(config, vendorRuntime, vendorFactory, result => {
 
 `tests/NativeExtensionTests.cs` 使用显式测试替身验证两种自定义平台身份、延迟装配、按能力多态、关闭模块不创建、所有权与身份不匹配拒绝；同时确认便携配置仍拒绝未实现原生渠道。可通过 tests/run-all-tests.ps1 重跑。
 
-该测试证明现有接口允许扩展，不证明任何原生 SDK、JNI/Objective-C 桥接、原生构建或真机功能可用。首批供应商选择、接入与验收需另行迭代；这符合本轮仅完成微信、抖音、TikTok，原生渠道保留扩展接口的范围。
+该测试证明现有接口允许扩展，不证明任何原生 SDK、JNI/Objective-C 桥接、原生构建或真机功能可用。首批供应商选择、接入与验收需另行迭代；此处是原有通用扩展测试的边界；新增 Android 包的具体实现与验证单独列在 [Android 工作计划](../android/WORK_PLAN.md)。

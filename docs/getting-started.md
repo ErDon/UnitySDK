@@ -67,7 +67,7 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 - [存储](storage.md)、[分享](share.md)、[激励广告](rewarded-ads.md)
 - [网络请求](network.md)、[数据上报](analytics.md)
 - [订单](orders.md)、[支付编排](payment-pipeline.md)
-- [平台隔离](platform-isolation.md)、[Android/iOS 扩展](native-extension.md)
+- [Android 原生包与 Unity 桥接](android.md)、[平台隔离](platform-isolation.md)、[原生渠道扩展](native-extension.md)
 
 所有接口以各能力文档的当前实现说明为准；整体架构草案包含尚未完成的发布目标。工作计划顶部勾选项列明已验证范围，未勾选的真机、真实支付与最终裁剪不视为完成。
 

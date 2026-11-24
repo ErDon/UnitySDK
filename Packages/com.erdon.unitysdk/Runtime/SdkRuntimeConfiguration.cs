@@ -15,7 +15,7 @@ namespace ErDon.UnitySDK
             var issues = new List<string>();
             if (schemaVersion != 1) issues.Add("CONFIG.SCHEMA_UNSUPPORTED");
             if (string.IsNullOrWhiteSpace(gameId)) issues.Add("CONFIG.GAME_ID_REQUIRED");
-            if (platform != "Mock" && platform != "WeChat" && platform != "Douyin" && platform != "TikTok") issues.Add("CONFIG.PLATFORM_UNSUPPORTED");
+            if (platform != "Mock" && platform != "WeChat" && platform != "Douyin" && platform != "TikTok" && platform != "Android") issues.Add("CONFIG.PLATFORM_UNSUPPORTED");
             if (production && platform == "Mock") issues.Add("CONFIG.PRODUCTION_MOCK");
             if (platform != "Mock" && string.IsNullOrWhiteSpace(appId)) issues.Add("CONFIG.APP_ID_REQUIRED");
             try {

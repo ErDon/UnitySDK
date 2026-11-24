@@ -44,7 +44,8 @@ namespace ErDon.UnitySDK.Editor
             var known = new Dictionary<string,string>(StringComparer.Ordinal) {
                 {"WeChat", "ERDON_PLATFORM_WECHAT"},
                 {"Douyin", "ERDON_PLATFORM_DOUYIN"},
-                {"TikTok", "ERDON_PLATFORM_TIKTOK"}
+                {"TikTok", "ERDON_PLATFORM_TIKTOK"},
+                {"Android", "ERDON_PLATFORM_ANDROID"}
             };
             var selected = new HashSet<string>((defines ?? "").Split(';').Select(x=>x.Trim()).Where(x=>x.StartsWith("ERDON_PLATFORM_",StringComparison.Ordinal)), StringComparer.Ordinal);
             string required;
@@ -59,7 +60,7 @@ namespace ErDon.UnitySDK.Editor
             if(!selected.Contains(required))errors.Add("Missing target define: " + required);
             foreach(var symbol in selected)
                 if(symbol != required)errors.Add("Foreign or unknown platform define: " + symbol);
-            if(engineTarget != "WebGL")errors.Add("Current mini-game adapters require the WebGL build target");
+            if(engineTarget != (target == "Android" ? "Android" : "WebGL"))errors.Add("Platform does not match engine build target: " + target);
             return errors;
         }
         // Positive check complements foreign-platform isolation: defines alone do not install an adapter.
@@ -71,6 +72,7 @@ namespace ErDon.UnitySDK.Editor
             switch (target) {
                 case "WeChat": package = "com.erdon.unitysdk.wechat"; assembly = "ErDon.UnitySDK.WeChat"; break;
                 case "Douyin": package = "com.erdon.unitysdk.douyin"; assembly = "ErDon.UnitySDK.Douyin"; break;
+                case "Android": package = "com.erdon.unitysdk.android"; assembly = "ErDon.UnitySDK.Android"; break;
                 case "TikTok": package = "com.erdon.unitysdk.tiktok"; assembly = "ErDon.UnitySDK.TikTok"; break;
                 default: errors.Add("No Player adapter registered for target: " + target); return errors;
             }

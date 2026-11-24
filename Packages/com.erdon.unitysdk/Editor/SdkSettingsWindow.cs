@@ -55,7 +55,7 @@ namespace ErDon.UnitySDK.Editor
             if (settings.analytics) enabled.Add("数据上报");
             EditorGUILayout.LabelField("启用模块", enabled.Count == 0 ? "无" : string.Join("、", enabled.ToArray()), EditorStyles.wordWrappedLabel);
             EditorGUILayout.HelpBox("预览显示下一次初始化使用的配置；修改开关后需重新初始化。关闭模块不会创建对应能力实例。", MessageType.Info);
-            using (new EditorGUI.DisabledScope(EditorApplication.isPlaying || EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL)) {
+            using (new EditorGUI.DisabledScope(EditorApplication.isPlaying || (EditorUserBuildSettings.activeBuildTarget != BuildTarget.WebGL && EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android))) {
                 if (GUILayout.Button("应用构建能力选择（触发重编译）")) settings.ApplyCapabilityDefines();
             }
             EditorGUILayout.HelpBox("构建能力选择移除未勾选的五类平台适配及网络/支付通信实现；Editor 保留预览。公共接口和官方 SDK 内部代码的保留范围需单独审计。", MessageType.Info);
@@ -95,7 +95,7 @@ namespace ErDon.UnitySDK.Editor
             EditorGUILayout.LabelField("真实平台启动（仅 Play Mode）", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox("需安装对应官方 SDK 和适配包并启用平台宏。这里只启动平台，不展示广告或发起支付；Editor 能力取决于官方 SDK。构建阻断仍生效。", MessageType.Info);
             EditorGUILayout.LabelField("网络工厂", EditorPlatformBootstrap.NetworkFactory == null ? "未注入（真实平台网络开启时需要）" : "已注入");
-            EditorGUILayout.LabelField("支付后端工厂", EditorPlatformBootstrap.PaymentFactory == null ? "未注入（TikTok 支付开启时需要）" : "已注入");
+            EditorGUILayout.LabelField("支付后端工厂", EditorPlatformBootstrap.PaymentFactory == null ? "未注入（抖音/TikTok/Android 支付开启时需要）" : "已注入");
             EditorGUILayout.LabelField("登录后端工厂", EditorPlatformBootstrap.SessionExchangeFactory == null ? "未注入（关闭登录可测试启动）" : "已注入");
             using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying)) {
                 using (new EditorGUI.DisabledScope(settings.platform == DistributionPlatform.Mock)) {
@@ -204,7 +204,7 @@ namespace ErDon.UnitySDK.Editor
                 switch (code) {
                     case "CONFIG.APP_ID_REQUIRED": reason = "请填写所选平台的 App ID（非密钥）。"; break;
                     case "CONFIG.GAME_ID_REQUIRED": reason = "请填写用于区分游戏的 Game ID。"; break;
-                    case "CONFIG.PLATFORM_UNSUPPORTED": reason = "当前配置入口尚未支持该平台，请选择微信、抖音或 TikTok。"; break;
+                    case "CONFIG.PLATFORM_UNSUPPORTED": reason = "当前配置入口尚未支持该平台，请选择微信、抖音、TikTok 或 Android。"; break;
                     case "CONFIG.PRODUCTION_MOCK": reason = "生产环境不能使用 Mock，请切换真实平台或关闭生产环境。"; break;
                     case "CONFIG.SESSION_EXCHANGE_REQUIRED": reason = "请注入登录后端工厂，或关闭登录后测试平台启动。"; break;
                     case "CONFIG.NETWORK_PROVIDER_REQUIRED": reason = "请注入网络工厂，或关闭网络模块。"; break;

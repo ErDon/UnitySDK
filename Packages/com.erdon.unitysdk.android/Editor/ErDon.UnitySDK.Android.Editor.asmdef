@@ -1,0 +1,1 @@
+{"name":"ErDon.UnitySDK.Android.Editor","references":["ErDon.UnitySDK","ErDon.UnitySDK.Editor"],"includePlatforms":["Editor"],"autoReferenced":true}

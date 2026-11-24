@@ -1111,3 +1111,10 @@ Unity 增加通用类型化 PreparedPaymentLauncher<T> / UnityPreparedRequestCli
 已完成：为启动生命周期、配置工厂、支付编排/预支付、Unity HTTP、聚合日志、服务端配置和令牌刷新补充必要中文注释。
 
 共 12 个源码文件新增 37 行注释，解释主线程派发、重复/迟到回调、对象释放责任、幂等键、Paid/Fulfilled、取消等待与真实交易的区别、会话切换、日志格式责任及刷新 CAS 的限制。逐行差异检查确认源码仅新增注释，git diff --check 通过；未改执行逻辑，因此本轮不重复运行功能测试。此为维护记录，不改变主计划 72/84 的功能与验收计数。
+
+
+### 新增 Android 原生 SDK 与 Unity 桥接（2026-11-24）
+
+根据用户新确认扩展原范围，新增 android 原生源码/离线 AAR 构建和 com.erdon.unitysdk.android UPM。包含独立 Java 能力接口、模块装配、取消/超时/日志/释放、默认持久化存储与系统文本分享、渠道扩展、Unity JNI 桥接及配置/构建隔离。登录/广告/支付/网络/上报没有内置具体供应商；Unity 网络复用现有 HTTP 工厂，支付仍要求显式服务端装配，不能凭收银台返回成功发货。
+
+新增范围使用 [Android 工作计划](android/WORK_PLAN.md) 单独计数（5/6），原小游戏 72/84 不变。Java 行为、真实 Android API/AAR/示例、Unity 隔离桥接、C# Player 全开/全关以及既有公共回归通过。真机、具体渠道、IL2CPP/JNI/R8 和 APK/AAB 最终隔离仍待验收；不将这些列为已完成。接入文档见 [Android 指南](docs/android.md)。

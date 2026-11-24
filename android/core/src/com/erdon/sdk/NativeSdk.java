@@ -27,6 +27,11 @@ public final class NativeSdk implements AutoCloseable {
     public interface Payments extends Provider { void launch(String orderId, String parametersJson, Callback<Void> callback); }
     public interface Analytics extends Provider { void report(String name, String parametersJson, Callback<Void> callback); }
     public interface Network extends Provider { void send(HttpRequest request, Callback<HttpResponse> callback); }
+    /** Optional transport cancellation; old channel Network implementations remain source-compatible. */
+    public interface CancellableNetwork extends Network {
+        Operation sendCancellable(HttpRequest request, Callback<HttpResponse> callback);
+        default void send(HttpRequest request, Callback<HttpResponse> callback) { sendCancellable(request,callback); }
+    }
     public static final class HttpRequest {
         public final String url, method, body;
         public final Map<String,String> headers;
@@ -59,7 +64,7 @@ public final class NativeSdk implements AutoCloseable {
             return new Result<T>(null,code,safeReason,platformCode);
         }
     }
-    private interface Invoke<T> { void run(Provider provider, Callback<T> callback); }
+    private interface Invoke<T> { void run(Provider provider, Call<T> callback); }
     private final EnumSet<Module> enabled;
     private final EnumMap<Module,Provider> providers = new EnumMap<>(Module.class);
     private final Set<Call<?>> calls = new HashSet<>();
@@ -104,19 +109,32 @@ public final class NativeSdk implements AutoCloseable {
             Provider p=provider(module);
             if(p==null) call.finish(Result.fail("CAPABILITY.NOT_SUPPORTED","No provider installed"));
             else if(!type.isInstance(p)) call.finish(Result.fail("CONFIG.PROVIDER_MISMATCH","Provider has wrong capability type"));
-            else action.run(p,call::finish);
+            else if(!call.finished.get()) action.run(p,call);
         } catch(Exception error) { call.finish(Result.fail("PROVIDER.EXCEPTION","Provider invocation failed")); }
         return call;
     }
-    private final class Call<T> implements Operation {
+    private final class Call<T> implements Operation, Callback<T> {
         final String id=UUID.randomUUID().toString(), api;
         final AtomicBoolean finished=new AtomicBoolean();
         Callback<T> callback;
         volatile Future<?> timeout;
+        Operation transport;
         Call(String api,String summary,Callback<T> callback) { this.api=api;this.callback=callback;write(api,id,"Start",summary,"Pending"); }
+        public void complete(Result<T> result) { finish(result); }
+        void attach(Operation operation) {
+            boolean stop;
+            synchronized(NativeSdk.this) { stop=finished.get();if(!stop)transport=operation; }
+            if(stop && operation!=null) operation.cancel();
+        }
+        void releaseTransport() {
+            Operation operation;
+            synchronized(NativeSdk.this) { operation=transport;transport=null; }
+            if(operation!=null)try{operation.cancel();}catch(Exception ignored) { }
+        }
         void finish(Result<T> result) {
             if(!finished.compareAndSet(false,true)) return;
             if(timeout!=null) timeout.cancel(false);
+            releaseTransport();
             final Result<T> safe=(result==null?Result.<T>fail("PROVIDER.INVALID_RESPONSE","Missing provider result"):result).withCallId(id);
             write(api,id,"Complete","{}",safe.success()?"Success":safe.code);
             try { dispatch.execute(() -> {
@@ -129,7 +147,7 @@ public final class NativeSdk implements AutoCloseable {
             }
         }
         public void cancel() { finish(Result.fail("OPERATION.CANCELLED","Local wait cancelled; remote action may continue")); }
-        void abandon() { finished.set(true); if(timeout!=null) timeout.cancel(false); callback=null; }
+        void abandon() { finished.set(true); if(timeout!=null) timeout.cancel(false);callback=null;releaseTransport(); }
     }
     public Operation login(Callback<String> callback) {
         return invoke(Module.LOGIN,"login","{}",Login.class,callback,(p,c)->((Login)p).login(r -> {
@@ -173,15 +191,17 @@ public final class NativeSdk implements AutoCloseable {
             try { uri=new java.net.URI(request.url); } catch(Exception error) { c.complete(Result.fail("NETWORK.INVALID_REQUEST","Invalid URL")); return; }
             if(!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost()==null || uri.getUserInfo()!=null || uri.getFragment()!=null ||
                 !("GET".equals(request.method)||"POST".equals(request.method)) || (request.body!=null && request.body.length()>65536) || !validHeaders(request.headers)) c.complete(Result.fail("NETWORK.INVALID_REQUEST","Valid HTTPS GET/POST and headers required"));
+            else if(p instanceof CancellableNetwork) c.attach(((CancellableNetwork)p).sendCancellable(request,c));
             else ((Network)p).send(request,c);
         });
     }
-    private static boolean validHeaders(Map<String,String> headers) {
+    static boolean validHeaders(Map<String,String> headers) {
         if(headers.size()>32)return false;
         Set<String> names=new HashSet<>();
         for(Map.Entry<String,String> header:headers.entrySet()) {
             String name=header.getKey(),value=header.getValue();
             if(name==null||!name.matches("[A-Za-z0-9-]{1,64}")||value==null||value.length()>8192||value.indexOf('\r')>=0||value.indexOf('\n')>=0)return false;
+            for(int i=0;i<value.length();i++)if(value.charAt(i)<32||value.charAt(i)==127)return false;
             String lower=name.toLowerCase(Locale.ROOT);
             if(!names.add(lower)||Arrays.asList("host","content-length","connection","transfer-encoding").contains(lower))return false;
         }
@@ -221,12 +241,17 @@ public final class NativeSdk implements AutoCloseable {
             try { fallback.write(line); } catch(Exception ignored) { }
         } finally { logging.remove(); }
     }
-    public synchronized void close() {
+    public void close() {
         if(Boolean.TRUE.equals(logging.get())) throw new IllegalStateException("Log reentry");
-        if(closed) return;closed=true;
-        for(Call<?> call:calls) call.abandon(); calls.clear();timer.shutdownNow();
+        List<Call<?>> abandoned;
         Set<Provider> unique=Collections.newSetFromMap(new IdentityHashMap<Provider,Boolean>());
-        for(Provider p:providers.values()) if(unique.add(p)) try { p.close(); } catch(Exception ignored) { }
-        providers.clear();
+        synchronized(this) {
+            if(closed)return;closed=true;
+            abandoned=new ArrayList<>(calls);calls.clear();unique.addAll(providers.values());providers.clear();
+        }
+        timer.shutdownNow();
+        // Do not hold the SDK monitor while a channel closes sockets or removes native listeners.
+        for(Call<?> call:abandoned)call.abandon();
+        for(Provider p:unique)try{p.close();}catch(Exception ignored) { }
     }
 }

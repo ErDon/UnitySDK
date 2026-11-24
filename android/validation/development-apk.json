@@ -1,0 +1,24 @@
+{
+  "kind": "Development APK technical validation, not production certification",
+  "applicationId": "com.erdon.sdk.smoke",
+  "apkSha256": "875cfe27e2eba37832be704442deead15c7545eb55b4c2554261446b898e12c7",
+  "aarSha256": "281bb7373a9e4c23fd7f590d524d277449878d32d9d522fa9c4714a4fc47d1ff",
+  "architecture": "arm64-v8a",
+  "backend": "IL2CPP",
+  "r8MappingSha256": "af6bf20bd44a1b6e8b35b04b0316253b3de4fff034e6b520cc0e1313502385bf",
+  "nativeLibraries": [
+    "lib/arm64-v8a/libmain.so",
+    "lib/arm64-v8a/libunity.so",
+    "lib/arm64-v8a/libil2cpp.so"
+  ],
+  "checks": [
+    "JNI class retained in DEX and R8 mapping",
+    "Known ByteDance/TikTok/WeChat DEX prefixes absent",
+    "Only ARM64 native libraries"
+  ],
+  "limitations": [
+    "Not exhaustive vendor/resource detection",
+    "Not production or physical-device validation",
+    "Other module combinations not covered"
+  ]
+}

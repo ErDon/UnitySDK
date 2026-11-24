@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-24",
+  "deviceKind": "Android emulator, Cetus, ARM64 translation",
+  "applicationId": "com.erdon.sdk.smoke",
+  "apkSha256": "875cfe27e2eba37832be704442deead15c7545eb55b4c2554261446b898e12c7",
+  "aarSha256": "281bb7373a9e4c23fd7f590d524d277449878d32d9d522fa9c4714a4fc47d1ff",
+  "runs": [
+    {
+      "run": 1,
+      "jniPassed": true,
+      "persistenceMarker": true
+    },
+    {
+      "run": 2,
+      "jniPassed": true,
+      "persistenceMarker": true
+    }
+  ],
+  "validated": [
+    "IL2CPP/R8 JNI entry and AndroidJavaProxy callback",
+    "Unity main-thread callback dispatch",
+    "UTF-8 and empty storage values, remove and not-found",
+    "Cold process restart persistence",
+    "Missing advertising channel rejects without fake success",
+    "Default native network rejects cleartext before sending",
+    "SDK shutdown"
+  ],
+  "notValidated": [
+    "Physical device",
+    "Actual advertising/login/payment supplier",
+    "System share interaction",
+    "Android HTTPS to real backend",
+    "All package/module combinations"
+  ]
+}

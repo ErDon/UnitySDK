@@ -23,7 +23,7 @@
 
 ## 开发进度
 
-已实现登录、存储、分享、激励广告、网络、数据上报聚合，以及支付/订单公共链路、诊断日志、Editor Mock、配置装配和部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md)、[抖音](docs/douyin.md) 与 [TikTok](docs/tiktok.md) 已有平台适配、初始化桥接及程序集/注入行为测试；服务端已有会话和订单实现。真实凭证联调、真机功能、真实支付及最终产物裁剪尚待验收，不可用于生产接入。TikTok 干净官方 1.1.6 插件已完成独立工程集成、开发构建及官方小游戏导出；真机与最终产物隔离仍待验收。新增 [Android 原生 AAR 与 Unity 桥接](docs/android.md) 开发预览，内置存储/文本分享，其余渠道按接口扩展；iOS 仍仅提供扩展契约，不包含具体原生供应商。Android 任务单独见 [工作计划](android/WORK_PLAN.md)。
+已实现登录、存储、分享、激励广告、网络、数据上报聚合，以及支付/订单公共链路、诊断日志、Editor Mock、配置装配和部分隔离审计，详见 [工作计划](WORK_PLAN.md) 和 [接入说明](docs/getting-started.md)。[微信](docs/wechat.md)、[抖音](docs/douyin.md) 与 [TikTok](docs/tiktok.md) 已有平台适配、初始化桥接及程序集/注入行为测试；服务端已有会话和订单实现。真实凭证联调、真机功能、真实支付及最终产物裁剪尚待验收，不可用于生产接入。TikTok 干净官方 1.1.6 插件已完成独立工程集成、开发构建及官方小游戏导出；真机与最终产物隔离仍待验收。新增 [Android 原生 AAR 与 Unity 桥接](docs/android.md) 开发预览，内置存储/文本分享/HTTPS，已完成开发 APK 及模拟器 JNI/持久化检查，其余渠道按接口扩展；iOS 仍仅提供扩展契约，不包含具体原生供应商。Android 任务单独见 [工作计划](android/WORK_PLAN.md)。
 
 配置面板入口：`Tools → ErDon SDK → 配置与预览`，详见[配置面板说明](docs/configuration.md)。运行时按配置装配和平台启动已接通；完整构建依赖与产物验收尚未完成，正式 Player 构建仍被阻断，满足平台宏、适配器与混装检查的非生产 Development Build 可用于技术验证。请在独立测试工程接入，勿以 Mock/编译通过代替真实平台验收。
 

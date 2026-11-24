@@ -16,7 +16,7 @@
 | 分享 | `NativeSdk.Share` / `share` | `SDK.Share` | 系统文本分享；不支持图片时明确拒绝，成功只表示已发起 |
 | 激励广告 | `NativeSdk.Ads` / `showAd` | `SDK.ShowRewardedAd` | 渠道扩展，完整观看与提前关闭分开表示 |
 | 支付 | `NativeSdk.Payments` / `launchPayment` | `SDK.Pay` | 原生只拉起收银台；Unity 必须显式装配服务端支付工厂 |
-| 网络 | `NativeSdk.Network` / `send` | `SDK.Request` | 原生提供 HTTPS GET/POST 扩展契约；Unity 复用 HTTP 包及网络工厂 |
+| 网络 | `NativeSdk.Network` / `send` | `SDK.Request` | 原生内置可取消的 HTTPS GET/POST；可被渠道覆盖；Unity 复用 HTTP 包及网络工厂 |
 | 上报 | `NativeSdk.Analytics` / `report` | `SDK.ReportEvent(event, callback)` | 渠道扩展；同步上报返回 ASYNC_REQUIRED，接受请求不证明后台入库 |
 
 Android 是操作系统，不等于具体登录、支付或广告供应商。本包没有捆绑 Google/Huawei 等渠道，也没有安装后自动可用的支付服务端。仓库现有服务端配置只支持小游戏三平台，不能把 Android 配置改名为微信绕过验证。
@@ -53,7 +53,9 @@ Android 原生启动在 Editor 返回 `PLATFORM.UNAVAILABLE`，Editor 预览请�
 
 接入方组合 `UnityPreparedRequestClient<AndroidPaymentParameters>` → `PreparedPaymentLauncher<AndroidPaymentParameters>` → `VerifiedPayment`，并通过 `BeginConfiguredStartup(..., createPayment: ...)` 注入。`matchesOrder` 必须核对订单、商品、金额和币种等渠道字段。原生收银台成功只返回 `AwaitServerConfirmation`；服务端达到 Fulfilled 才代表聚合支付成功。详见 [支付编排](payment-pipeline.md)。
 
-网络开启时注入 `createNetwork`，复用 [Unity HTTP 接入](network.md)。原生独立应用的 Network provider 应负责取消观察、响应大小上限、超时和禁止凭据重定向；核心仅校验 HTTPS/方法/请求体基本约束，没有内置 HTTP 实现。
+Unity 网络开启时注入 `createNetwork`，复用 [Unity HTTP 接入](network.md)。原生 `AndroidSdk.create` 开启 NETWORK 后默认创建 HttpsNetwork；宿主须声明 INTERNET 权限。支持 HTTPS GET/POST、请求头和 UTF-8 文本，保留非 2xx 状态；不跟随重定向、不禁用证书或主机名校验。默认连接/读取超时各 10 秒、响应上限 1 MiB、请求体上限 64 KiB（按 UTF-8 字节），2 个工作线程、最多排队 32 项。超出队列返回 NETWORK.BUSY。GET 不接受请求体。
+
+聚合取消、超时和关闭会释放支持 CancellableNetwork 的传输句柄；断连异步执行以避免阻塞 UI，仍不撤销服务端动作。旧的 Network 接口实现保持兼容，但不能自动中止它没有暴露句柄的底层请求。自定义网络仍可通过渠道工厂覆盖默认实现。
 
 ## 日志、错误及生命周期
 
@@ -70,6 +72,9 @@ Unity 上层继续使用 `SdkConfig.LogCallback`，SDK 提供完整格式，未�
 | BRIDGE.JNI_FAILED / BRIDGE.INVALID_RESPONSE | 原生调用或协议失败；检查打包、保留规则和版本 |
 | ANDROID.ACTIVITY_UNAVAILABLE | Activity 已销毁/正在结束；重新创建对应宿主 |
 | STORAGE.NOT_FOUND / STORAGE.WRITE_FAILED | 无该键 / 同步持久化失败 |
+| NETWORK.BUSY / NETWORK.RESPONSE_TOO_LARGE | 请求队列已满 / 响应超限 |
+| NETWORK.TLS_FAILED / NETWORK.PERMISSION_DENIED | TLS 校验失败 / 宿主未授予网络权限 |
+| NETWORK.TIMEOUT / NETWORK.INVALID_RESPONSE | 连接或读取超时 / 返回内容不符合 UTF-8 等约束 |
 | OPERATION.TIMEOUT / OPERATION.CANCELLED | 本地等待终止，不证明远程动作取消 |
 
 原生默认等待上限 15 秒，AndroidSdk.create 的 timeoutMs 重载或独立 NativeSdk 构造可设 1–300000 毫秒。Unity 桥接广告默认 120 秒、支付 60 秒，其余 15 秒；聚合层另有自己的等待上限。启动/调用/关闭建议均由所属游戏主线程负责；渠道必须迅速返回、异步完成，不能阻塞 UI。原生回调通过配置 executor 派发；Unity JNI 回调进一步派发至 Unity SynchronizationContext，再由聚合层处理。
@@ -82,6 +87,8 @@ UPM 运行时程序集只支持 Editor/Android，并要求 `ERDON_PLATFORM_ANDRO
 
 模块开关控制实例化，不能保证删除 AAR 内所有基础实现；AAR 目前包含小型核心及存储/分享实现。第三方渠道应独立 AAR/Gradle 依赖，仅勾选时添加对应依赖；不要把全部供应商打进一个大 AAR 再靠运行时开关假装裁剪。R8 可辅助删除未使用实现，但最终 APK/AAB 资源与 DEX 隔离仍需实测。
 
-本地检查包括原生核心行为、真实 Android API 编译及 Unity 桥接测试。**不代表 Android 真机分享、存储重启恢复、IL2CPP/JNI/R8 或真实渠道登录付款已验收。** 升级时同时重建 AAR，更新版本与校验值，复跑测试，最后执行真机及最终包体审计。
+本地检查包含原生行为和真实回环 HTTPS、Android API 编译、Unity 桥接检查，以及独立 ARM64 IL2CPP/R8 Development APK 构建。模拟器验证及 APK 检查范围见 [Android 工作计划](../android/WORK_PLAN.md)。**模拟器结果不等于物理真机、系统分享交互或真实渠道登录付款验收，也不覆盖全部构建组合。** 升级时同时重建 AAR，更新版本与校验值，复跑测试，最后执行真机及最终包体审计。
 
 实现依据：[Unity AAR 导入](https://docs.unity3d.com/2022.3/Documentation/Manual/android-aar-import.html)、[AndroidJavaProxy](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/AndroidJavaProxy.html)、[Android 系统分享](https://developer.android.com/training/sharing/send)。
+
+网络实现依据：[Android HttpsURLConnection](https://developer.android.com/reference/javax/net/ssl/HttpsURLConnection)。

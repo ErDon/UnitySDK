@@ -11,7 +11,7 @@
 | 抖音 | TTSDK 6.9.7 | BGDT 官方安装、八组接口/注入回归（含支付网关/工厂）、独立开发构建与官方导出、注册保留；七模块全部关闭的自有实现链接检查 | 最终产物隔离、真实初始化、后端联调及真机 |
 | BGDT 安装工具 | 3.0.271 | 官网安装包下载、独立 Unity 导入、cp 模式安装 TTSDK 6.9.7 | 新版本升级与真机回归 |
 | 公共服务端 | 0.1.0，Node 24.20.0 | 115 项测试：模拟三平台上游、本机 HTTP/SQLite、会话/订单隔离、抖音/TikTok 支付通知与发货、TikTok 加密令牌续期、三平台配置与统一启动 | 官方接口调用、Unity HTTPS、部署、备份与性能 |
-| Android 原生/Unity 桥接 | SDK 0.1.0，Java 8，API 26+；编译 API 33 | Java 核心回归、真实 Android API/AAR 与原生示例编译、Unity 隔离桥接检查、C# Player 全开/全关编译；AAR 哈希见 android/build-manifest.json | 真机、IL2CPP/JNI/R8、供应商与最终 APK/AAB 隔离 |
+| Android 原生/Unity 桥接 | SDK 0.1.0，Java 8，API 26+；编译 API 33 | Java/真实回环 HTTPS 回归、API/AAR 编译、Unity 桥接、C# 全开/全关编译、ARM64 IL2CPP/R8 开发 APK、模拟器 JNI/冷启动存储；哈希见 android/build-manifest.json 与 android/validation/development-apk.json | 物理真机、系统分享交互、真实供应商及全部 APK/AAB 组合隔离 |
 | iOS 原生渠道 | 无 | 扩展边界设计 | 本轮不接具体供应商 |
 | Godot | 无 | 协议边界设计 | 本轮不实现引擎桥接 |
 

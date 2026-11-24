@@ -50,7 +50,7 @@ sdk.share("标题", "正文或完整链接", result -> { });
 sdk.showAd("your-unit-id", result -> { });
 // 5. 支付：仅接受游戏后端准备的渠道参数，返回后仍需服务端查单和幂等发货。
 sdk.launchPayment("server-order-id", "{\"channelPayload\":\"server-signed-data\"}", result -> { });
-// 6. 网络：HTTPS GET/POST 扩展接口；当前没有内置网络供应商。
+// 6. 网络：开启 NETWORK 后默认使用内置 HTTPS；原生宿主须声明 INTERNET 权限。
 // 如需请求头，使用 sdk.send(new NativeSdk.HttpRequest(url, method, body, headers), callback)。
 sdk.send("https://api.example.com/status", "GET", "", result -> {
     if (result.success()) { int httpStatus = result.value.status; }
@@ -60,7 +60,7 @@ sdk.report("level_complete", "{\"level\":1}", result -> { });
 login.cancel();
 ```
 
-推荐将每项渠道实现拆成独立 Android library/AAR。实现对应接口后，在 `AndroidSdk.create` 的 channels 参数中按 Module 创建新对象；未匹配返回 null（存储/分享会回落到内置实现）。不要返回同一个已被旧 SDK 释放的实例。Factory 是构造器，不在创建 SDK 时启动所有渠道。
+推荐将每项渠道实现拆成独立 Android library/AAR。实现对应接口后，在 `AndroidSdk.create` 的 channels 参数中按 Module 创建新对象；未匹配返回 null（存储/分享/网络会回落到内置实现）。不要返回同一个已被旧 SDK 释放的实例。Factory 是构造器，不在创建 SDK 时启动所有渠道。
 
 Unity 宿主在应用启动时调用 `UnityBridge.installChannels(AndroidSdk.ChannelFactory)` 安装同一工厂，再启动 C# SDK。它只影响之后创建的实例。初始化渠道所需的 Activity 通过工厂参数传入，公开 App ID、环境和后端地址由宿主配置；密钥留在后端。第三方 SDK 的初始化、Activity 回调或 consent 流程由其独立渠道包负责，本包不猜测供应商 API。
 
@@ -73,7 +73,7 @@ Unity 宿主在应用启动时调用 `UnityBridge.installChannels(AndroidSdk.Cha
 | Share | `Result<Void>` | 发起系统/渠道分享，不能承诺接收者收到 |
 | Ads | `Result<Boolean>` | 完整观看返回 true；提前关闭 false；错误用 fail |
 | Payments | `Result<Void>` | 消费已准备参数，绝不能发货或信任客户端金额 |
-| Network | `Result<HttpResponse>` | 超时、响应限额、安全 HTTPS，禁止携带凭据跟随重定向；非 2xx 也保留 HTTP 状态 |
+| Network / CancellableNetwork | `Result<HttpResponse>` | 默认 HttpsNetwork 提供超时、响应限额及不跟随重定向；可取消接口提供底层中止句柄，非 2xx 保留 HTTP 状态 |
 | Analytics | `Result<Void>` | 校验事件/参数，不上传未经授权的个人信息 |
 
 provider 回调可来自其他线程，核心统一派发到配置 executor；AndroidSdk 默认派发 Android UI 线程。provider 方法须快速返回；超时不可能解救一个阻塞 UI 线程的供应商。每个返回的 Operation 只负责本地观察，close 时还须解除渠道监听。core 不拥有 Activity 或供应商全局单例。
@@ -93,4 +93,23 @@ build.py 使用 javac 编译真实 Android API、生成 classes.jar/AAR，并更
 
 Unity 验证入口为 `tests/AndroidBridgeUnityChecks.cs`：放入只安装核心与 Android 包的隔离工程 Assets/Editor，设置 Android 构建目标及 ERDON_PLATFORM_ANDROID 后，以 `-executeMethod AndroidBridgeUnityChecks.Run` 批处理运行。该检查覆盖真实 Unity JSON 解析/序列化及工厂、配置、AAR importer，但 JNI 接收方使用注入替身，不是真机。
 
-Java 测试覆盖模块关闭不创建、重复/迟到回调、取消/超时、关闭后派发抑制、空结果、所有权及日志脱敏。Android 设备上的系统分享、进程重启持久化、IL2CPP/JNI/R8、渠道登录广告支付和最终 APK/AAB 裁剪尚需验收。
+Java 测试覆盖模块关闭、回调与所有权、日志脱敏和 HTTPS 的 TLS/GET/POST/状态/限额/重定向/取消。test.py 额外开启临时本机 HTTPS 服务，使用临时测试证书，结束后自动关闭并清理；不访问真实平台。已增加独立 IL2CPP/R8 APK 构建与模拟器检查，证据及未覆盖项见 WORK_PLAN.md；物理真机、系统分享交互、真实渠道及所有构建组合仍需验收。
+
+
+## 默认 HTTPS 使用边界
+
+原生宿主 Manifest 声明 `<uses-permission android:name="android.permission.INTERNET" />`，并启用 NETWORK。默认 10 秒连接/读取超时、1 MiB 响应、64 KiB UTF-8 请求体、2 个工作线程和 32 项排队；GET 不接受请求体。返回体为严格 UTF-8 文本，二进制下载需独立适配。302 等重定向只返回状态，不自动携带 Authorization 请求下一站。默认使用系统证书和主机名校验。
+
+NativeSdk 的总等待超时独立于连接/读取超时。取消/超时会调用 CancellableNetwork 的句柄；取消后的 socket 清理异步执行，不阻塞上层 UI，也不能保证服务器未处理请求。直接构造 HttpsNetwork 可调整超时和响应限额；渠道实现仍可覆盖它。
+
+
+## 重跑实际 Android 开发包检查
+
+在隔离 Unity 工程中将 tests/AndroidDeviceSmoke.cs 放到 Assets，将 tests/AndroidDevelopmentBuildChecks.cs 放到 Assets/Editor，调用 `-executeMethod AndroidDevelopmentBuildChecks.Run`。脚本只修改该隔离工程设置，构建非生产 ARM64 IL2CPP/R8 测试 APK；不要在业务工程直接执行。输出默认位于 .tests/android-smoke/SDKSmoke.apk。
+
+```powershell
+python tests/audit-android-apk.py
+./tests/run-android-device-smoke.ps1 -Serial emulator-5554
+```
+
+设备脚本先检查 APK 包名，只安装/更新 com.erdon.sdk.smoke；冷启动两次验证持久化，结束后关闭测试应用，保留测试数据，不清除其他应用或全局日志。请明确指定测试设备序列号。APK 审计只检查列明 DEX 包名前缀、ARM64 库和 R8 映射，不能证明所有第三方资源已被移除。

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import com.erdon.sdk.NativeSdk;
+import com.erdon.sdk.HttpsNetwork;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -35,6 +36,7 @@ public final class AndroidSdk {
             }
             if(module==NativeSdk.Module.STORAGE) return new Preferences(context,namespace);
             if(module==NativeSdk.Module.SHARE) return new TextShare(reference);
+            if(module==NativeSdk.Module.NETWORK) return new HttpsNetwork();
             return null;
         }, runnable -> {
             Activity host=reference.get();

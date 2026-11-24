@@ -2,11 +2,12 @@
   "version": "0.1.0",
   "protocolVersion": 1,
   "minSdk": 26,
-  "aarSha256": "65e195ee8a559f64f3588eac27107d9d3b5321612f1902fe80e87b00db455c25",
+  "aarSha256": "281bb7373a9e4c23fd7f590d524d277449878d32d9d522fa9c4714a4fc47d1ff",
   "sources": {
-    "core/src/com/erdon/sdk/NativeSdk.java": "83039f035b59c530fae63b52b923c6986d241a4c8e72d76bb7a7eb42d5559d2a",
-    "library/src/com/erdon/sdk/android/AndroidSdk.java": "9862a7494a48efd7a9a45a8f19f00b27cbfbaff14a6384768b049de9819de052",
-    "library/src/com/erdon/sdk/android/UnityBridge.java": "d0ffaffd6bc04325b4223c473e5bd2d569c31f963d98a90808044aac98cb0271"
+    "core/src/com/erdon/sdk/HttpsNetwork.java": "3e94c89c3af37d8bd68bc5c6e7266001dbd443ad2f21b4bc4b82a82a2e72c20e",
+    "core/src/com/erdon/sdk/NativeSdk.java": "1d6e52a2b3c151716e7cd1c392d97b94c92e879f7d73661fc91df27048ce1489",
+    "library/src/com/erdon/sdk/android/AndroidSdk.java": "425b415f539ea114a81d38dcbb0317f8c96bd9f9222ed2d1e7604e9c502cd95f",
+    "library/src/com/erdon/sdk/android/UnityBridge.java": "399f76abe78411eed23a54a512ba518c0067ea97edfcfa862e012ea2cd73b3f7"
   },
   "androidApiSha256": "14261d2817d558e7fbbf9848216c4f6ec37c134353325eab230acf2af0c25fe7"
 }

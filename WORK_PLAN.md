@@ -1118,3 +1118,10 @@ Unity 增加通用类型化 PreparedPaymentLauncher<T> / UnityPreparedRequestCli
 根据用户新确认扩展原范围，新增 android 原生源码/离线 AAR 构建和 com.erdon.unitysdk.android UPM。包含独立 Java 能力接口、模块装配、取消/超时/日志/释放、默认持久化存储与系统文本分享、渠道扩展、Unity JNI 桥接及配置/构建隔离。登录/广告/支付/网络/上报没有内置具体供应商；Unity 网络复用现有 HTTP 工厂，支付仍要求显式服务端装配，不能凭收银台返回成功发货。
 
 新增范围使用 [Android 工作计划](android/WORK_PLAN.md) 单独计数（5/6），原小游戏 72/84 不变。Java 行为、真实 Android API/AAR/示例、Unity 隔离桥接、C# Player 全开/全关以及既有公共回归通过。真机、具体渠道、IL2CPP/JNI/R8 和 APK/AAB 最终隔离仍待验收；不将这些列为已完成。接入文档见 [Android 指南](docs/android.md)。
+
+
+### Android HTTPS 与实际安装包验证（2026-11-24）
+
+补齐原生默认 HttpsNetwork：GET/POST、系统 TLS、UTF-8 字节限额、禁止重定向、有限并发队列、安全错误及可取消传输。NativeSdk 的可选 CancellableNetwork 将总等待超时、取消和关闭传递到底层，断连异步执行，旧 Network 渠道保持兼容。Java 测试与真实本机 HTTPS 通过，包含慢响应取消、证书拒绝、302/503、分块上限和关闭清理。
+
+隔离 Unity 工程完成 ARM64 IL2CPP/R8 开发 APK 构建；专用模拟器应用通过真实 JNI、回调线程、存储读写删除/空值、冷启动持久化、默认网络明文拒绝及未配置渠道错误。APK 保留桥接类和 ARM64 IL2CPP，未发现列明的外平台 DEX 前缀；检查不代替完整资源/供应商审计。新增可重跑构建、设备和 APK 检查脚本。Android 独立计划更新为 8/9，物理真机及具体供应商仍未勾选；原小游戏 72/84 不变。

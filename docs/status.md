@@ -38,7 +38,7 @@
 
 ## 范围说明
 
-新增 [Android AAR 与 Unity 桥接](android.md) 开发预览，存储/文本分享已有实现，其余能力提供渠道扩展接口；新增任务按 [Android 工作计划](../android/WORK_PLAN.md) 单列，不并入上述 72/84。iOS 仍仅提供扩展契约，不接具体供应商；抖音 Android/iOS 收银台路由属于抖音小游戏能力。Godot 尚无引擎桥接，不能直接导入 Unity 包。核心契约不依赖 Unity 类型，不代表其他引擎适配已经完成。
+新增 [Android AAR 与 Unity 桥接](android.md) 开发预览，存储/文本分享/HTTPS 已有实现，开发 APK 与模拟器 JNI/存储已验证，其余能力提供渠道扩展接口；新增任务按 [Android 工作计划](../android/WORK_PLAN.md) 单列，不并入上述 72/84。iOS 仍仅提供扩展契约，不接具体供应商；抖音 Android/iOS 收银台路由属于抖音小游戏能力。Godot 尚无引擎桥接，不能直接导入 Unity 包。核心契约不依赖 Unity 类型，不代表其他引擎适配已经完成。
 
 ## 验证入口
 

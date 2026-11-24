@@ -54,6 +54,8 @@ async function verify(binding, temporaryCode) {
 
 新增认证路由与 SQLite v2 迁移注意事项见 [游戏会话撤销](../docs/session-revocation.md)。它只撤销游戏会话，不撤销平台授权或支付。
 
+TikTok 支付组合服务另有 [平台授权撤销](../docs/tiktok-revocation.md)：受认证 HTTP 入口、凭据库 schema 2 状态持久化、令牌删除及本地会话失效。网络结果不确定时阻断使用并保留受控恢复，不自动判定成功。
+
 重放键按 platform/appId/code 隔离，防止同一平台应用在不同游戏/环境绑定重复消费同一个 code。即使上游超时也保留 claim，因为上游可能已经消费；客户端应重新获取 code。记录从不包含原始 code。MemoryAuthStore 有容量限制与访问时过期清理，但进程重启数据丢失、多实例不共享，故只能用于测试。
 
 ## HTTP 与诊断

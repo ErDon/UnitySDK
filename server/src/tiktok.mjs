@@ -8,6 +8,7 @@ export function createTikTokVerifier({ fetchImpl = fetch, timeoutMs = 8000, cred
   return async (binding, code) => {
     try {
       const startedAt = now();
+      const authorizationRevision = credentialStore?.authorizationRevision ? await credentialStore.authorizationRevision() : 0;
       const response = await fetchImpl('https://open.tiktokapis.com/v2/oauth/token/', {
         method: 'POST', redirect: 'error', signal: AbortSignal.timeout(timeoutMs),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cache-Control': 'no-cache' },
@@ -44,8 +45,12 @@ export function createTikTokVerifier({ fetchImpl = fetch, timeoutMs = 8000, cred
           throw new AuthError('AUTH.PLATFORM_RESPONSE_INVALID', 502);
         try {
           await credentialStore.put(binding, data.open_id, { accessToken: data.access_token, expiresAt,
-            refreshToken: hasRefresh ? data.refresh_token : null, refreshExpiresAt });
+            refreshToken: hasRefresh ? data.refresh_token : null, refreshExpiresAt }, null, authorizationRevision);
         } catch {
+          let revoke;
+          try { revoke = credentialStore.revocation?.(binding, data.open_id); } catch { }
+          if (revoke && revoke.state !== 'Complete') throw new AuthError('AUTH.REVOCATION_PENDING', 409);
+          if (revoke && revoke.revision > authorizationRevision) throw new AuthError('AUTH.LOGIN_REVOKED', 409);
           // Do not issue a game session when enabled commerce credentials could not be saved.
           throw new AuthError('AUTH.CREDENTIAL_STORAGE_FAILED', 503);
         }

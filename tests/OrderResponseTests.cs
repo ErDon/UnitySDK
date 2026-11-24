@@ -5,6 +5,8 @@ class OrderResponseTests
     static void Check(bool ok,string reason){if(!ok)throw new Exception(reason);}
     static void Main(){
         var id=Guid.NewGuid().ToString("D");var correlation=Guid.NewGuid().ToString("D");
+        var pending=OrderResponsePolicy.Evaluate(409,new OrderResponseData{errorCode="AUTH.REVOCATION_PENDING",callId=correlation});
+        Check(pending.Error.Code=="AUTH.REVOCATION_PENDING"&&pending.Error.Retry==RetryPolicy.UserAction&&pending.ServerCallId==correlation,"Pending authorization preserves diagnosis and correlation");
         var data=new OrderResponseData{callId=correlation,order=new OrderData{orderId=id,productId="coins",amountMinor=99,currency="USD",state="Created"}};
         var result=OrderResponsePolicy.Evaluate(200,data,id,"coins");
         Check(result.Success&&result.Order.State==OrderState.Created&&result.ServerCallId==correlation,"Create is not paid");

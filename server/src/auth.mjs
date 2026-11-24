@@ -46,7 +46,9 @@ export class MemoryAuthStore {
 }
 
 export class AuthService {
-  constructor({ bindings, verifiers, store, now = Date.now, sessionTtlMs = 3600000, codeTtlMs = 600000 }) {
+  constructor({ bindings, verifiers, store, now = Date.now, sessionTtlMs = 3600000, codeTtlMs = 600000, assertAuthorized = null }) {
+    if (assertAuthorized !== null && typeof assertAuthorized !== 'function') throw new TypeError('Invalid authorization policy');
+    this.assertAuthorized = assertAuthorized;
     if (!Array.isArray(bindings) || typeof store?.sessionRevision !== 'function' || typeof store?.revokeSubject !== 'function' || !verifiers || !Number.isSafeInteger(sessionTtlMs) || sessionTtlMs <= 0 || !Number.isSafeInteger(codeTtlMs) || codeTtlMs <= 0)
       throw new Error('Invalid auth configuration');
     this.bindings = new Map();
@@ -76,6 +78,7 @@ export class AuthService {
     // Keep the claim even on transport failure: a platform may already have consumed the code.
     const identity = await verify(binding, request.code);
     if (!identity || typeof identity.subject !== 'string' || !identity.subject.trim()) throw new AuthError('AUTH.INVALID_IDENTITY', 502);
+    if (this.assertAuthorized) await this.assertAuthorized(binding, identity.subject);
     const session = randomBytes(32).toString('base64url');
     const expiresAt = this.now() + this.sessionTtlMs;
     await this.store.putSession(digest(session), {
@@ -87,6 +90,7 @@ export class AuthService {
     if (typeof session !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(session)) throw new AuthError('AUTH.SESSION_INVALID');
     const record = await this.store.getSession(digest(session));
     if (!record || record.binding !== bindingKey(expectedBinding)) throw new AuthError('AUTH.SESSION_INVALID');
+    if (this.assertAuthorized) await this.assertAuthorized(expectedBinding, record.subject);
     return { subject: record.subject, expiresAt: record.expiresAt };
   }
   async revoke(session) {

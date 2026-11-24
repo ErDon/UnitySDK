@@ -18,6 +18,7 @@ class SessionResponseTests
         Check(result.ServerCallId==id && result.Error.ServerCallId==id,"Server correlation retained");
         var revoked=SessionResponsePolicy.Evaluate(409,new SessionResponseData{errorCode="AUTH.LOGIN_REVOKED",callId=id});
         Check(revoked.Error.Code=="AUTH.LOGIN_REVOKED" && revoked.Error.Retry==RetryPolicy.UserAction && revoked.ServerCallId==id,"Revocation during login requires user action");
+        Check(SessionResponsePolicy.Evaluate(409,new SessionResponseData{errorCode="AUTH.REVOCATION_PENDING"}).Error.Code=="AUTH.REVOCATION_PENDING","Pending authorization has explicit diagnosis");
         Check(SessionResponsePolicy.Evaluate(401,new SessionResponseData{errorCode="AUTH.LOGIN_REVOKED"}).Error.Code=="AUTH.SERVER_REJECTED","Revocation status is allowlisted");
         Check(SessionResponsePolicy.Evaluate(403,new SessionResponseData{errorCode="AUTH.APP_NOT_ALLOWED"}).Error.Retry==RetryPolicy.Never,"Binding configuration failure");
         Check(SessionResponsePolicy.Evaluate(502,new SessionResponseData{errorCode="AUTH.PLATFORM_UNAVAILABLE"}).Error.Retry==RetryPolicy.Delayed,"Upstream failure");

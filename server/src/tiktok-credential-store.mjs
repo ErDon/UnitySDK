@@ -25,7 +25,7 @@ export class TikTokCredentialStore {
       this.db.exec('PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; BEGIN IMMEDIATE;');
       this.db.exec('CREATE TABLE IF NOT EXISTS erdon_tiktok_credential_schema(version INTEGER NOT NULL)');
       const versions = this.db.prepare('SELECT version FROM erdon_tiktok_credential_schema').all();
-      if (versions.length > 1 || (versions.length && versions[0].version !== 1)) throw new Error();
+      if (versions.length > 1 || (versions.length && ![1, 2].includes(versions[0].version))) throw new Error();
       this.db.exec(`CREATE TABLE IF NOT EXISTS erdon_tiktok_credentials (
         binding TEXT NOT NULL, subject TEXT NOT NULL, expires_at INTEGER NOT NULL,
         key_id TEXT NOT NULL, nonce BLOB NOT NULL, ciphertext BLOB NOT NULL, tag BLOB NOT NULL,
@@ -34,7 +34,12 @@ export class TikTokCredentialStore {
         binding TEXT NOT NULL, subject TEXT NOT NULL, expires_at INTEGER NOT NULL,
         key_id TEXT NOT NULL, nonce BLOB NOT NULL, ciphertext BLOB NOT NULL, tag BLOB NOT NULL,
         PRIMARY KEY(binding,subject));`);
-      if (!versions.length) this.db.exec('INSERT INTO erdon_tiktok_credential_schema VALUES (1)');
+      this.db.exec(`CREATE TABLE IF NOT EXISTS erdon_tiktok_authorization_revision(id INTEGER PRIMARY KEY CHECK(id=1), revision INTEGER NOT NULL);
+        INSERT OR IGNORE INTO erdon_tiktok_authorization_revision VALUES(1,0);
+        CREATE TABLE IF NOT EXISTS erdon_tiktok_revocations(binding TEXT NOT NULL, subject TEXT NOT NULL,
+          job_id TEXT NOT NULL, state TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(binding,subject));`);
+      if (!versions.length) this.db.exec('INSERT INTO erdon_tiktok_credential_schema VALUES (2)');
+      else if (versions[0].version === 1) this.db.exec('UPDATE erdon_tiktok_credential_schema SET version=2');
       this.db.exec('COMMIT');
     } catch {
       try { this.db?.exec('ROLLBACK'); } catch { }
@@ -59,17 +64,23 @@ export class TikTokCredentialStore {
     }
   }
   time() { const value = this.now(); if (!Number.isSafeInteger(value) || value < 0) throw new TypeError('Invalid credential clock'); return value; }
-  async put(binding, subject, { accessToken, expiresAt, refreshToken = null, refreshExpiresAt = null }, expectedRefreshRevision = null) {
+  async put(binding, subject, { accessToken, expiresAt, refreshToken = null, refreshExpiresAt = null }, expectedRefreshRevision = null, authorizationRevision = 0) {
     const scope = this.scope(binding, subject), current = this.time();
     if (!token(accessToken) || !Number.isSafeInteger(expiresAt) || expiresAt <= current) throw new TypeError('Invalid credential value');
     if (refreshToken !== null && (!token(refreshToken) || !Number.isSafeInteger(refreshExpiresAt) || refreshExpiresAt <= current)) throw new TypeError('Invalid refresh credential');
     return this.transaction(() => {
+      if (expectedRefreshRevision === null && (!Number.isSafeInteger(authorizationRevision) || authorizationRevision < 0 ||
+          authorizationRevision > this.db.prepare('SELECT revision FROM erdon_tiktok_authorization_revision WHERE id=1').get().revision)) throw new Error();
+      const revoke = this.db.prepare('SELECT state,revision FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      if (revoke && (revoke.state !== 'Complete' || (expectedRefreshRevision === null && revoke.revision > authorizationRevision))) throw new Error();
       if (expectedRefreshRevision !== null) {
         const previous = this.db.prepare('SELECT nonce FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').get(scope, subject);
         if (!previous || Buffer.from(previous.nonce).toString('base64') !== expectedRefreshRevision) return false;
       }
-      this.db.prepare('DELETE FROM erdon_tiktok_credentials WHERE expires_at<=?').run(current);
-      this.db.prepare('DELETE FROM erdon_tiktok_refresh_credentials WHERE expires_at<=?').run(current);
+      // Keep encrypted material for unresolved revocation, even if a different user's login prunes expired rows.
+      for (const table of ['erdon_tiktok_credentials', 'erdon_tiktok_refresh_credentials'])
+        this.db.prepare(`DELETE FROM ${table} WHERE expires_at<=? AND NOT EXISTS
+          (SELECT 1 FROM erdon_tiktok_revocations r WHERE r.binding=${table}.binding AND r.subject=${table}.subject AND r.state!='Complete')`).run(current);
       const exists = this.db.prepare('SELECT 1 FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').get(scope, subject);
       if (!exists && this.db.prepare('SELECT COUNT(*) AS count FROM erdon_tiktok_credentials').get().count >= this.capacity) throw new Error();
       if (refreshToken !== null) {
@@ -99,12 +110,15 @@ export class TikTokCredentialStore {
   async getRefresh(binding, subject) {
     return this.read(binding, subject, true);
   }
-  read(binding, subject, refresh) {
+  read(binding, subject, refresh, revocationJob = null) {
     const scope = this.scope(binding, subject), current = this.time();
     return this.transaction(() => {
+      const job = this.db.prepare('SELECT job_id,state FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      if (revocationJob !== null) { if (!job || job.job_id !== revocationJob || job.state !== 'Sending') throw new Error(); }
+      else if (job && job.state !== 'Complete') return null;
       const table = refresh ? 'erdon_tiktok_refresh_credentials' : 'erdon_tiktok_credentials';
       const row = this.db.prepare(`SELECT * FROM ${table} WHERE binding=? AND subject=?`).get(scope, subject);
-      if (!row || row.expires_at <= current) return null;
+      if (!row || (revocationJob === null && row.expires_at <= current)) return null;
       if (!Number.isSafeInteger(row.expires_at) || row.nonce.length !== 12 || row.tag.length !== 16 || row.ciphertext.length > 8192) throw new Error();
       const decipher = createDecipheriv('aes-256-gcm', this.#keys.get(row.key_id), row.nonce);
       decipher.setAAD(aad(scope, subject, row.expires_at, row.key_id, refresh)); decipher.setAuthTag(row.tag);
@@ -117,8 +131,58 @@ export class TikTokCredentialStore {
   async remove(binding, subject) {
     const scope = this.scope(binding, subject);
     this.transaction(() => {
+      const job = this.db.prepare('SELECT state FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      if (job && job.state !== 'Complete') throw new Error();
       this.db.prepare('DELETE FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').run(scope, subject);
       this.db.prepare('DELETE FROM erdon_tiktok_refresh_credentials WHERE binding=? AND subject=?').run(scope, subject);
+    });
+  }
+  authorizationRevision() {
+    return this.transaction(() => this.db.prepare('SELECT revision FROM erdon_tiktok_authorization_revision WHERE id=1').get().revision);
+  }
+  revocation(binding, subject) {
+    const scope = this.scope(binding, subject);
+    return this.transaction(() => {
+      const row = this.db.prepare('SELECT job_id AS jobId,state,revision FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      return row ? Object.freeze({ ...row }) : null;
+    });
+  }
+  nextAuthorizationRevision() {
+    const revision = this.db.prepare('SELECT revision FROM erdon_tiktok_authorization_revision WHERE id=1').get().revision;
+    if (!Number.isSafeInteger(revision) || revision >= Number.MAX_SAFE_INTEGER) throw new Error();
+    this.db.prepare('UPDATE erdon_tiktok_authorization_revision SET revision=? WHERE id=1').run(revision + 1);
+    return revision + 1;
+  }
+  beginRevocation(binding, subject) {
+    const scope = this.scope(binding, subject);
+    return this.transaction(() => {
+      const old = this.db.prepare('SELECT job_id AS jobId,state,revision FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      if (old && old.state !== 'Complete') return { ...old };
+      if (!old && this.db.prepare('SELECT COUNT(*) AS count FROM erdon_tiktok_revocations').get().count >= this.capacity) throw new Error();
+      if (!this.db.prepare('SELECT 1 FROM erdon_tiktok_credentials WHERE binding=? AND subject=?').get(scope, subject)) throw new Error();
+      const jobId = randomBytes(24).toString('hex'), revision = this.nextAuthorizationRevision();
+      this.db.prepare(`INSERT INTO erdon_tiktok_revocations VALUES(?, ?, ?, 'Pending', ?)
+        ON CONFLICT(binding,subject) DO UPDATE SET job_id=excluded.job_id,state=excluded.state,revision=excluded.revision`).run(scope, subject, jobId, revision);
+      return { jobId, state: 'Pending', revision };
+    });
+  }
+  transitionRevocation(binding, subject, jobId, from, to) {
+    const scope = this.scope(binding, subject);
+    if (!['Pending:Sending','Sending:Uncertain','Sending:Confirmed','Uncertain:Pending','Sending:Pending','Confirmed:Finalizing','Finalizing:Confirmed'].includes(from + ':' + to)) throw new TypeError('Invalid revocation transition');
+    return this.transaction(() => this.db.prepare('UPDATE erdon_tiktok_revocations SET state=? WHERE binding=? AND subject=? AND job_id=? AND state=?')
+      .run(to, scope, subject, jobId, from).changes === 1);
+  }
+  completeRevocation(binding, subject, jobId) {
+    const scope = this.scope(binding, subject);
+    this.transaction(() => {
+      const row = this.db.prepare('SELECT state,job_id FROM erdon_tiktok_revocations WHERE binding=? AND subject=?').get(scope, subject);
+      if (!row || row.job_id !== jobId) throw new Error();
+      if (row.state === 'Complete') return;
+      if (row.state !== 'Finalizing') throw new Error();
+      for (const table of ['erdon_tiktok_credentials','erdon_tiktok_refresh_credentials'])
+        this.db.prepare(`DELETE FROM ${table} WHERE binding=? AND subject=?`).run(scope, subject);
+      this.db.prepare("UPDATE erdon_tiktok_revocations SET state='Complete',revision=? WHERE binding=? AND subject=?")
+        .run(this.nextAuthorizationRevision(), scope, subject);
     });
   }
   close() {

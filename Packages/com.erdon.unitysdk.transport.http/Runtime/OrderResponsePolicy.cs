@@ -23,6 +23,7 @@ namespace ErDon.UnitySDK
                 var code=data==null?null:data.errorCode;
                 var error=new SdkError("PAY.SERVER_REJECTED","Order service rejected request");
                 if(status==401&&code=="AUTH.SESSION_INVALID")error=new SdkError(code,"Game session expired or invalid").WithRetry(RetryPolicy.UserAction);
+                else if(status==409&&code=="AUTH.REVOCATION_PENDING")error=new SdkError(code,"Platform authorization revocation is unresolved; preserve the order and contact the game operator").WithRetry(RetryPolicy.UserAction);
                 else if(status==404&&(code=="PAY.ORDER_NOT_FOUND"||code=="PAY.PRODUCT_NOT_FOUND"))error=new SdkError(code,"Order or product is unavailable").WithRetry(RetryPolicy.Never);
                 else if(status==409&&(code=="PAY.NOT_PAID"||code=="PAY.IDEMPOTENCY_CONFLICT"||code=="PAY.VERIFICATION_MISMATCH"||code=="PAY.TRANSACTION_REUSED"||code=="PAY.TRANSACTION_CONFLICT"))
                     error=new SdkError(code,"Order state or verified payment does not match the request").WithRetry(RetryPolicy.UserAction);

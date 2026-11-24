@@ -14,6 +14,7 @@ import { createTikTokPaymentWebhookHandler } from './tiktok-webhook-http.mjs';
 import { DeliveryWorker } from './delivery-worker.mjs';
 import { TikTokCredentials } from './tiktok-credentials.mjs';
 import { createTikTokTokenClient } from './tiktok-token-client.mjs';
+import { TikTokRevocation } from './tiktok-revocation.mjs';
 
 // One application binding per instance. Caller drains its HTTP server before close().
 // This composition owns its databases, but never starts a listener or grants goods.
@@ -38,17 +39,20 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
     const credentials = new TikTokCredentialStore(credentialPath, { keys, currentKeyId, now }); owned.push(credentials);
     const authStore = new SqliteAuthStore(authPath, { now }); owned.push(authStore);
     const orderStore = new SqliteOrderStore(orderPath); owned.push(orderStore);
+    let revocation;
     const auth = new AuthService({ bindings: [scope], store: authStore, now,
+      assertAuthorized: (binding, subject) => revocation.assertAuthorized(binding, subject),
       verifiers: { TikTok: createTikTokVerifier({ fetchImpl, credentialStore: credentials, now }) } });
     const orders = new OrderService({ binding: scope, catalog, auth, store: orderStore, now,
       // Client-supplied evidence cannot mark a TikTok order paid. Signed notifications do that.
       verifyPayment: async () => ({ paid: false }) });
     const payments = new TikTokPrepayments(orderStore);
     const flow = new TikTokPrepaymentFlow(payments, createTikTokTradeClient({ fetchImpl }));
-    const managedCredentials = new TikTokCredentials({ binding: scope, store: credentials,
-      client: createTikTokTokenClient({ fetchImpl, now }), now });
+    const tokenClient = createTikTokTokenClient({ fetchImpl, now });
+    const managedCredentials = new TikTokCredentials({ binding: scope, store: credentials, client: tokenClient, now });
+    revocation = new TikTokRevocation({ binding: scope, auth, credentials, managedCredentials, client: tokenClient });
     const prepayments = new TikTokPrepaymentService({ orders, flow, catalog, credentials: managedCredentials, isSandbox, now, orderUrlPrefix });
-    const sessionHandler = createAuthHandler(auth, { log });
+    const sessionHandler = createAuthHandler(auth, { log, authorizationRevoker: revocation });
     const orderHandler = createOrderHandler(orders, { log, prepayments });
     const webhookHandler = createTikTokPaymentWebhookHandler(payments, { binding: scope, isSandbox,
       clientSecret: scope.secret, log, nowSeconds: () => Math.floor(now() / 1000) });
@@ -57,7 +61,7 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
         response.writeHead(503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'Connection': 'close' });
         response.end(JSON.stringify({ errorCode: 'SERVER.CLOSED' })); return;
       }
-      if (request.url === '/v1/session' || request.url === '/v1/session/revoke-all') return sessionHandler(request, response);
+      if (request.url === '/v1/session' || request.url === '/v1/session/revoke-all' || request.url === '/v1/authorization/revoke') return sessionHandler(request, response);
       if (request.url === '/v1/webhooks/tiktok/payment') return webhookHandler(request, response);
       return orderHandler(request, response); // Existing strict router rejects all other paths.
     };
@@ -66,6 +70,7 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
       worker.start();
     }
     return Object.freeze({ handler, close, orders,
+      resumeAuthorizationRevocation: (subject, options) => revocation.resume(subject, options),
       pendingDelivery: () => orderStore.pendingDelivery() });
   } catch (error) { close(); throw error; }
 }

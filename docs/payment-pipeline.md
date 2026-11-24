@@ -2,6 +2,16 @@
 
 VerifiedPayment 实现 IPay，组合 IOrderClient 与 IPaymentLauncher。它负责客户端流程，不能替代服务端平台下单、验签与发货。已接 SDK.Pay 聚合、Editor Mock 预览及三平台收银台网关。抖音/TikTok 已有显式支付工厂和服务端组合，微信服务端链路与全部真实扣款仍待验证。
 
+首次接入：先完成 [服务器配置](server-configuration.md)，抖音直接按 [完整接入示例](douyin-payments.md) 操作。TikTok 依次阅读本页“TikTok 服务端组合入口”“游戏上层调用”“配置启动注入支付”；推荐动态会话工厂，避免捕获旧账号会话。下文保留底层组件的独立用法，单独调用某个验签或传输组件不等于已装配整条支付链路。
+
+| 订单状态 | 含义 | 上层处理 |
+| --- | --- | --- |
+| Created | 游戏订单已创建，尚无已核验到账依据 | 保留 requestId/orderId，查询或恢复原订单 |
+| Paid | 服务端已确认付款，游戏权益尚未确认入库 | 等待/恢复幂等发货，不重复拉起收银台 |
+| Fulfilled | 发货处理已确认完成 | SDK 支付可返回成功，客户端同步库存 |
+
+收银台 success、签名 valid、平台查单 SUCCESS 和游戏订单 Fulfilled 是不同层次的结果。当前 TikTok 平台查单不会单独把订单改成 Paid，抖音主动查单尚未实现。取消和超时均不代表交易已撤销。
+
 ## TikTok 服务端验签基础
 
 `server/src/tiktok-webhook.mjs` 提供 `verifyTikTokWebhook`，按 [TikTok 官方验签协议](https://developers.tiktok.com/docs/en/webhooks-verification)使用时间戳、点号和原始请求体计算 HMAC-SHA256，以恒定时间比较摘要。以下是服务器代码，不能放进 Unity 客户端：
@@ -49,7 +59,7 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 `createTikTokTradeClient`（server/src/tiktok-trade-client.mjs）的 `create` 接收服务器 accessToken、tokenAmount、orderId、productId、productName、orderUrl、quantity、quantityUnit、imageUrl。依照 [官方支付 API](https://developers.tiktok.com/docs/en/minis-payment-apis)固定向 TikTok HTTPS 创建订单地址发 POST，token_type 为 BEANS，禁止重定向；仅返回冻结的 tradeOrderId。
 
-这只是服务器传输组件，调用方必须从可信商品配置和登录令牌保管服务取值，不能转发客户端金额或令牌。当前登录验证器仍只保留身份，不保管平台 token；该客户端尚未与登录、下单尝试持久化和 Unity 收银台接通。
+这只是服务器传输组件，调用方必须从可信商品配置和登录令牌保管服务取值，不能转发客户端金额或令牌。TikTokApplication 已将登录令牌加密保存、按需刷新、持久化下单和通知处理装配起来；Unity 通过预支付客户端与网关连接。单独使用登录验证器且不注入 credentialStore 时仍只验证身份。
 
 本地参数错误在请求前拒绝；响应限制 16 KiB，默认请求超时 8 秒。401 返回 PAY.PLATFORM_TOKEN_REJECTED；网络异常、其他非成功 HTTP、业务错误或无效响应统一为 PAY.PREPAYMENT_UNCERTAIN，不输出平台正文或密钥。结果不确定时禁止自动重新创建订单；需要持久化尝试状态和对账，不能推断“平台未下单”。拿到平台单号后也必须可靠保存关联，不能因保存失败就重新下单。
 
@@ -159,7 +169,7 @@ put(binding, subject, { accessToken, expiresAt }) 以 AES-256-GCM 和随机 12 �
 
 可将同一 store 作为 TikTokPrepaymentService 的 credentials，并通过 `createTikTokVerifier({ credentialStore: store })` 注入登录验证器。验证成功后先等待令牌保存，再由 AuthService 签发游戏会话；不注入时保留仅身份兑换行为。有效期从上游请求开始前计算，避免网络耗时延长令牌寿命，过期或溢出拒绝。写入异常统一返回 HTTP 503 / AUTH.CREDENTIAL_STORAGE_FAILED，客户端应稍后取得新的登录 code，不重用已经提交的 code。平台访问令牌和刷新令牌不返回客户端；同时加密保存上游提供的刷新令牌；撤销联动尚未完成。
 
-默认服务器尚未配置密钥或加载此存储。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭；`test/tiktok.test.mjs` 另验证保存先于签发会话、作用域隔离、写入失败不签发、凭证防重放及有效期边界。真实 OAuth 与支付联调仍待完成。
+配置化启动在 TikTok 支付开启时要求加密密钥并加载此存储；原 npm start 登录入口不加载支付凭据库。`test/tiktok-credential-store.test.mjs` 覆盖重开恢复、磁盘无测试令牌明文、AAD 篡改、错误密钥、轮换、容量、过期及关闭；`test/tiktok.test.mjs` 另验证保存先于签发会话、作用域隔离、写入失败不签发、凭证防重放及有效期边界。真实 OAuth 与支付联调仍待完成。
 
 ## HTTP 通知入口装配
 
@@ -306,7 +316,7 @@ var factory = new ErDon.UnitySDK.TikTok.TikTokProviderFactory(
 
 ### 配置启动注入支付
 
-`SdkPlatformRegistry.CreateStartup` 与 `UnitySdkHost.BeginConfiguredStartup` 新增可选 `createPayment` 参数，类型为 `Func<Action<Action>, IPay>`；可传入上面的动态会话组合构造函数。TikTok 自动注册声明支持显式支付装配且要求该工厂。配置勾选 payments 但未提供时，在创建平台运行时前返回 CONFIG.PAYMENT_PROVIDER_REQUIRED；关闭支付时忽略工厂，不创建支付客户端或网关。微信/抖音尚未声明此支持，不能通过传入工厂绕过 CONFIG.PAYMENT_UNIMPLEMENTED。
+`SdkPlatformRegistry.CreateStartup` 与 `UnitySdkHost.BeginConfiguredStartup` 新增可选 `createPayment` 参数，类型为 `Func<Action<Action>, IPay>`；可传入上面的动态会话组合构造函数。TikTok 自动注册声明支持显式支付装配且要求该工厂。配置勾选 payments 但未提供时，在创建平台运行时前返回 CONFIG.PAYMENT_PROVIDER_REQUIRED；关闭支付时忽略工厂，不创建支付客户端或网关。抖音也已声明此支持，类型化参数装配见 [抖音支付接入](douyin-payments.md)。微信尚未声明支持，不能通过传入工厂绕过 CONFIG.PAYMENT_UNIMPLEMENTED。
 
 支付工厂在平台就绪后才调用，返回对象由 SDK 持有；可与 createNetwork 同时使用，平台身份保持不变。PAYMENTS 编译裁剪时不包含包装实现，运行时配置仍须与编译模块匹配。
 

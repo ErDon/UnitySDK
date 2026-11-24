@@ -16,7 +16,7 @@ POST 到游戏配置的 HTTPS 会话地址，Content-Type: application/json：
 
 UnitySessionExchange 使用 HTTPS，不跟随重定向，不记录请求凭证、响应会话、任意 HTTP 错误正文。429 返回 AUTH.RATE_LIMITED；若 Retry-After 是正整数秒数，则保留为 Error.RetryAfterSeconds。缺失、非法或 HTTP 日期格式均不猜等待时间，也不自动重试。15 秒网络超时与 SDK 外层等待超时分别存在；取消外层等待不代表服务器未处理请求。Dispose 会中止本实例的活动网络请求。
 
-当前已实现客户端编排、HTTP 传输、微信/抖音/TikTok 凭证适配，以及 [Node 参考服务](../server/README.md) 的验证器/会话/HTTP 组件。服务端测试使用模拟平台响应及内存存储；真实平台校验、生产会话持久化与 Unity HTTPS 联调尚未完成。HTTP 响应使用最多 65536 字节的固定缓冲区，在接收分块时拒绝越界并返回 NETWORK.RESPONSE_TOO_LARGE，优先于通用传输错误。该限制约束客户端保留的正文，不承诺精确限制底层网络收包量，也不能替代服务端限流。
+当前已实现客户端编排、HTTP 传输、微信/抖音/TikTok 凭证适配，以及 [Node 参考服务](../server/README.md) 的验证器/会话/HTTP 组件。服务端已提供内存/SQLite 会话存储，配置启动使用 SQLite；测试采用模拟平台响应、本机 HTTP 和持久化重开验证。真实平台校验、生产部署与 Unity HTTPS 登录联调尚未验收。HTTP 响应使用最多 65536 字节的固定缓冲区，在接收分块时拒绝越界并返回 NETWORK.RESPONSE_TOO_LARGE，优先于通用传输错误。该限制约束客户端保留的正文，不承诺精确限制底层网络收包量，也不能替代服务端限流。
 
 HTTPS 实现单独位于可选 UPM 包 com.erdon.unitysdk.transport.http；核心只保留 ISessionExchange 接口，不强制引入 UnityWebRequest。自有后端协议不同可自行实现 ISessionExchange。安装传输包时同时安装本仓库核心包；两者版本应一致。
 

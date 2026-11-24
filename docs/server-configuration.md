@@ -17,6 +17,8 @@
 
 在仓库的 server 目录执行；以抖音为例：
 
+下面的复制命令只用于首次创建文件；已经配置过的 .env / *.local.json 应直接编辑，跳过复制，避免覆盖现有值。游戏的 Unity JSON 与这里的服务端 JSON 是不同格式，不能互换。
+
 ```powershell
 Copy-Item .env.example .env
 Copy-Item config/douyin.example.json config/douyin.local.json

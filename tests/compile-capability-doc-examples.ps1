@@ -15,7 +15,8 @@ try {
     $standard = Join-Path $UnityData 'NetStandard/ref/2.1.0/netstandard.dll'
     $engine = Join-Path $UnityData 'Managed/UnityEngine/UnityEngine.CoreModule.dll'
     $json = Join-Path $UnityData 'Managed/UnityEngine/UnityEngine.JSONSerializeModule.dll'
-    foreach ($inputFile in @($mono, $compiler, $standard, $engine, $json, $CoreAssembly, $HttpAssembly)) {
+    $frameworkShim = Join-Path $UnityData 'NetStandard/compat/2.1.0/shims/netfx/mscorlib.dll'
+    foreach ($inputFile in @($mono, $compiler, $standard, $engine, $json, $frameworkShim, $CoreAssembly, $HttpAssembly)) {
         if (!(Test-Path -LiteralPath $inputFile -PathType Leaf)) { throw "Missing compilation input: $inputFile" }
     }
     $output = New-Item -ItemType Directory -Force '.tests/documentation-examples'
@@ -27,6 +28,9 @@ try {
         $documents += $platformDoc[0]
         $platformReferences += "/reference:$($platformDoc[1])"
     }
+    if ($DouyinAssembly) { $documents += 'douyin-payments' }
+    $compiledCount = 0
+    $skippedCount = 0
     foreach ($name in $documents) {
         $markdown = Get-Content -Raw -Encoding UTF8 "docs/$name.md"
         $matches = [regex]::Matches($markdown, '(?s)```csharp\r?\n(.*?)\r?\n```')
@@ -35,12 +39,23 @@ try {
         foreach ($match in $matches) {
             $index++
             $body = $match.Groups[1].Value
+            # Payment documentation also includes platform-specific examples. Skip explicitly,
+            # never pretend they were checked without the corresponding platform assembly.
+            if ($body -match 'ErDon\.UnitySDK\.TikTok' -and !$TikTokAssembly) {
+                Write-Output "DOCUMENTATION_COMPILE_SKIP $name-$index (requires -TikTokAssembly)"
+                $skippedCount++; continue
+            }
             # These examples use namespace imports followed by statements for a game method.
             $imports = [regex]::Matches($body, '(?m)^using [\w.]+;\r?$')
             $header = ($imports | ForEach-Object { $_.Value }) -join "`n"
+            if ($header -notmatch '(?m)^using ErDon\.UnitySDK;') { $header += "`nusing ErDon.UnitySDK;" }
             $body = [regex]::Replace($body, '(?m)^using [\w.]+;\r?\n', '')
             # Dependencies named in the payment examples are supplied by the game integration.
             $parameters = if ($name -eq 'payment-pipeline') { 'ErDon.UnitySDK.IOrderClient orderClient, ErDon.UnitySDK.IPaymentLauncher platformLauncher, System.Action<System.Action> mainThreadPost, string gameSession, string savedPurchaseRequestId' } else { '' }
+            if ($name -eq 'payment-pipeline') {
+                $parameters += ', UnityEngine.MonoBehaviour host, string ordersEndpoint, System.Action<ErDon.UnitySDK.SdkLogLevel,string> engineLog, System.Func<ErDon.UnitySDK.ISessionExchange> createSessionExchange'
+            }
+            if ($name -eq 'douyin-payments' -and $index -eq 2) { $parameters = 'string gameSession, string purchaseRequestId' }
             $source = Join-Path $output.FullName "$name-$index.cs"
             $fields = ''
             if ($name -in @('wechat', 'tiktok') -and $index -eq 1) { $parameters = 'ErDon.UnitySDK.ISessionExchange sessionExchange, System.Action<System.Action> postToMainThread' }
@@ -61,9 +76,11 @@ try {
                 "$header`npublic class DocumentationExample : UnityEngine.MonoBehaviour { $fields public void Run($parameters) {`n$body`n} }"
             }
             Set-Content -LiteralPath $source -Encoding UTF8 -Value $compilationUnit
-            & $mono $compiler /nologo /target:library /nostdlib /warnaserror "/reference:$standard" "/reference:$engine" "/reference:$json" "/reference:$CoreAssembly" "/reference:$HttpAssembly" @platformReferences "/out:$($output.FullName)/$name-$index.dll" $source
+            & $mono $compiler /nologo /target:library /nostdlib /warnaserror "/reference:$standard" "/reference:$frameworkShim" "/reference:$engine" "/reference:$json" "/reference:$CoreAssembly" "/reference:$HttpAssembly" @platformReferences "/out:$($output.FullName)/$name-$index.dll" $source
             if ($LASTEXITCODE -ne 0) { throw "Documentation example compilation failed: $name" }
             Write-Output "DOCUMENTATION_COMPILE_PASS $name-$index"
+            $compiledCount++
         }
     }
+    Write-Output "DOCUMENTATION_COMPILE_SUMMARY passed=$compiledCount skipped=$skippedCount"
 } finally { Pop-Location }

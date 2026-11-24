@@ -3,6 +3,14 @@
 
 当前阶段：实现中的 UPM 开发预览，尚未完成真实平台端到端验收。
 
+首次接入按以下顺序阅读：
+
+1. [当前能力与未完成事项](docs/status.md)：确认功能、验收与本轮范围。
+2. [新项目接入](docs/getting-started.md)：安装、Mock 验证、真实平台启动。
+3. [账号与密钥配置](docs/server-configuration.md)：填写服务端本地配置，不向客户端发放密钥。
+4. [业务接口索引](docs/api-reference.md)：逐项查看调用、结果、取消和错误语义。
+5. 需要支付时阅读 [支付编排](docs/payment-pipeline.md) 和 [抖音完整接入示例](docs/douyin-payments.md)。
+
 - [上层接口索引与生命周期](docs/api-reference.md)
 - [整体架构与设计图](docs/architecture.md)
 - [错误码与诊断规范](docs/errors.md)

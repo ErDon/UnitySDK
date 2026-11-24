@@ -1,5 +1,7 @@
 # 平台启动编排（开发中）
 
+推荐接入入口是 `UnitySdkHost.BeginConfiguredStartup`：配置控制平台和模块，`createSessionExchange` 提供游戏会话兑换，`createNetwork` 提供可选网络能力，`createPayment` 提供抖音/TikTok 的支付组合。工厂只在对应模块开启、平台就绪后创建实例；缺少所需工厂会在启动预检时拒绝。完整配置步骤见 [新项目接入](getting-started.md)，账号密钥在 [服务端配置](server-configuration.md) 中管理。
+
 SdkStartup 串联 IPlatformRuntime 与 IPlatformSdkProviderFactory。构造时校验三个平台标识一致，并复制模块配置；Start 只调用官方初始化桥接。收到成功回调且 IsReady=true 后，下一次 Tick 才装配业务能力。失败、未就绪或超时不会替换当前 SDK；能力创建失败沿用 SDK 工厂回滚机制。
 
 ```csharp

@@ -105,7 +105,7 @@ createTikTokVerifier 按 [TikTok Minis OAuth](https://developers.tiktok.com/docs
 
 ## 订单组件
 
-新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。可使用 createOrderHandler 显式装配订单 HTTP 路由，默认启动器尚未启用；真实平台验签仍待完成，内存订单仅用于开发。
+新增 OrderService、MemoryOrderStore 与 SqliteOrderStore，接口、验证器及发货契约见 [订单与发货](../docs/orders.md)。可使用 createOrderHandler 显式装配订单 HTTP 路由，原 npm start 登录入口不启用订单；配置化启动在抖音/TikTok 支付开启时装配订单及各自的通知验签。微信支付验签仍待实现，真实平台联调未验收；内存订单仅用于开发。
 
 ## 多游戏共享存储回归
 

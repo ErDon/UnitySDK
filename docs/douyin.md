@@ -93,7 +93,7 @@ void OnDouyinRuntimeReady()
 
 工厂构造不调用平台、不创建后端通信对象。只有 LoginEnabled=true 才请求新的 ISessionExchange，并与 DouyinCredentialProvider 组成 VerifiedAuth。关闭登录时可以省略第三个参数；启用登录但缺少工厂或工厂返回 null 会拒绝初始化。每次工厂调用必须返回新 exchange，禁止捕获并重复返回同一个已被 SDK 接管的实例。
 
-SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，也不实现 IPayProviderFactory，开启支付会被明确拒绝。配置面板和运行时 JSON 已支持按平台注册的自动启动装配，真实平台验收仍未完成。
+SDK 接管并释放创建出的能力，VerifiedAuth 负责释放 exchange；游戏不再重复 Dispose。游戏提供的协程宿主必须活到 SDK.Shutdown，建议在持久启动对象上装配。此工厂不处理 TTSDK 安装/初始化，已实现 IPayProviderFactory；开启支付必须注入 createPayment，缺失时拒绝装配，不回退 Mock。配置面板和运行时 JSON 已支持按平台注册的自动启动装配，真实平台验收仍未完成。
 
 ## 官方运行时初始化桥接
 

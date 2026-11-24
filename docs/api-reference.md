@@ -18,7 +18,7 @@
 | `SDK.CancelShare()` | 无返回值 | 结束本地等待，不保证关闭分享面板 |
 | `SDK.ShowRewardedAd(request, callback, timeoutMilliseconds)` | `RewardedAdResult` 回调 | [广告](rewarded-ads.md)，默认 120 秒；提前关闭可成功但 Completed=false |
 | `SDK.CancelRewardedAd()` | 无返回值 | 不保证关闭广告；下层未结束时仍可能拒绝新展示 |
-| `SDK.Pay(request, callback, timeoutMilliseconds)` | `PaymentResult` 回调 | [支付](payment-pipeline.md)，默认 60 秒；真实收银台尚待接入 |
+| `SDK.Pay(request, callback, timeoutMilliseconds)` | `PaymentResult` 回调 | [支付](payment-pipeline.md)，默认 60 秒；三平台网关已有适配，微信后端未完成，真实扣款待验收 |
 | `SDK.CancelPay()` | 无返回值 | 不退款、不证明未扣费；保留购买编号查单 |
 | `SDK.Request(request, callback)` | `INetworkOperation` | [网络](network.md)，每个句柄独立 Cancel；HTTP 非 2xx 不一定是传输失败 |
 | `SDK.ReportEvent(event, callback, timeoutMilliseconds)` | `IAnalyticsOperation` | [上报](analytics.md)，默认 15 秒；推荐跨平台统一使用此重载 |
@@ -33,7 +33,7 @@
 
 | 接口 | 接入责任 |
 | --- | --- |
-| `UnitySdkHost.BeginConfiguredStartup(...)` | 推荐入口：运行时配置、会话/网络工厂、就绪回调及可选日志回调；按目标平台注册装配 |
+| `UnitySdkHost.BeginConfiguredStartup(...)` | 推荐入口：运行时配置、会话/网络/支付工厂、就绪回调及可选日志回调；按目标平台注册装配 |
 | `UnitySdkHost.BeginStartup(...)` | 自行提供配置、官方 runtime 桥接和平台工厂；见[启动](startup.md) |
 | `UnitySdkHost.CancelStartup()` | 取消当前初始化等待，已运行的业务 SDK 保持运行 |
 | `UnitySdkHost.InitializeWithFactory(...)` | 官方宿主已经就绪时，由工厂按开关创建能力；成功后放弃旧启动等待 |

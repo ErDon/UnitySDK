@@ -2,6 +2,26 @@
 
 Unity 基线 2022.3。通过 Package Manager 的 Add package from disk 选择 Packages/com.erdon.unitysdk/package.json。微信、抖音、TikTok 适配位于独立平台包。完整产物与真机验收尚未完成，正式 Player 构建仍被阻断。非生产配置可使用 Development Build 进行技术验证，但必须通过目标适配器、WebGL 平台宏及混装检查；不支持将 Mock 打入 Player。
 
+## 新项目推荐顺序
+
+1. **先确认范围**：阅读 [当前能力与待办](status.md)。首批平台为微信、抖音、TikTok；微信支付后端未完成，Godot/原生供应商本轮不实现。
+2. **只装核心跑 Mock**：在空白 Unity 工程安装核心包，用下方配置面板验证登录成功、失败、取消及关闭模块后的结果。此步不需要账号、密钥或官方 SDK。
+3. **选择一个真实平台**：安装 HTTP 包、目标适配包及对应官方 SDK，按 [微信](wechat.md)、[抖音](douyin.md) 或 [TikTok](tiktok.md) 文档配置。不要在同一发行工程混装抖音/TikTok 官方 DLL。
+4. **配置服务器**：按 [账号密钥配置](server-configuration.md) 复制目标 JSON 和 .env，先运行配置检查。缺真实密钥不妨碍运行自动测试，但真实登录时必须填写有效凭据；客户端只使用公开 App ID 和自己的 HTTPS 服务地址。
+5. **接入启动与能力**：先只启用登录，等待启动成功再登录；然后逐项开启存储、分享、广告、网络与上报。开启网络需提供网络工厂。上层接口与详细示例见 [接口索引](api-reference.md)。
+6. **单独装配支付**：抖音/TikTok 需要显式支付工厂、服务器目录定价和游戏发货处理；[通用启动示例](../Packages/com.erdon.unitysdk.transport.http/Samples~/ConfiguredStartup/README.md) 没有自动注入支付工厂。按 [抖音支付](douyin-payments.md) 或 [TikTok 支付编排](payment-pipeline.md) 接入，不能仅勾选后期待收银台可用。
+7. **最后做构建与真机验收**：应用模块构建选择，导出非生产 Development Build，检查目标平台包体并记录真机结果。不要为通过构建而关闭隔离检查。
+
+## 三种配置不要混用
+
+| 配置 | 放置位置 | 内容 |
+| --- | --- | --- |
+| Unity 面板配置及导出 JSON | 游戏工程 ProjectSettings / Assets | 平台、Game ID、App ID、模块开关；不含服务端密钥 |
+| 服务端平台 JSON | server/config 下的本地副本 | 平台绑定、商品、支付路由、数据库路径和环境变量名称 |
+| 服务端 .env 或部署环境变量 | 服务器环境 | App ID、App Secret、回调 Token、令牌加密密钥 |
+
+客户端与服务器的 gameId、appId、environment、platform 必须一致。Unity 的 production=false 对应 test；test 仅是数据隔离标签，不保证官方支付为沙盒。更换游戏时使用独立配置、数据库和存储命名空间。
+
 ## 配置驱动的 Mock
 
 打开 Tools → ErDon SDK → 配置与预览，填写 Game ID，选择 Mock，勾选登录。进入 Play Mode，选择模拟结果，点击初始化和登录按钮。关闭登录后重新初始化，应返回 MODULE.DISABLED。此流程验证 Editor Mock；真实平台需安装对应适配包和官方插件，并按启动文档初始化。
@@ -62,6 +82,6 @@ Shutdown 使旧请求及已入队的旧结果失效，不再派发结果。重�
 ./tests/compile-capability-doc-examples.ps1 -CoreAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.dll' -HttpAssembly '你的工程/Library/ScriptAssemblies/ErDon.UnitySDK.Transport.Http.dll'
 ```
 
-默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档、接口索引、配置、启动、原生扩展及错误处理文档的全部 C# 代码块（当前 22 段），失败立即停止；不会运行这些调用或访问平台。完整工厂类型直接编译，调用片段包入 MonoBehaviour 方法；配置资源作为 TextAsset 参数传入，底层网络示例补入文中要求的 provider 字段及 OnDestroy 释放方法。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
+默认 Unity 编译器目录为 2022.3.14f1c1，可通过 `-UnityData` 指定其他安装的 Editor/Data 路径。脚本在仓库 `.tests/documentation-examples` 生成临时包装类和 DLL，逐段编译上述七份能力文档、接口索引、配置、启动、原生扩展及错误处理文档中的公共 C# 代码块，失败立即停止；不会运行这些调用或访问平台。完整工厂类型直接编译，调用片段包入 MonoBehaviour 方法；配置资源作为 TextAsset 参数传入，底层网络示例补入文中要求的 provider 字段及 OnDestroy 释放方法。它验证文档与所传程序集的接口兼容性，不证明程序集是最新构建，也不代替真机、后端与支付验收。
 
-平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共 22 段，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。三平台合计新增 10 段已分别通过编译，全部独立示例共 32 段。
+平台接入文档另有微信 4 段、抖音 3 段、TikTok 3 段。安装目标官方依赖并让独立 Unity 工程编译完成后，可分别增加 `-WeChatAssembly`、`-DouyinAssembly` 或 `-TikTokAssembly` 参数，指向对应的 `Library/ScriptAssemblies/ErDon.UnitySDK.<平台>.dll`；同时将 CoreAssembly 和 HttpAssembly 指向同一工程。每个平台单独执行，不要求把多个官方 SDK 混装到同一个工程。省略平台参数只检查公共片段；支付文档中的 TikTok 专用片段会明确输出 SKIP，不表示平台文档已通过；提供不存在的程序集路径会失败。成员方法直接放入包装组件，不通过补写空方法来掩盖缺失依赖。提供 DouyinAssembly 时还会检查 douyin-payments.md 的两段接入示例；提供 TikTokAssembly 时检查支付文档中的 TikTok 工厂示例。以脚本最终 passed/skipped 汇总为准，不以历史段数判断当前覆盖率。

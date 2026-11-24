@@ -75,6 +75,14 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 平台令牌加密存储
 
+### 待发货任务
+
+服务端 `DeliveryWorker` 接收 `{ orders, deliver, intervalMs, batchSize, log }`。默认每 3 秒最多处理 100 个当前应用作用域的 Paid 订单，通过 OrderService.fulfill 调用业务发货回调；失败订单保留 Paid，后续轮次重试，分批轮转避免一直失败的订单阻塞后面的订单。runOnce 可手动执行，重叠调用合并为同一次执行；start 启用定时任务，stop 停止后续任务并等待正在发货的调用完成。
+
+TikTok 组合服务可通过 `createTikTokApplication({ ..., deliver, deliveryIntervalMs: 3000, deliveryBatchSize: 100 })` 自动启动任务；不传 deliver 保留手工发货模式。关闭时先排空 HTTP 请求，再 `await app.close()`，它会等待任务结束再关闭数据库。deliver(message) 只在业务权益持久化成功后返回 true，必须将 deliveryKey 去重与发货置于同一数据库事务。SDK 不持有游戏背包或钱包，不能替游戏决定权益写入位置。接收方应设置自己的请求超时；SDK 不在发货结果未知时强制启动重叠调用。
+
+日志包含接口、时间、callId/logId、批量上限、处理/失败数量与统一错误，不输出用户或接收方异常。任务使用本机定时器，无分布式抢占锁；多实例必须依赖接收方原子去重，生产监控与外部服务部署另行配置。
+
 ### 微信道具直购网关
 
 `WeChatPaymentGateway` 实现 `IPlatformPaymentGateway<WeChatPaymentRequest>`，调用 WX.RequestMidasPaymentGameItem。请求包含服务器返回的 SignData、PaySignature、SessionSignature，不可变且 ToString 脱敏；签名原文不裁剪、不解析重排，价格和签名均由服务器负责。此网关不覆盖游戏币充值、好友代付或其他虚拟支付 API。
@@ -129,7 +137,19 @@ process.once('SIGTERM', () => server.close(() => app.close()));
 
 目录需预先创建。入口提供 POST /v1/session、订单路由（含 prepare）和 POST /v1/webhooks/tiktok/payment；不会创建公开发货路由，不接受客户端成功回执作为支付依据。服务器工作进程可读取 `app.pendingDelivery()`，再调用 `app.orders.fulfill(orderId, deliver)`；deliver 必须在业务数据库中将 deliveryKey 去重和权益增加放在同一事务内。
 
-此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 close。未包含公网部署、定时发货任务或令牌刷新；原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
+此入口拥有其创建的数据库，构造中途失败会释放已创建资源；close 可重复调用。调用者必须先排空在途请求再 await close。可选定时发货已实现；公网部署及令牌刷新尚未完成。原有 npm start 仍为仅登录参考服务，不会隐式启用支付。组合测试使用模拟 OAuth/支付响应和本地签名通知，不代表真实扣款。
+
+### TikTok 服务启动
+
+新增 `npm run start:tiktok`。设置 `SDK_TIKTOK_CONFIG` 为可信部署配置模块的绝对路径（.mjs），模块 `export default` 上述 createTikTokApplication 配置，含服务端密钥环与可选业务 deliver 回调。SDK_PORT 可选，默认 8787。配置模块能执行代码，只能由部署人员维护，不能指向用户上传文件。数据目录需要预先创建，密钥不得放进 Unity 项目或提交到仓库。
+
+```powershell
+$env:SDK_TIKTOK_CONFIG = 'D:\GameServer\tiktok.config.mjs'
+$env:SDK_PORT = '8787'
+npm run start:tiktok
+```
+
+服务仅监听 127.0.0.1，由部署侧 HTTPS 反向代理转发；SIGINT/SIGTERM 停止监听、排空请求后等待发货任务并关闭存储。启动失败只输出固定诊断，避免导入错误暴露配置内容。也可通过 startTikTokServer(configuration, { port }) 嵌入自己的进程，await 返回实例的 stop() 关闭。现有每进程限流按直连来源计数，代理部署需要配套网关限流，不能直接信任任意 X-Forwarded-For。TLS、系统服务安装、实际账号密钥与业务权益存储不由示例自动创建。
 
 `TikTokCredentialStore(path, { keys, currentKeyId, now?, capacity? })`（server/src/tiktok-credential-store.mjs）实现凭证提供器的 get，并提供 put/remove/close。keys 为密钥 ID 到 32 字节 Buffer 的 Map；调用方从部署密钥服务加载，不放进 Unity、JSON 配置或 Git。存储复制密钥 Buffer，关闭时清理自己的副本，不改调用方的 Buffer；不承诺 JavaScript 字符串在内存中安全擦除。
 

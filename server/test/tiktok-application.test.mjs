@@ -7,6 +7,29 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createTikTokApplication } from '../src/tiktok-application.mjs';
 
+test('application close drains configured delivery worker before closing databases',async t=>{
+  let entered,release;const started=new Promise(resolve=>entered=resolve);
+  const binding={gameId:'game',appId:'app',environment:'test',platform:'TikTok',secret:'secret'};
+  const app=createTikTokApplication({binding,isSandbox:true,authPath:':memory:',orderPath:':memory:',credentialPath:':memory:',
+    keys:new Map([['key',Buffer.alloc(32,8)]]),currentKeyId:'key',log:()=>{},deliveryIntervalMs:100,
+    catalog:[{productId:'coins',amountMinor:99,currency:'USD',tokenAmount:100,productName:'Coins',quantity:1,quantityUnit:'item',imageUrl:'https://example.com/item.png'}],
+    fetchImpl:async()=>Response.json({open_id:'player',access_token:'private-token',token_type:'Bearer',expires_in:3600}),
+    deliver:async()=>{entered();await new Promise(resolve=>release=resolve);return true;}
+  });
+  t.after(async()=>{release?.();await app.close();});
+  const session=(await app.orders.auth.exchange({...binding,code:'code'})).session;
+  const order=await app.orders.create(session,{productId:'coins',requestId:'one'});
+  await app.orders.store.markPaid(order.orderId,'trusted-test-transaction');
+  const deadline=setTimeout(()=>entered(),2000);
+  try {
+    await started;assert.equal(typeof release,'function');
+    let closed=false;const closing=app.close().then(()=>closed=true);
+    await Promise.resolve();assert.equal(closed,false);assert.equal(app.orders.store.closed,false);
+    release();await closing;assert.equal(app.orders.store.closed,true);
+    await app.close();
+  }finally{clearTimeout(deadline);}
+});
+
 test('composed application authenticates, prepares, accepts signed payment and resumes after restart', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'erdon-app-'));
   let app, server, base, creates = 0;

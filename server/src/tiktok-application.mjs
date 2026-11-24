@@ -11,21 +11,26 @@ import { createTikTokTradeClient } from './tiktok-trade-client.mjs';
 import { createAuthHandler } from './http.mjs';
 import { createOrderHandler } from './orders-http.mjs';
 import { createTikTokPaymentWebhookHandler } from './tiktok-webhook-http.mjs';
+import { DeliveryWorker } from './delivery-worker.mjs';
 
 // One application binding per instance. Caller drains its HTTP server before close().
 // This composition owns its databases, but never starts a listener or grants goods.
 export function createTikTokApplication({ binding, catalog, isSandbox, authPath, orderPath, credentialPath,
-  keys, currentKeyId, orderUrlPrefix = '/orders/', fetchImpl = fetch, now = Date.now, log = console.info } = {}) {
+  keys, currentKeyId, orderUrlPrefix = '/orders/', fetchImpl = fetch, now = Date.now, log = console.info,
+  deliver = null, deliveryIntervalMs = 3000, deliveryBatchSize = 100 } = {}) {
   if (binding?.platform !== 'TikTok' || typeof isSandbox !== 'boolean' ||
-      typeof now !== 'function' || typeof log !== 'function' || !Array.isArray(catalog) || !catalog.length)
+      typeof now !== 'function' || typeof log !== 'function' || !Array.isArray(catalog) || !catalog.length ||
+      (deliver !== null && typeof deliver !== 'function'))
     throw new TypeError('Invalid TikTok application configuration');
   const scope = Object.freeze({ ...binding });
   const owned = [];
-  let closed = false;
+  let closed = false, worker = null, closing = null;
+  const closeStores = () => { for (const store of owned.reverse()) { try { store.close(); } catch { } } };
   const close = () => {
-    if (closed) return;
+    if (closed) return closing;
     closed = true;
-    for (const store of owned.reverse()) { try { store.close(); } catch { /* Close remaining resources. */ } }
+    if (worker) { closing = worker.stop().finally(closeStores); return closing; }
+    closeStores();
   };
   try {
     const credentials = new TikTokCredentialStore(credentialPath, { keys, currentKeyId, now }); owned.push(credentials);
@@ -52,6 +57,10 @@ export function createTikTokApplication({ binding, catalog, isSandbox, authPath,
       if (request.url === '/v1/webhooks/tiktok/payment') return webhookHandler(request, response);
       return orderHandler(request, response); // Existing strict router rejects all other paths.
     };
+    if (deliver !== null) {
+      worker = new DeliveryWorker({ orders, deliver, intervalMs: deliveryIntervalMs, batchSize: deliveryBatchSize, log });
+      worker.start();
+    }
     return Object.freeze({ handler, close, orders,
       pendingDelivery: () => orderStore.pendingDelivery() });
   } catch (error) { close(); throw error; }

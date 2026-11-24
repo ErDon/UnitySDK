@@ -4,5 +4,5 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=24.20.0" },
-  "scripts": { "test": "node --test", "start": "node src/start.mjs" }
+  "scripts": { "test": "node --test", "start": "node src/start.mjs", "start:tiktok": "node src/start-tiktok.mjs" }
 }

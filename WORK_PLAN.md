@@ -129,6 +129,12 @@
 
 ## 2026-11-24 执行记录
 
+### 抖音 Android / iOS 支付网关
+
+核对官方支付文档和 TTSDK 6.9.7 元数据，新增不可变 DouyinPaymentRequest 及 Android 支付/iOS 客服收银台网关，支持游戏币和直购参数互斥校验、直购 CanIUse、脱敏平台错误、取消、重复回调和关闭保护。核心增加泛型网关契约，保留 TikTok 字符串接口兼容。
+
+抖音官方 DLL 全套测试通过，新增网关请求映射和生命周期测试；测试中 ErrorInfo 内部构造限制使用测试专用未初始化对象解决。TikTok Runtime/Editor 双套回归通过。抖音受认证参数映射、服务端核验、工厂及真机仍待完成，66/78。
+
 ### 面板支付工厂注入与退出清理
 
 EditorPlatformBootstrap 增加 PaymentFactory，传入统一配置启动；面板显示注入状态、支付依赖错误说明，支付开关不再标成仅 Editor Mock。退出 Play Mode 清除工厂引用，启动按钮不会主动发起交易。

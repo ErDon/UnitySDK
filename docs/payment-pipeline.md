@@ -75,6 +75,14 @@ Paid 记录进入现有 pendingDelivery 队列，由 OrderService.fulfill 和游
 
 ## 平台令牌加密存储
 
+### 抖音支付网关
+
+`DouyinPaymentGateway` 实现 `IPlatformPaymentGateway<DouyinPaymentRequest>`，显式选择 Android 或 IosCustomerService 路由；前者使用 TT.RequestGamePayment，后者使用 TT.OpenAwemeCustomerService。参数和回调已对照 [官方 C# 支付文档](https://developer.open-douyin.com/docs/resource/zh-CN/mini-game/develop/api/c-api/payment/payment-request) 及本地官方 6.9.7 DLL 核验。
+
+DouyinPaymentRequest 为不可变参数快照：OrderId、ZoneId、ExtraInfo，以及游戏币数量 BuyQuantity 或直购价格 AmountMinor / ProductName / DirectPurchase。直购必须 BuyQuantity=0；游戏币模式不填直购金额/商品名。订单号、数量和价格必须取自认证后的游戏服务端，不能以客户端商品输入为准。网关不会换算价格档位或验证后台开通资格；直购会检查相应 CanIUse 能力，缺能力返回 CAPABILITY.NOT_SUPPORTED，不自动降级为其他付费场景。
+
+成功回调仅返回 AwaitServerConfirmation，不生成支付证据。取消码 -2 映射 PAY.USER_CANCELLED，其余失败返回 PAY.PLATFORM_REJECTED 并保留数字平台码，原始文本不传给上层。并发/重复回调与 Dispose 后迟到回调受保护，关闭网关不撤销平台交易。此阶段未完成抖音服务端交易核验、游戏订单到参数的受认证映射和工厂装配；配置入口仍阻断抖音支付，不代表已可上线。既有非泛型 IPlatformPaymentGateway 保留为字符串请求特化，TikTok 调用方式不变。
+
 ### 平台查单传输
 
 `createTikTokTradeClient().query({ accessToken, tradeOrderId })` 使用服务端保管的用户访问令牌，调用固定 HTTPS POST `/v2/minis/trade_order/query/`，返回冻结的 `{ tradeOrderId, status }`。只接受与请求相同的平台单号及 PENDING / SUCCESS 状态；未知状态、格式错误或超过 16 KiB 的响应返回 PAY.QUERY_RESPONSE_INVALID，网络或 HTTP 失败返回 PAY.QUERY_UNAVAILABLE，HTTP 401 返回 PAY.PLATFORM_TOKEN_REJECTED。禁止重定向，不自动重试，不回传上游消息或令牌。

@@ -47,7 +47,8 @@ namespace ErDon.UnitySDK
     public interface IPaymentLauncher : IDisposable { void Launch(GameOrder order,Action<PaymentLaunchResult> callback); }
     public interface ISessionPaymentLauncher : IPaymentLauncher { void Launch(PaymentRequest request,GameOrder order,Action<PaymentLaunchResult> callback); }
     // Engine/platform layer only. ID must come from a trusted server prepayment response.
-    public interface IPlatformPaymentGateway : IDisposable { void Launch(string tradeOrderId, Action<PaymentLaunchResult> callback); }
+    public interface IPlatformPaymentGateway<TRequest> : IDisposable { void Launch(TRequest request, Action<PaymentLaunchResult> callback); }
+    public interface IPlatformPaymentGateway : IPlatformPaymentGateway<string> { }
     public interface IPay : IDisposable { void Pay(PaymentRequest request,Action<PaymentResult> callback); }
     // Optional main-thread lifecycle for bounded payment reconciliation.
     public interface IPaymentWait { void Tick(); void CancelWait(); }

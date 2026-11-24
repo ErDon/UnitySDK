@@ -1,3 +1,7 @@
 # Local build outputs
 .tests/
 server/data/
+server/config/*.local.json
+server/config/data/
+server/.env
+server/.env.local

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "platform": "TikTok",
+  "gameId": "my-game",
+  "environment": "test",
+  "appIdEnv": "TIKTOK_APP_ID",
+  "secretEnv": "TIKTOK_APP_SECRET",
+  "port": 8789,
+  "storage": { "auth": "data/tiktok-auth.sqlite", "orders": "data/tiktok-orders.sqlite", "credentials": "data/tiktok-credentials.sqlite" },
+  "payments": {
+    "enabled": true,
+    "isSandbox": true,
+    "currentKeyId": "key1",
+    "keysEnv": { "key1": "TIKTOK_CREDENTIAL_KEY_HEX" },
+    "orderUrlPrefix": "/orders/",
+    "catalog": [{ "productId": "coins", "productName": "Coins", "amountMinor": 99, "currency": "USD",
+      "tokenAmount": 100, "quantity": 1, "quantityUnit": "item", "imageUrl": "https://example.com/coins.png" }]
+  }
+}

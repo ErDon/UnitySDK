@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "platform": "Douyin",
+  "gameId": "my-game",
+  "environment": "test",
+  "appIdEnv": "DOUYIN_APP_ID",
+  "secretEnv": "DOUYIN_APP_SECRET",
+  "port": 8788,
+  "storage": { "auth": "data/douyin-auth.sqlite", "orders": "data/douyin-orders.sqlite" },
+  "payments": {
+    "enabled": true,
+    "route": "Android",
+    "zoneId": "1",
+    "callbackTokenEnv": "DOUYIN_CALLBACK_TOKEN",
+    "catalog": [{ "productId": "sword", "productName": "宝剑", "amountMinor": 600, "currency": "CNY" }]
+  }
+}

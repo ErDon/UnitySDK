@@ -1,5 +1,7 @@
 # 公共登录参考服务（0.1 开发版）
 
+推荐使用新的 [账号与密钥配置入口](../docs/server-configuration.md)：三平台 JSON 模板 + 本地 .env，`npm run config:check -- config/douyin.local.json` 检查，`npm run start:configured -- config/douyin.local.json` 启动。未填真实密钥可先完成离线检查与自动测试。
+
 Node.js 24.20.0+（本机验证版本 24.20.0），无 npm 第三方依赖。选择 Node 是为提供可独立运行的参考后端；协议不要求游戏使用 Node，自有后端可实现同一 HTTPS 协议。
 
 已实现按受信 game/app/environment/platform 绑定验证请求、微信 code 验证器、随机游戏会话、过期/撤销、code 并发重放拦截、HTTP 请求/上游响应大小限制及 SDK 格式化脱敏日志。没有真实微信凭据联调；内存存储、示例启动器不用于生产。

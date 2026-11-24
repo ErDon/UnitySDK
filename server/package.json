@@ -4,5 +4,6 @@
   "private": true,
   "type": "module",
   "engines": { "node": ">=24.20.0" },
-  "scripts": { "test": "node --test", "start": "node src/start.mjs", "start:tiktok": "node src/start-tiktok.mjs" }
+  "scripts": { "test": "node --test", "start": "node src/start.mjs", "start:tiktok": "node src/start-tiktok.mjs",
+    "config:check": "node --env-file-if-exists=.env src/config-cli.mjs check", "start:configured": "node --env-file-if-exists=.env src/config-cli.mjs start" }
 }

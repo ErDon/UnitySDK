@@ -109,3 +109,20 @@ $env:PYTHONIOENCODING = "utf-8"
 ```
 
 RequiredTypes 只接受真实类型定义作为保留证据，单纯类型引用不算保留。TikTok 实际 Development Build 和上述检查通过，证明网络能力裁剪没有删除登录 HTTP 依赖；不证明真实平台登录、HTTPS 接口或后端联调成功。负例使用已移除登录的微信构建要求 CredentialProvider 保留，检查器正确拒绝。
+
+
+### 绑定产物哈希的逐文件审查
+
+`tools/review-export-isolation.py` 读取完整导出库存，重新扫描实际目录的全部文件并核对路径、大小和 SHA-256。新增、删除或修改文件会拒绝使用旧库存。输出必须在导出目录外，不能覆盖输入文件。
+
+```powershell
+python tools/review-export-isolation.py --inventory compatibility/wechat-export-files-2026-11-24.json --root '<对应导出根目录>' --output '<审查报告.json>'
+```
+
+未提供 `--reviews` 时生成待审清单。可另建 JSON，包含 schemaVersion=1、platform 和 reviews 数组；每项填写 path、sha256、verdict（target/shared/game-content/foreign）、reviewer、evidenceReference、reason。只有完整审查记录及当前哈希吻合才记为 review-recorded。旧哈希记为 stale-review；库存中的 foreign-only-exact-match 不允许用简单人工结论覆盖，仍阻断，需补充目标平台来源证据并重新整理库存。
+
+退出码 0 表示审查记录完整，2 表示待审或阻断，输入无效会失败。记录完整不是平台来源认证、运行验收或语义级不存在外平台代码的证明。缺少字符串标记不作为通过依据。
+
+2026-11-25 对已有导出库存进行实物哈希复核：微信84项、抖音13项、TikTok17项。初始待审报告保存在 compatibility/*-review-2026-11-25.json，尚未放行。微信库存根目录包括 minigame 子目录；抖音/TikTok 库存根目录是 tt-minigame 本身。
+
+抖音 plugin-config.js 仅匹配 TikTok 文件基线，但此前已在抖音官方工具 DLL 中找到完整文本，见 compatibility/douyin-plugin-config-review-2026-11-24.json。这不是确认混入 TikTok SDK；生成来源和最终包完整隔离仍需结合其他证据审核，暂不自动消除阻断。

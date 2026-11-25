@@ -36,7 +36,7 @@
 
 ## 范围说明
 
-新增 [Android AAR 与 Unity 桥接](android.md) 开发预览，存储/文本分享/HTTPS 已有实现，开发 APK 与模拟器 JNI/存储已验证，其余能力提供渠道扩展接口；新增任务按 [Android 工作计划](../android/WORK_PLAN.md) 单列，不并入上述 75/87。iOS 仍仅提供扩展契约，不接具体供应商；抖音 Android/iOS 收银台路由属于抖音小游戏能力。Godot 尚无引擎桥接，不能直接导入 Unity 包。核心契约不依赖 Unity 类型，不代表其他引擎适配已经完成。
+新增 [Android AAR 与 Unity 桥接](android.md) 开发预览，存储/文本分享/HTTPS 已有实现，开发 APK 与模拟器 JNI/存储已验证，其余能力提供渠道扩展接口；新增任务按 [Android 工作计划](../android/WORK_PLAN.md) 单列，不并入上述 78/90。iOS 仍仅提供扩展契约，不接具体供应商；抖音 Android/iOS 收银台路由属于抖音小游戏能力。Godot 尚无引擎桥接，不能直接导入 Unity 包。核心契约不依赖 Unity 类型，不代表其他引擎适配已经完成。
 
 新增 [TikTok 平台授权撤销](tiktok-revocation.md)及 [游戏会话撤销](session-revocation.md)：包含三平台服务端路由、AUTH.LOGIN_REVOKED 错误映射与 SQLite v2 停机升级说明。
 
@@ -48,7 +48,7 @@
 | --- | --- | --- |
 | 公共逻辑 | `tests/run-all-tests.ps1` | C# 行为、配置、生命周期、日志与支付编排 |
 | 官方程序集 | [兼容矩阵](../compatibility/README.md) 中的平台脚本 | 指定版本编译与注入回调，不是真机 |
-| 服务端 | server 目录执行 `npm test` | 当前 140 项，模拟上游、本机 HTTP/SQLite，无真实付款 |
+| 服务端 | server 目录执行 `npm test` | 当前 156 项，模拟上游、本机 HTTP/SQLite，无真实付款 |
 | 配置 | `npm run config:check -- config/douyin.example.json` | 在 server 目录运行；缺密钥时退出 1 为预期结果 |
 | Unity/构建 | 工作计划执行记录 | 列明的隔离工程、Play Mode 和产物检查 |
 

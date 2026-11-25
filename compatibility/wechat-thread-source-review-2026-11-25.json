@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "source": "Pinned official WeChat conversion SDK 0.1.1 (915d4bf)",
+  "files": [
+    {
+      "path": "Editor/WXConvertCore.cs",
+      "sha256": "71053d80e225e1b07a5616f3cf371ff8386b2ece93771e926eab1ad13ed88e19",
+      "bytes": 109541
+    },
+    {
+      "path": "Editor/WXEditorSettingHelper.cs",
+      "sha256": "d6d994b261d97e29aa5d5a6015b5fa915f6868dea6f1f9f649778d806bbb1e00",
+      "bytes": 71912
+    },
+    {
+      "path": "Runtime/wechat-default/unity-namespace.js",
+      "sha256": "d172b1041c5d40f40e175fc6e37cbf12af0e50c1e39dfc81861263e518adec6f",
+      "bytes": 9340
+    },
+    {
+      "path": "Runtime/wechat-default/game.json",
+      "sha256": "c44dac82d859e881cf0aa8658fc7fd1039aafb70ef96a8d71609373be258ab79",
+      "bytes": 1068
+    },
+    {
+      "path": "Runtime/wechat-default/workers/response/index.js",
+      "sha256": "b0781ac1b05eca2a753a7ef0200a51a2e3dfcbf3de86c5b77d265d4cfdb5f633",
+      "bytes": 2273
+    }
+  ],
+  "findings": [
+    "WXConvertCore.cs routes CompileOptions.brotliMT to build-host MultiThreadBrotliCompress and exports the option to namespace metadata.",
+    "Official worker response template handles file writes and reports Android support; its presence does not prove invocation.",
+    "ConvertForThread is separately conditional on EnableRenderThread."
+  ],
+  "limitation": "Source inspection only; no device execution or runtime thread certification."
+}

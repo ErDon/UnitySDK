@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "game.json",
+      "bytes": 654,
+      "sha256": "d3817031716b9191fa49e44de995533f3a8c979db56a55af3e2b8c71b83a59c7"
+    },
+    {
+      "path": "project.config.json",
+      "bytes": 1724,
+      "sha256": "1a65051259380b04b3341f89c63a5c74ffef0ffa1851f8d1a88f1fcc1c6ace55"
+    },
+    {
+      "path": "unity-namespace.js",
+      "bytes": 9011,
+      "sha256": "520b6bc6383555d830beac87bfe094bb6bfd13187b840b39f3e8d93dd34dc259"
+    }
+  ],
+  "findings": [
+    "APP_ID_NOT_READY",
+    "WORKERS_DECLARED_REQUIRES_REVIEW",
+    "BROTLI_MT_LITERAL_REQUIRES_REVIEW",
+    "DEVELOPMENT_CONNECTION_CONFIG_PRESENT"
+  ],
+  "subpackageRoots": [
+    "data-package",
+    "wasmcode"
+  ],
+  "productionReadiness": "not-certified",
+  "limitation": "Static configuration evidence only; worker declarations and JavaScript literals do not prove runtime thread execution."
+}

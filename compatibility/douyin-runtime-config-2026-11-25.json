@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "game.json",
+      "bytes": 719,
+      "sha256": "1be8747216b64b4f17d8d5d4fe8152fdb31bfcb87a827b2fd1c943deba10dd50"
+    },
+    {
+      "path": "project.config.json",
+      "bytes": 360,
+      "sha256": "1e3d48c056937f92ff365f73c621023e7014a0b1bd662fea5f83717d34b9bc70"
+    },
+    {
+      "path": "unity-namespace.js",
+      "bytes": 496,
+      "sha256": "720633c5ac54f94128fbaa28372087704c0350b1a3ba20f5d8d567e9eeab70f6"
+    }
+  ],
+  "findings": [
+    "APP_ID_NOT_READY",
+    "DEVELOPMENT_CONNECTION_CONFIG_PRESENT"
+  ],
+  "subpackageRoots": [
+    "data-package",
+    "wasmcode"
+  ],
+  "productionReadiness": "not-certified",
+  "limitation": "Static configuration evidence only; worker declarations and JavaScript literals do not prove runtime thread execution."
+}

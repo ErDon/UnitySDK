@@ -131,3 +131,23 @@ python tools/review-export-isolation.py --inventory compatibility/wechat-export-
 来源核对增量：`--vendor-inventory` 可重复传入导出报告使用的全部平台基线。工具首先验证每个库存文件本身的 SHA-256 与导出报告一致，拒绝遗漏、重复或被修改的基线；再给目标平台完全一致的文件附上 sourcePaths 和 inventorySha256。该证据仅证明目标平台基线包含相同字节，不证明生成路径或所有模块裁剪。
 
 2026-11-25 已保存三份 `compatibility/*-review-decisions-2026-11-25.json`：微信63项、抖音2项、TikTok5项完成目标字节来源审查；对应报告剩余21/11/12项待审或阻断。共70项已核对、44项未放行。所有结论仍绑定文件哈希；没有用“未发现字符串”填充任何审查结论。
+
+### 导出配置与单线程边界检查
+
+在接入游戏的每次正式候选导出后运行：
+
+```powershell
+python tools/inspect-runtime-config.py --root '<包含 game.json 的小游戏目录>' --output '<导出目录外的报告.json>'
+```
+
+微信这里应传 `minigame`，其他两平台传 `tt-minigame`。检查器只读取配置，不执行第三方脚本；记录文件哈希，检查占位 App ID、分包目录、重复/越界路径，以及调试连接、Worker 和 Brotli MT 字面配置。报告不输出 App ID 或调试连接地址。退出 0 只表示检查成功完成，应查看 findings；即使没有发现问题，productionReadiness 仍为 not-certified，不能代替构建、来源审查和真机验收。
+
+现有三份开发导出均有占位 App ID 和调试连接配置，报告见 `compatibility/*-runtime-config-2026-11-25.json`。不应作为发布包上传。真实 App ID 通过工程配置填写，再重新导出；不要改旧包来沿用旧哈希证据。
+
+SDK 自有运行时不依赖 C# 工作线程，WebGL 构建检查拒绝开启 `PlayerSettings.WebGL.threadsSupport`。这不等于删除官方运行环境的所有 Worker 文件。固定版本微信官方源码中：
+
+- `CompileOptions.brotliMT` 控制编辑器端 `MultiThreadBrotliCompress`，并输出 `useBrotliMT` 元数据；它不是游戏 C# 多线程开关。
+- 官方 `workers/response/index.js` 含文件写入处理；配置声明或模板存在不能证明设备端已调用。
+- 官方 `ConvertForThread` 另受 `EnableRenderThread` 控制，升级官方 SDK 时也要核查该选项，不能仅检查 Brotli 标记。
+
+对应源码文件哈希与结论见 `compatibility/wechat-thread-source-review-2026-11-25.json`。不自动移除官方 Worker 或修改其脚本；需在目标版本、设备和配置上确认实际运行行为。以上审查不改变剩余真机验收和完整包体裁剪状态。

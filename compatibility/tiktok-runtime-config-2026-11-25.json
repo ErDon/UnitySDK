@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "game.json",
+      "bytes": 538,
+      "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f"
+    },
+    {
+      "path": "project.config.json",
+      "bytes": 69,
+      "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f"
+    },
+    {
+      "path": "unity-namespace.js",
+      "bytes": 437,
+      "sha256": "387850337a3fd248bc77a6cfd0bcc1ec03d837e4f2c91b368f330be400b7077f"
+    }
+  ],
+  "findings": [
+    "APP_ID_NOT_READY",
+    "DEVELOPMENT_CONNECTION_CONFIG_PRESENT"
+  ],
+  "subpackageRoots": [
+    "StreamingAssets",
+    "data-package",
+    "wasmcode"
+  ],
+  "productionReadiness": "not-certified",
+  "limitation": "Static configuration evidence only; worker declarations and JavaScript literals do not prove runtime thread execution."
+}

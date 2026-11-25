@@ -12,7 +12,7 @@
     {
       "path": "data-package/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -26,7 +26,7 @@
     {
       "path": "game.json",
       "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 538,
       "targetByteEvidence": null
     },
@@ -93,21 +93,21 @@
     {
       "path": "project.config.json",
       "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 69,
       "targetByteEvidence": null
     },
     {
       "path": "StreamingAssets/erdon-sdk-probe.txt",
       "sha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 41,
       "targetByteEvidence": null
     },
     {
       "path": "StreamingAssets/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -128,7 +128,7 @@
     {
       "path": "wasmcode/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -147,8 +147,8 @@
       "targetByteEvidence": null
     }
   ],
-  "reviewed": 5,
-  "pendingOrBlocked": 12,
+  "reviewed": 11,
+  "pendingOrBlocked": 6,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

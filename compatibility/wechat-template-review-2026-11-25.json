@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "platform": "WeChat",
+  "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+  "files": [
+    {
+      "path": "minigame/unity-sdk/index.js",
+      "sha256": "a21575fcc35fce95c4fd272a6166f58fb395baf89c7d9da068af725604041689",
+      "sourcePath": "Runtime/wechat-default/unity-sdk/index.js",
+      "sourceSha256": "cad658230b31a6566e29d7a2b3bc4006542066b43c365d836be5a03326838711",
+      "replacementMap": {
+        "$unityVersion$": "2022.3.14f1c1"
+      },
+      "sourceDecoding": "utf-8-sig",
+      "outputEncoding": "utf-8 with BOM",
+      "lineEndingNormalization": "none",
+      "exactReconstruction": true
+    },
+    {
+      "path": "minigame/unity-sdk/storage.js",
+      "sha256": "02b63202110160b4e190ce44173b67d1d94f5d8e2572e4bfeb07a48960d095de",
+      "sourcePath": "Runtime/wechat-default/unity-sdk/storage.js",
+      "sourceSha256": "9c1ea4931d4188348c2fdc71fd13b577ef5fc4c1aa0e6d25669a157f69313902",
+      "replacementMap": {
+        "'$PreLoadKeys'": "[]"
+      },
+      "sourceDecoding": "utf-8-sig",
+      "outputEncoding": "utf-8 with BOM",
+      "lineEndingNormalization": "none",
+      "exactReconstruction": true
+    },
+    {
+      "path": "minigame/unity-sdk/texture.js",
+      "sha256": "088318cc54fe59dfb6afdd33055546be07b1e9c80eac36d05882abbdd9aba119",
+      "sourcePath": "Runtime/wechat-default/unity-sdk/texture.js",
+      "sourceSha256": "84b36b1340691035c01500cb3094fc66baac1fa74d85898398eba9e59f34dfab",
+      "replacementMap": {},
+      "sourceDecoding": "utf-8-sig",
+      "outputEncoding": "utf-8 with BOM",
+      "lineEndingNormalization": "none",
+      "exactReconstruction": true
+    },
+    {
+      "path": "minigame/unity-sdk/font/index.js",
+      "sha256": "3030ddbbd6c5f950e675d3468e4f0cdf5fec1f7b61667f503029af64690c86e0",
+      "sourcePath": "Runtime/wechat-default/unity-sdk/font/index.js",
+      "sourceSha256": "56bc5411ed5c9ca0ae50017cc7f8119b2c428937a49b8bce7bcefe613cea6fd0",
+      "replacementMap": {
+        "$CJK_Unified_Ideographs": "true",
+        "$C0_Controls_and_Basic_Latin": "true",
+        "$CJK_Symbols_and_Punctuation": "true",
+        "$General_Punctuation": "true",
+        "$Enclosed_CJK_Letters_and_Months": "true",
+        "$Vertical_Forms": "true",
+        "$CJK_Compatibility_Forms": "true",
+        "$Miscellaneous_Symbols": "true",
+        "$CJK_Compatibility": "true",
+        "$Halfwidth_and_Fullwidth_Forms": "true",
+        "$Dingbats": "true",
+        "$Letterlike_Symbols": "true",
+        "$Enclosed_Alphanumerics": "true",
+        "$Number_Forms": "true",
+        "$Currency_Symbols": "true",
+        "$Arrows": "true",
+        "$Geometric_Shapes": "true",
+        "$Mathematical_Operators": "true",
+        "$CustomUnicodeRange": "[]"
+      },
+      "sourceDecoding": "utf-8-sig",
+      "outputEncoding": "utf-8 without BOM",
+      "lineEndingNormalization": "none",
+      "exactReconstruction": true
+    },
+    {
+      "path": "minigame/check-version.js",
+      "sha256": "85263b3a16c83599d11d1430fbadf13c799b4a83b7d447de48c6ea7b4f5e3e19",
+      "sourcePath": "Runtime/wechat-default/check-version.js",
+      "sourceSha256": "7588c7cbd9ddcaee45bbe5958b5ac9f984f17e2de8181000d36008ddeb42a12c",
+      "replacementMap": {
+        "$DISABLE_HIGHPERFORMANCE_FALLBACK": "false",
+        "$LOAD_DATA_FROM_SUBPACKAGE": "false",
+        "$COMPRESS_DATA_PACKAGE": "false",
+        "$IOS_DEVICE_PIXEL_RATIO": "0"
+      },
+      "sourceDecoding": "utf-8-sig",
+      "outputEncoding": "utf-8 without BOM",
+      "lineEndingNormalization": "none",
+      "exactReconstruction": true
+    }
+  ],
+  "limitation": "Exact reconstruction from inventoried target template and explicit substitutions. Does not prove the executed generator, runtime behavior, or whole-export isolation."
+}

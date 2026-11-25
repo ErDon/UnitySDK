@@ -17,6 +17,38 @@
       "reviewer": "Codex byte-attribution review 2026-11-25",
       "evidenceReference": "inventory-sha256:5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0",
       "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/images/unity_logo.png. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "data-package/game.js",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "path": "game.json",
+      "sha256": "1be8747216b64b4f17d8d5d4fe8152fdb31bfcb87a827b2fd1c943deba10dd50",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers."
+    },
+    {
+      "path": "project.config.json",
+      "sha256": "1e3d48c056937f92ff365f73c621023e7014a0b1bd662fea5f83717d34b9bc70",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers."
+    },
+    {
+      "path": "wasmcode/game.js",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
     }
   ]
 }

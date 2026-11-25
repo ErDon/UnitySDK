@@ -151,3 +151,11 @@ SDK 自有运行时不依赖 C# 工作线程，WebGL 构建检查拒绝开启 `P
 - 官方 `ConvertForThread` 另受 `EnableRenderThread` 控制，升级官方 SDK 时也要核查该选项，不能仅检查 Brotli 标记。
 
 对应源码文件哈希与结论见 `compatibility/wechat-thread-source-review-2026-11-25.json`。不自动移除官方 Worker 或修改其脚本；需在目标版本、设备和配置上确认实际运行行为。以上审查不改变剩余真机验收和完整包体裁剪状态。
+
+### 内容审查增量（2026-11-25）
+
+最新逐文件记录为微信72项、抖音6项、TikTok11项，共89项；待审或阻断分别12/7/6项，共25项。此前70/44为历史进度。
+
+`compatibility/export-content-review-2026-11-25.json` 补充14项：7个零字节入口不包含可执行内容；6份 JSON 经过完整内容检查，属于声明式配置；1个 TikTok StreamingAssets 探针与工程源文件逐字节相等。配置引用的外部 UnityPlugin 仍需独立验证，配置审查不等于插件代码通过，原占位 App ID 和开发配置问题也未解除。
+
+`compatibility/wechat-template-review-2026-11-25.json` 补充5个脚本：index、storage、texture、font/index、check-version。源文件先核对固定官方库存哈希，再按报告中的 replacementMap 替换；以 outputEncoding 指定的 UTF-8 BOM 规则编码后，完整字节与导出一致，不忽略任何区域或规范化换行。报告包含源/目标哈希和全部替换值，可按相同方式复核。该结论证明目标模板可以还原导出内容，不证明实际执行了哪个生成器，也不替代完整包体和设备验收。

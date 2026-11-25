@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-11-25",
+  "files": [
+    {
+      "platform": "WeChat",
+      "path": "minigame/data-package/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "WeChat",
+      "path": "minigame/game.json",
+      "bytes": 654,
+      "sha256": "d3817031716b9191fa49e44de995533f3a8c979db56a55af3e2b8c71b83a59c7",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "deviceOrientation",
+        "iOSHighPerformance",
+        "iOSHighPerformance+",
+        "parallelPreloadSubpackages",
+        "plugins",
+        "subpackages",
+        "workers"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/wechat-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "WeChat",
+      "path": "minigame/project.config.json",
+      "bytes": 1724,
+      "sha256": "1a65051259380b04b3341f89c63a5c74ffef0ffa1851f8d1a88f1fcc1c6ace55",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "appid",
+        "compileType",
+        "condition",
+        "description",
+        "libVersion",
+        "packOptions",
+        "projectname",
+        "setting",
+        "simulatorPluginLibVersion",
+        "simulatorType"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/wechat-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "WeChat",
+      "path": "minigame/wasmcode/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "Douyin",
+      "path": "data-package/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "Douyin",
+      "path": "game.json",
+      "bytes": 719,
+      "sha256": "1be8747216b64b4f17d8d5d4fe8152fdb31bfcb87a827b2fd1c943deba10dd50",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "deviceOrientation",
+        "enableAndroidPipelineMode",
+        "enableIOSHighPerformanceMode",
+        "enableIOSHighPerformanceModePlus",
+        "enableWebGL2",
+        "graphicsDeviceType",
+        "menuButtonStyle",
+        "plugins",
+        "subpackages"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/douyin-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "Douyin",
+      "path": "project.config.json",
+      "bytes": 360,
+      "sha256": "1e3d48c056937f92ff365f73c621023e7014a0b1bd662fea5f83717d34b9bc70",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "appid",
+        "packOptions",
+        "projectname"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/douyin-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "Douyin",
+      "path": "wasmcode/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "TikTok",
+      "path": "data-package/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "TikTok",
+      "path": "game.json",
+      "bytes": 538,
+      "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "deviceOrientation",
+        "enableIOSHighPerformanceMode",
+        "enableIOSHighPerformanceModePlus",
+        "enableWebGL2",
+        "gameEngine",
+        "menuButtonStyle",
+        "originalWasmMd5",
+        "plugins",
+        "sdkVersion",
+        "subpackages",
+        "wasmCodeSize",
+        "wasmFuncCount"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/tiktok-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "TikTok",
+      "path": "project.config.json",
+      "bytes": 69,
+      "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "declarative-configuration",
+      "topLevelKeys": [
+        "appid",
+        "projectname"
+      ],
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers.",
+      "configurationReport": "compatibility/tiktok-runtime-config-2026-11-25.json"
+    },
+    {
+      "platform": "TikTok",
+      "path": "StreamingAssets/erdon-sdk-probe.txt",
+      "bytes": 41,
+      "sha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
+      "matchingPlatforms": [],
+      "classification": "unmatched-requires-review",
+      "kind": "test-resource",
+      "sourcePath": ".tests/TikTokBuildProject/Assets/StreamingAssets/erdon-sdk-probe.txt",
+      "sourceSha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
+      "reason": "Exact complete byte equality with the fixed project StreamingAssets test resource; not evidence of device-side reading."
+    },
+    {
+      "platform": "TikTok",
+      "path": "StreamingAssets/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "platform": "TikTok",
+      "path": "wasmcode/game.js",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matchingPlatforms": [
+        "WeChat"
+      ],
+      "classification": "empty-file-no-platform-attribution",
+      "kind": "empty-entry",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    }
+  ],
+  "limitation": "Content classification only; JSON plugin references are not validation of downloaded plugin code. No device or full-export isolation certification."
+}

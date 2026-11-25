@@ -5,14 +5,14 @@
     {
       "path": "minigame/check-version.js",
       "sha256": "85263b3a16c83599d11d1430fbadf13c799b4a83b7d447de48c6ea7b4f5e3e19",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 8296,
       "targetByteEvidence": null
     },
     {
       "path": "minigame/data-package/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -39,7 +39,7 @@
     {
       "path": "minigame/game.json",
       "sha256": "d3817031716b9191fa49e44de995533f3a8c979db56a55af3e2b8c71b83a59c7",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 654,
       "targetByteEvidence": null
     },
@@ -83,7 +83,7 @@
     {
       "path": "minigame/project.config.json",
       "sha256": "1a65051259380b04b3341f89c63a5c74ffef0ffa1851f8d1a88f1fcc1c6ace55",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 1724,
       "targetByteEvidence": null
     },
@@ -348,7 +348,7 @@
     {
       "path": "minigame/unity-sdk/font/index.js",
       "sha256": "3030ddbbd6c5f950e675d3468e4f0cdf5fec1f7b61667f503029af64690c86e0",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 6910,
       "targetByteEvidence": null
     },
@@ -440,7 +440,7 @@
     {
       "path": "minigame/unity-sdk/index.js",
       "sha256": "a21575fcc35fce95c4fd272a6166f58fb395baf89c7d9da068af725604041689",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 3132,
       "targetByteEvidence": null
     },
@@ -575,7 +575,7 @@
     {
       "path": "minigame/unity-sdk/storage.js",
       "sha256": "02b63202110160b4e190ce44173b67d1d94f5d8e2572e4bfeb07a48960d095de",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 4432,
       "targetByteEvidence": null
     },
@@ -594,7 +594,7 @@
     {
       "path": "minigame/unity-sdk/texture.js",
       "sha256": "088318cc54fe59dfb6afdd33055546be07b1e9c80eac36d05882abbdd9aba119",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 11345,
       "targetByteEvidence": null
     },
@@ -706,7 +706,7 @@
     {
       "path": "minigame/wasmcode/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -941,8 +941,8 @@
       }
     }
   ],
-  "reviewed": 63,
-  "pendingOrBlocked": 21,
+  "reviewed": 72,
+  "pendingOrBlocked": 12,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

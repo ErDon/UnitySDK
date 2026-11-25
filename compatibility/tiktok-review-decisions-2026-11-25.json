@@ -41,6 +41,54 @@
       "reviewer": "Codex byte-attribution review 2026-11-25",
       "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
       "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/plugin.provenance.json. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "data-package/game.js",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "path": "game.json",
+      "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers."
+    },
+    {
+      "path": "project.config.json",
+      "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Manually inspected complete declarative export configuration. External UnityPlugin references remain runtime dependencies requiring separate validation. Placeholder App ID/development settings remain release blockers."
+    },
+    {
+      "path": "StreamingAssets/erdon-sdk-probe.txt",
+      "sha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Exact complete byte equality with the fixed project StreamingAssets test resource; not evidence of device-side reading."
+    },
+    {
+      "path": "StreamingAssets/game.js",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "path": "wasmcode/game.js",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verdict": "game-content",
+      "reviewer": "Codex content review 2026-11-25",
+      "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
+      "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
     }
   ]
 }

@@ -12,7 +12,7 @@
     {
       "path": "data-package/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -26,7 +26,7 @@
     {
       "path": "game.json",
       "sha256": "1be8747216b64b4f17d8d5d4fe8152fdb31bfcb87a827b2fd1c943deba10dd50",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 719,
       "targetByteEvidence": null
     },
@@ -64,7 +64,7 @@
     {
       "path": "project.config.json",
       "sha256": "1e3d48c056937f92ff365f73c621023e7014a0b1bd662fea5f83717d34b9bc70",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 360,
       "targetByteEvidence": null
     },
@@ -85,7 +85,7 @@
     {
       "path": "wasmcode/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 0,
       "targetByteEvidence": null
     },
@@ -104,8 +104,8 @@
       "targetByteEvidence": null
     }
   ],
-  "reviewed": 2,
-  "pendingOrBlocked": 11,
+  "reviewed": 6,
+  "pendingOrBlocked": 7,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

@@ -2,6 +2,7 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import hashlib
+import json
 import unittest
 
 spec = importlib.util.spec_from_file_location('export_review', Path(__file__).resolve().parents[1] / 'tools/review-export-isolation.py')
@@ -10,6 +11,19 @@ spec.loader.exec_module(module)
 
 
 class ReviewTests(unittest.TestCase):
+    def test_baseline_hash_binding_rejects_changed_and_duplicate_inventory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder)/'vendor.json'
+            source.write_text(json.dumps({'schemaVersion': 2, 'coverage': 'all-files', 'platform': 'WeChat',
+                'files': [{'path': 'vendor.js', 'bytes': 1, 'sha256': 'a'*64}]}))
+            report = {'platform': 'WeChat', 'baselines': [{'platform': 'WeChat',
+                'inventorySha256': hashlib.sha256(source.read_bytes()).hexdigest()}],
+                'files': [{'path': 'renamed.js', 'bytes': 1, 'sha256': 'a'*64}]}
+            self.assertEqual(module.baseline_evidence(report, [source])['renamed.js']['sourcePaths'], ['vendor.js'])
+            with self.assertRaises(ValueError): module.baseline_evidence(report, [source, source])
+            source.write_text(source.read_text()+' ')
+            with self.assertRaises(ValueError): module.baseline_evidence(report, [source])
+
     def test_missing_stale_and_foreign_cannot_pass(self):
         report = {'schemaVersion': 1, 'platform': 'WeChat', 'files': [
             {'path': 'game.js', 'bytes': 1, 'sha256': 'a'*64, 'classification': 'unmatched-requires-review'}]}

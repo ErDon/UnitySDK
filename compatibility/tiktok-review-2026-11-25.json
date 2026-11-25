@@ -6,108 +6,151 @@
       "path": "data-package/0ceb2fdcfb74c236.webgl.data.unityweb.bin.br",
       "sha256": "de4a587c3caa821ee89cdc241d1dd8aeebd28408c15b1227599ae61c0b6f8576",
       "state": "pending-review",
-      "bytes": 1135422
+      "bytes": 1135422,
+      "targetByteEvidence": null
     },
     {
       "path": "data-package/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "state": "pending-review",
-      "bytes": 0
+      "bytes": 0,
+      "targetByteEvidence": null
     },
     {
       "path": "game.js",
       "sha256": "f0d5a36879a90d40eab2f12470a1ce3eefe7dc01b905abceca9a5b880b467ebc",
       "state": "pending-review",
-      "bytes": 4513
+      "bytes": 4513,
+      "targetByteEvidence": null
     },
     {
       "path": "game.json",
       "sha256": "29f5f79d023615bf4c7f6b501056d0651a8c05bdbe7a81f9a960bd8f75923a2f",
       "state": "pending-review",
-      "bytes": 538
+      "bytes": 538,
+      "targetByteEvidence": null
     },
     {
       "path": "images/background.png",
       "sha256": "e430cc1ea369eb3e6aece786f15d1e0b35ce6275d686258d6251308dd89c72b1",
-      "state": "pending-review",
-      "bytes": 31536
+      "state": "review-recorded",
+      "bytes": 31536,
+      "targetByteEvidence": {
+        "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+        "sourcePaths": [
+          "DefaultTemplate/backgroundportrait.png"
+        ]
+      }
     },
     {
       "path": "images/unity_logo.png",
       "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6",
-      "state": "pending-review",
-      "bytes": 9664
+      "state": "review-recorded",
+      "bytes": 9664,
+      "targetByteEvidence": {
+        "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+        "sourcePaths": [
+          "DefaultTemplate/images/unity_logo.png"
+        ]
+      }
     },
     {
       "path": "plugin-config.js",
       "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2",
-      "state": "pending-review",
-      "bytes": 529
+      "state": "review-recorded",
+      "bytes": 529,
+      "targetByteEvidence": {
+        "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+        "sourcePaths": [
+          "DefaultTemplate/plugin-config.js"
+        ]
+      }
     },
     {
       "path": "plugin.js",
       "sha256": "93e25bd22663b61f922cc73d78538297772ee5466c60de42b810c0cbee42306d",
-      "state": "pending-review",
-      "bytes": 839734
+      "state": "review-recorded",
+      "bytes": 839734,
+      "targetByteEvidence": {
+        "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+        "sourcePaths": [
+          "DefaultTemplate/plugin.js"
+        ]
+      }
     },
     {
       "path": "plugin.provenance.json",
       "sha256": "28e22759c5171859add635ae63ce6f5c87521b937b3b9ca6a8f024d10822d970",
-      "state": "pending-review",
-      "bytes": 592
+      "state": "review-recorded",
+      "bytes": 592,
+      "targetByteEvidence": {
+        "inventorySha256": "e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+        "sourcePaths": [
+          "DefaultTemplate/plugin.provenance.json"
+        ]
+      }
     },
     {
       "path": "project.config.json",
       "sha256": "4469caa15237b0230b8de10373faf8b0c92dd0675285ca2c39c808b25c14c70f",
       "state": "pending-review",
-      "bytes": 69
+      "bytes": 69,
+      "targetByteEvidence": null
     },
     {
       "path": "StreamingAssets/erdon-sdk-probe.txt",
       "sha256": "2e7673ddcaca54e841085c89d28082e7b14b48660b67d31bf994ec250f1c6793",
       "state": "pending-review",
-      "bytes": 41
+      "bytes": 41,
+      "targetByteEvidence": null
     },
     {
       "path": "StreamingAssets/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "state": "pending-review",
-      "bytes": 0
+      "bytes": 0,
+      "targetByteEvidence": null
     },
     {
       "path": "unity-namespace.js",
       "sha256": "387850337a3fd248bc77a6cfd0bcc1ec03d837e4f2c91b368f330be400b7077f",
       "state": "pending-review",
-      "bytes": 437
+      "bytes": 437,
+      "targetByteEvidence": null
     },
     {
       "path": "wasmcode/b7cf5f7d5eff158d.webgl.wasm.code.unityweb.wasm.br",
       "sha256": "2c902a6d5987eac380c541d6047870f4c73ba42010933504b489fdd597a66776",
       "state": "pending-review",
-      "bytes": 5685301
+      "bytes": 5685301,
+      "targetByteEvidence": null
     },
     {
       "path": "wasmcode/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "state": "pending-review",
-      "bytes": 0
+      "bytes": 0,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl-wasm-split.js",
       "sha256": "b87d4fce279dbaf306305a6d93cae2ef88d61b16b1d3703965787a70e9822639",
       "state": "pending-review",
-      "bytes": 894
+      "bytes": 894,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl.framework.js",
       "sha256": "f1ce9e017f7cefabccfa23f23a0aebace93ccf35546eb3ad38a975c7478a3e4b",
       "state": "pending-review",
-      "bytes": 766913
+      "bytes": 766913,
+      "targetByteEvidence": null
     }
   ],
-  "reviewed": 0,
-  "pendingOrBlocked": 17,
+  "reviewed": 5,
+  "pendingOrBlocked": 12,
   "removedReviewPaths": [],
   "reviewComplete": false,
-  "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence."
+  "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",
+  "targetByteMatchCount": 5
 }

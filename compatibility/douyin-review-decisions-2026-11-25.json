@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "platform": "Douyin",
+  "reviews": [
+    {
+      "path": "images/background.png",
+      "sha256": "ec37b6e03810688a88276cb616ad4dc12907416820301c693b7f779534561e97",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/backgroundportrait.png. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "images/unity_logo.png",
+      "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:5bfc09920038ebcec911db230ce774e2a89ad7d00e523987192d6f5862d8c5b0",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/images/unity_logo.png. Byte attribution only; no runtime or module-isolation claim."
+    }
+  ]
+}

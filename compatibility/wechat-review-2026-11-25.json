@@ -6,510 +6,945 @@
       "path": "minigame/check-version.js",
       "sha256": "85263b3a16c83599d11d1430fbadf13c799b4a83b7d447de48c6ea7b4f5e3e19",
       "state": "pending-review",
-      "bytes": 8296
+      "bytes": 8296,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/data-package/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "state": "pending-review",
-      "bytes": 0
+      "bytes": 0,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/events.js",
       "sha256": "b040773760fe21c179d31774050bbecdf5b507ca6ea9502ff9a9189c30386d78",
-      "state": "pending-review",
-      "bytes": 1603
+      "state": "review-recorded",
+      "bytes": 1603,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/events.js",
+          "Runtime/wechat-default/events.js"
+        ]
+      }
     },
     {
       "path": "minigame/game.js",
       "sha256": "2e0e007eef68804d2399c478964346a05089de5ade2801de11316959811ae1a9",
       "state": "pending-review",
-      "bytes": 8188
+      "bytes": 8188,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/game.json",
       "sha256": "d3817031716b9191fa49e44de995533f3a8c979db56a55af3e2b8c71b83a59c7",
       "state": "pending-review",
-      "bytes": 654
+      "bytes": 654,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/images/background.jpg",
       "sha256": "ee88b4672db843d57b164c5deeaf62e096e3bf91881bdba71a85dd980687db80",
-      "state": "pending-review",
-      "bytes": 8917
+      "state": "review-recorded",
+      "bytes": 8917,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/images/background.jpg"
+        ]
+      }
     },
     {
       "path": "minigame/images/unity_logo.png",
       "sha256": "34799ce1b7a341e39c6c6ea7fa439f170989f3ecc5d0cd3681573569b4b6d239",
-      "state": "pending-review",
-      "bytes": 1216
+      "state": "review-recorded",
+      "bytes": 1216,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/images/unity_logo.png"
+        ]
+      }
     },
     {
       "path": "minigame/plugin-config.js",
       "sha256": "4cde1dc76bbd76fda77060b30e48d78f2c82bb8411b09af0fc3a7f3f94bf2773",
-      "state": "pending-review",
-      "bytes": 506
+      "state": "review-recorded",
+      "bytes": 506,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/plugin-config.js",
+          "Runtime/wechat-default/plugin-config.js"
+        ]
+      }
     },
     {
       "path": "minigame/project.config.json",
       "sha256": "1a65051259380b04b3341f89c63a5c74ffef0ffa1851f8d1a88f1fcc1c6ace55",
       "state": "pending-review",
-      "bytes": 1724
+      "bytes": 1724,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/texture-config.js",
       "sha256": "747f107b820fab04666d6e00a01e124cee51aab7892011bd7506ed9fa4a9a455",
-      "state": "pending-review",
-      "bytes": 125
+      "state": "review-recorded",
+      "bytes": 125,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/texture-config.js",
+          "Runtime/wechat-default/texture-config.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-namespace.js",
       "sha256": "520b6bc6383555d830beac87bfe094bb6bfd13187b840b39f3e8d93dd34dc259",
       "state": "pending-review",
-      "bytes": 9011
+      "bytes": 9011,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/unity-sdk/ad.js",
       "sha256": "57299dc48c137dfe484fbe49fbec06c66810bc783ac9a1cde3881b1d8e089057",
-      "state": "pending-review",
-      "bytes": 9184
+      "state": "review-recorded",
+      "bytes": 9184,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/ad.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/common.js",
       "sha256": "2cb325f790a783d055980c58b23bdf0ce0990b6db032c58d5c7f29f6967b8e6d",
-      "state": "pending-review",
-      "bytes": 2301
+      "state": "review-recorded",
+      "bytes": 2301,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/audio/common.js",
+          "Runtime/wechat-default/unity-sdk/audio/common.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/const.js",
       "sha256": "29eb91c715c36542ec43783688b5a39d2809b6da77c99920e1e3fc1b12a0e237",
-      "state": "pending-review",
-      "bytes": 234
+      "state": "review-recorded",
+      "bytes": 234,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/audio/const.js",
+          "Runtime/wechat-default/unity-sdk/audio/const.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/index.js",
       "sha256": "e6b24fec45d4537d4bb9be479266c0b69a42b20efd8dcf51c4400c62f2edbfa5",
-      "state": "pending-review",
-      "bytes": 192
+      "state": "review-recorded",
+      "bytes": 192,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/audio/index.js",
+          "Runtime/wechat-default/unity-sdk/audio/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/inner-audio.js",
       "sha256": "9e5fe09d1935a466a5d9487eae3b787c2de4b6f52c58df6d24fe4ed0c3dca1ae",
-      "state": "pending-review",
-      "bytes": 12629
+      "state": "review-recorded",
+      "bytes": 12629,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/audio/inner-audio.js",
+          "Runtime/wechat-default/unity-sdk/audio/inner-audio.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/store.js",
       "sha256": "9d18d0e3e4c160bbd808aa80cb91098fd85730e4526cb54a796259c5c45760c3",
-      "state": "pending-review",
-      "bytes": 692
+      "state": "review-recorded",
+      "bytes": 692,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/audio/store.js",
+          "Runtime/wechat-default/unity-sdk/audio/store.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/unity-audio.js",
       "sha256": "b91336ff1dac1184c2f556202f5859c51f334557e832944cacdd98a9108c90ad",
-      "state": "pending-review",
-      "bytes": 48378
+      "state": "review-recorded",
+      "bytes": 48378,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/audio/unity-audio.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/audio/utils.js",
       "sha256": "9988b68c53ac1ea6f49a44d1edfed2a7701c4ff517c24151c24cdb50eca8992b",
-      "state": "pending-review",
-      "bytes": 2138
+      "state": "review-recorded",
+      "bytes": 2138,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/audio/utils.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/authorize.js",
       "sha256": "2e97f46ee0a73b1539d113ccf368406305085dc0c50554585aeff5eae2d383b0",
-      "state": "pending-review",
-      "bytes": 758
+      "state": "review-recorded",
+      "bytes": 758,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/authorize.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/bluetooth/index.js",
       "sha256": "17644ef87629da1985371f26fdfd7ed934c1c01353396f26237c5924b7c35f12",
-      "state": "pending-review",
-      "bytes": 1316
+      "state": "review-recorded",
+      "bytes": 1316,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/bluetooth/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/camera.js",
       "sha256": "4fde26e81b23342f753c91945bbb42bc1204ceba75e97031bc6dfb011706bf59",
-      "state": "pending-review",
-      "bytes": 3058
+      "state": "review-recorded",
+      "bytes": 3058,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/camera.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/canvas-context.js",
       "sha256": "e942f4f9130cbeb12bf27a336e5c3b93dc54d565305103eac23476e72f3fd014",
-      "state": "pending-review",
-      "bytes": 346
+      "state": "review-recorded",
+      "bytes": 346,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/canvas-context.js",
+          "Runtime/wechat-default/unity-sdk/canvas-context.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/canvas.js",
       "sha256": "24ec91fb33716b68603a03f66b0bdc7987b097449f37c23e218cb8c831462258",
-      "state": "pending-review",
-      "bytes": 853
+      "state": "review-recorded",
+      "bytes": 853,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/canvas.js",
+          "Runtime/wechat-default/unity-sdk/canvas.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/chat.js",
       "sha256": "ec801faf206d2572afaf51efb659e21ce2a8800ec1a4578823220c4758a34122",
-      "state": "pending-review",
-      "bytes": 5229
+      "state": "review-recorded",
+      "bytes": 5229,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/chat.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/cloud.js",
       "sha256": "daac546691551a941b7676c7e9d1231040855225a2d80b4776870ef4d404a4f9",
-      "state": "pending-review",
-      "bytes": 9225
+      "state": "review-recorded",
+      "bytes": 9225,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/cloud.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/conf.js",
       "sha256": "a900dd0795f655c3f3958aa949071e762cb301d4548f66e30e1c4b6f9bb9d10e",
-      "state": "pending-review",
-      "bytes": 51
+      "state": "review-recorded",
+      "bytes": 51,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/conf.js",
+          "Runtime/wechat-default/unity-sdk/conf.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/file-info.js",
       "sha256": "5e8900c9285d62b25b7e3d404990072f8ef00304738c56ca015d32faf1c1c35d",
-      "state": "pending-review",
-      "bytes": 1621
+      "state": "review-recorded",
+      "bytes": 1621,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/file-info.js",
+          "Runtime/wechat-default/unity-sdk/file-info.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/fix.js",
       "sha256": "0f50eead697dbcc8df6de8b22d5c4050b46e03e2429633f4c1c8a9aece361c25",
-      "state": "pending-review",
-      "bytes": 2865
+      "state": "review-recorded",
+      "bytes": 2865,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/fix.js",
+          "Runtime/wechat-default/unity-sdk/fix.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/font/fix-cmap.js",
       "sha256": "d9bb1e27cc03eb1dfb88c9efec9e38886029e90c6cfef9ba792b0dcda116cfda",
-      "state": "pending-review",
-      "bytes": 2305
+      "state": "review-recorded",
+      "bytes": 2305,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/font/fix-cmap.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/font/index.js",
       "sha256": "3030ddbbd6c5f950e675d3468e4f0cdf5fec1f7b61667f503029af64690c86e0",
       "state": "pending-review",
-      "bytes": 6910
+      "bytes": 6910,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/unity-sdk/font/read-metrics.js",
       "sha256": "853991b99532d73793f1bfb79416ceae8313d4c1777134c9ca9ea6554c224a80",
-      "state": "pending-review",
-      "bytes": 1393
+      "state": "review-recorded",
+      "bytes": 1393,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/font/read-metrics.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/font/split-sc.js",
       "sha256": "00df8c6ca287fa8028b0d04297e37ec0545f395e8a749dcbd86fb40e05dd8f01",
-      "state": "pending-review",
-      "bytes": 4755
+      "state": "review-recorded",
+      "bytes": 4755,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/font/split-sc.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/font/util.js",
       "sha256": "109eaa34eeb36476f3387aa72b5e6f54eb2b249147f17bfacf5abddc5a0e8110",
-      "state": "pending-review",
-      "bytes": 479
+      "state": "review-recorded",
+      "bytes": 479,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/font/util.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/fs.js",
       "sha256": "8d6969f4112d2369035c577072f06b5d9091ea7729afda6f7a01c40c5ede1e13",
-      "state": "pending-review",
-      "bytes": 16691
+      "state": "review-recorded",
+      "bytes": 16691,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/fs.js",
+          "Runtime/wechat-default/unity-sdk/fs.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/game-club.js",
       "sha256": "5aaec00ef0551e0e8864e6a917eab2fe2d39de58743b15c8d483b4fcae3be56f",
-      "state": "pending-review",
-      "bytes": 2606
+      "state": "review-recorded",
+      "bytes": 2606,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/game-club.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/game-recorder.js",
       "sha256": "4846a1a381ae17bdeb3d7c310be0d2e33bf19bf07b29dfb5338eab3f30398db4",
-      "state": "pending-review",
-      "bytes": 3278
+      "state": "review-recorded",
+      "bytes": 3278,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/game-recorder.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/gyroscope/index.js",
       "sha256": "d4076914b6b8bdce7b32b1dfb896e1e2cae7189aeaba1c189f1b204f07fa9650",
-      "state": "pending-review",
-      "bytes": 2626
+      "state": "review-recorded",
+      "bytes": 2626,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/gyroscope/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/index.js",
       "sha256": "a21575fcc35fce95c4fd272a6166f58fb395baf89c7d9da068af725604041689",
       "state": "pending-review",
-      "bytes": 3132
+      "bytes": 3132,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/unity-sdk/logger.js",
       "sha256": "68acc1be024a5bbe99efe4bd1cbb2b9d5abaa850222d355032f28f04cbd25fd7",
-      "state": "pending-review",
-      "bytes": 647
+      "state": "review-recorded",
+      "bytes": 647,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/logger.js",
+          "Runtime/wechat-default/unity-sdk/logger.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/mobileKeyboard/index.js",
       "sha256": "4ab0aba997bab4acf7d5054a1ff7a35d9736db3494317b8009737419d33ea41d",
-      "state": "pending-review",
-      "bytes": 4410
+      "state": "review-recorded",
+      "bytes": 4410,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/mobileKeyboard/index.js",
+          "Runtime/wechat-default/unity-sdk/mobileKeyboard/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/module-helper.js",
       "sha256": "74942d02be0bc53241dee02785446a1d8b11bd8d0e188b0711d618c77a0fcbb8",
-      "state": "pending-review",
-      "bytes": 370
+      "state": "review-recorded",
+      "bytes": 370,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/module-helper.js",
+          "Runtime/wechat-default/unity-sdk/module-helper.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/open-data.js",
       "sha256": "0e849405275a42f450b49879b1a431e3eb2db1fa12114179ee40a1ae2e9c4cff",
-      "state": "pending-review",
-      "bytes": 7875
+      "state": "review-recorded",
+      "bytes": 7875,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/open-data.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/recorder.js",
       "sha256": "01b39f691e6838eade0b9e67ef044ce1424b975767bba6733909d93db328f2ed",
-      "state": "pending-review",
-      "bytes": 4625
+      "state": "review-recorded",
+      "bytes": 4625,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/recorder.js",
+          "Runtime/wechat-default/unity-sdk/recorder.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/response.js",
       "sha256": "8cd27555e11feb719d80fb0d85cd7305ef4da34b91d3e26caeae9d309a0dbc72",
-      "state": "pending-review",
-      "bytes": 1965
+      "state": "review-recorded",
+      "bytes": 1965,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/response.js",
+          "Runtime/wechat-default/unity-sdk/response.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/resType.js",
       "sha256": "efb540ed1dc1930cbf2f88fc56830555d7e2be250cc7f8df883cacacbcf8a94b",
-      "state": "pending-review",
-      "bytes": 31280
+      "state": "review-recorded",
+      "bytes": 31280,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/resType.js",
+          "Runtime/wechat-default/unity-sdk/resType.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/resTypeOther.js",
       "sha256": "69f973d890e3263f3f93da035efe1c9db72ccb9b1403be28f468fd3de6630df5",
-      "state": "pending-review",
-      "bytes": 2390
+      "state": "review-recorded",
+      "bytes": 2390,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/resTypeOther.js",
+          "Runtime/wechat-default/unity-sdk/resTypeOther.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/sdk.js",
       "sha256": "d7288452cae5ac5c6d6b8b36878386dda03aed3b7a3834f04f999592b38fc708",
-      "state": "pending-review",
-      "bytes": 17674
+      "state": "review-recorded",
+      "bytes": 17674,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/sdk.js",
+          "Runtime/wechat-default/unity-sdk/sdk.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/share.js",
       "sha256": "1fba77a20c73df4f12931c93c02957bf214d888414c2fe171e82db397aa4f10c",
-      "state": "pending-review",
-      "bytes": 837
+      "state": "review-recorded",
+      "bytes": 837,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/share.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/storage.js",
       "sha256": "02b63202110160b4e190ce44173b67d1d94f5d8e2572e4bfeb07a48960d095de",
       "state": "pending-review",
-      "bytes": 4432
+      "bytes": 4432,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/unity-sdk/TCPSocket/index.js",
       "sha256": "d9bbe9357f925ad4ed5204a60c22ddcc7dd138073b9b634e85b6eadc00ac103f",
-      "state": "pending-review",
-      "bytes": 5548
+      "state": "review-recorded",
+      "bytes": 5548,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/TCPSocket/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/texture.js",
       "sha256": "088318cc54fe59dfb6afdd33055546be07b1e9c80eac36d05882abbdd9aba119",
       "state": "pending-review",
-      "bytes": 11345
+      "bytes": 11345,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/unity-sdk/touch/index.js",
       "sha256": "b110180e56d65bd059c37cd8ac6fe835cf8e3cc344380ea6a1b7dc6ffef54220",
-      "state": "pending-review",
-      "bytes": 2378
+      "state": "review-recorded",
+      "bytes": 2378,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/touch/index.js",
+          "Runtime/wechat-default/unity-sdk/touch/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/UDPSocket/index.js",
       "sha256": "98edef499351a98b51bc5e64e54cc51b5a8eee12fd68033dc02c25df3936d071",
-      "state": "pending-review",
-      "bytes": 6467
+      "state": "review-recorded",
+      "bytes": 6467,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/UDPSocket/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/upload-file.js",
       "sha256": "2f504cc44070e3c6b506e7e848c452cf451ea1903a4f29af6dd0e1caa8884ee9",
-      "state": "pending-review",
-      "bytes": 2739
+      "state": "review-recorded",
+      "bytes": 2739,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/upload-file.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/userinfo.js",
       "sha256": "fa8ff11ebb1a0ea091bf32431a871de5ddd40adb19f229415673165f04dd9232",
-      "state": "pending-review",
-      "bytes": 3012
+      "state": "review-recorded",
+      "bytes": 3012,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/userinfo.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/util.js",
       "sha256": "e162f10a43dbc8318ba9b868f394531ed37c1bc952cbade11c2d6591d63234f7",
-      "state": "pending-review",
-      "bytes": 6589
+      "state": "review-recorded",
+      "bytes": 6589,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/util.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/utils.js",
       "sha256": "138cce4f770745ee943cd4a8b97d22c03e3fdf94b1537b1d7823be44ffc0f158",
-      "state": "pending-review",
-      "bytes": 13687
+      "state": "review-recorded",
+      "bytes": 13687,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/utils.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/video/index.js",
       "sha256": "00cf6813ce44c218348aca013c5cec563a9e58ce9789ebd80322f4d2ba95dc61",
-      "state": "pending-review",
-      "bytes": 24252
+      "state": "review-recorded",
+      "bytes": 24252,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/unity-sdk/video/index.js"
+        ]
+      }
     },
     {
       "path": "minigame/unity-sdk/video.js",
       "sha256": "fb7785b2d2cc34474546bed81106bae14043838ea10c4e2c7efcc6d02eb7c117",
-      "state": "pending-review",
-      "bytes": 2628
+      "state": "review-recorded",
+      "bytes": 2628,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/playable-default/unity-sdk/video.js",
+          "Runtime/wechat-default/unity-sdk/video.js"
+        ]
+      }
     },
     {
       "path": "minigame/wasmcode/8236f74a58646f29.webgl.wasm.code.unityweb.wasm.br",
       "sha256": "932c111ebc9a64d2e174de598aca52a66f6d5c225830984056c45a4b244e81a0",
       "state": "pending-review",
-      "bytes": 3899102
+      "bytes": 3899102,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/wasmcode/game.js",
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "state": "pending-review",
-      "bytes": 0
+      "bytes": 0,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/weapp-adapter.js",
       "sha256": "233bece29813e3cc0b884477732027f51747221e3ea5157614eaa7569686d699",
-      "state": "pending-review",
-      "bytes": 76398
+      "state": "review-recorded",
+      "bytes": 76398,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/weapp-adapter.js"
+        ]
+      }
     },
     {
       "path": "minigame/webgl.wasm.framework.unityweb.js",
       "sha256": "d95467f9888985cf7ead89a43375aef8976c1ed8fbc1305fb59e802032a45b56",
       "state": "pending-review",
-      "bytes": 792131
+      "bytes": 792131,
+      "targetByteEvidence": null
     },
     {
       "path": "minigame/workers/response/index.js",
       "sha256": "b0781ac1b05eca2a753a7ef0200a51a2e3dfcbf3de86c5b77d265d4cfdb5f633",
-      "state": "pending-review",
-      "bytes": 2273
+      "state": "review-recorded",
+      "bytes": 2273,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "Runtime/wechat-default/workers/response/index.js"
+        ]
+      }
     },
     {
       "path": "webgl/4be94e3e3b77de78.webgl.data.unityweb.bin.txt",
       "sha256": "10d1ed43d6fbe3bfc9fd2e92c7fc33f7da24e52cd26a440be4dde7c15ca650a5",
       "state": "pending-review",
-      "bytes": 3253887
+      "bytes": 3253887,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/8236f74a58646f29.webgl.wasm.code.unityweb.wasm.br",
       "sha256": "932c111ebc9a64d2e174de598aca52a66f6d5c225830984056c45a4b244e81a0",
       "state": "pending-review",
-      "bytes": 3899102
+      "bytes": 3899102,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/Build/webgl.data",
       "sha256": "10d1ed43d6fbe3bfc9fd2e92c7fc33f7da24e52cd26a440be4dde7c15ca650a5",
       "state": "pending-review",
-      "bytes": 3253887
+      "bytes": 3253887,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/Build/webgl.framework.js",
       "sha256": "e2ccb67f0d3afb0e4362bcedafeb91cc4f334c7cb8c50843b87e1b79319f815b",
       "state": "pending-review",
-      "bytes": 789570
+      "bytes": 789570,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/Build/webgl.loader.js",
       "sha256": "c14607ce57dcc658de2a514e90a3afd1c30f385adf51bf494750061c36a5d161",
       "state": "pending-review",
-      "bytes": 26435
+      "bytes": 26435,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/Build/webgl.wasm",
       "sha256": "9b0c488e1e5b9cfb85421fa5ae6bcb4d70ddafc970d8eb7e3f91045aafa6f71c",
       "state": "pending-review",
-      "bytes": 18073582
+      "bytes": 18073582,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/index.html",
       "sha256": "d54540a33c42aedd5b3d4bef040d3549bc86c80a876b63eeadcf632f31a1d54d",
       "state": "pending-review",
-      "bytes": 21840
+      "bytes": 21840,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/TemplateData/favicon.ico",
       "sha256": "9c13beb90ee8f70580d52a21d5233970d1c89e71e4a34a462c22610941c3c77f",
-      "state": "pending-review",
-      "bytes": 2305
+      "state": "review-recorded",
+      "bytes": 2305,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/favicon.ico",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/favicon.ico"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/fullscreen-button.png",
       "sha256": "21221581673a54b8139d408d4a3f8d2b879e86827d4b6fc53b995ff7a99ee3e9",
-      "state": "pending-review",
-      "bytes": 175
+      "state": "review-recorded",
+      "bytes": 175,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/fullscreen-button.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/fullscreen-button.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/MemoryProfiler.png",
       "sha256": "0ce87be20d0c24ab6cb73b57de2004da261cc2a641e69319c6ae3fe11fc85483",
-      "state": "pending-review",
-      "bytes": 665
+      "state": "review-recorded",
+      "bytes": 665,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/MemoryProfiler.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/MemoryProfiler.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/progress-bar-empty-dark.png",
       "sha256": "bbee7131afe8a3365906240d89184dc86234c119467f390bc4bc6802328fdb4d",
-      "state": "pending-review",
-      "bytes": 96
+      "state": "review-recorded",
+      "bytes": 96,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/progress-bar-empty-dark.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/progress-bar-empty-dark.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/progress-bar-empty-light.png",
       "sha256": "143696c060ad43d6c30f19ff5f49000927a139a2a1e4c9f45fafaa2b90d7d2be",
-      "state": "pending-review",
-      "bytes": 109
+      "state": "review-recorded",
+      "bytes": 109,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/progress-bar-empty-light.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/progress-bar-empty-light.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/progress-bar-full-dark.png",
       "sha256": "3306a6244dcb3926fca38a28e3ced589df8ff1beed955eb17c0bbf01c918bc62",
-      "state": "pending-review",
-      "bytes": 74
+      "state": "review-recorded",
+      "bytes": 74,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/progress-bar-full-dark.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/progress-bar-full-dark.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/progress-bar-full-light.png",
       "sha256": "12395ea785480c5cdf12fade6e6cbf49666d5bb1cef7240c113dbcba6bdc5c87",
-      "state": "pending-review",
-      "bytes": 84
+      "state": "review-recorded",
+      "bytes": 84,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/progress-bar-full-light.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/progress-bar-full-light.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/style.css",
       "sha256": "e54c74b515a2086fa96807b78a046728d8c44ce55e95ad13c1fe12e7e2a68c4c",
       "state": "pending-review",
-      "bytes": 1444
+      "bytes": 1444,
+      "targetByteEvidence": null
     },
     {
       "path": "webgl/TemplateData/unity-logo-dark.png",
       "sha256": "c1b72d26c096487dabc948b54bc203f8dac7ed4e3f5733918798e858acb4b159",
-      "state": "pending-review",
-      "bytes": 3042
+      "state": "review-recorded",
+      "bytes": 3042,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/unity-logo-dark.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/tuanjie-logo-dark.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/unity-logo-light.png",
       "sha256": "002990aea0d946833cadc1519d5b7e50a4570bd537a0517dd79a59d3eec84da7",
-      "state": "pending-review",
-      "bytes": 3077
+      "state": "review-recorded",
+      "bytes": 3077,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/unity-logo-light.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/tuanjie-logo-light.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/webgl-logo.png",
       "sha256": "b30c3af2a4538c6edf5f2411953760641dfa257f2a4cc5b88d671aa243b1f12f",
-      "state": "pending-review",
-      "bytes": 2947
+      "state": "review-recorded",
+      "bytes": 2947,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/webgl-logo.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/webgl-logo.png"
+        ]
+      }
     },
     {
       "path": "webgl/TemplateData/webmemd-icon.png",
       "sha256": "c56f5494640cedda273aad38d58e6ab9da625d5b3f4d875c0ff92c6192a569c2",
-      "state": "pending-review",
-      "bytes": 1670
+      "state": "review-recorded",
+      "bytes": 1670,
+      "targetByteEvidence": {
+        "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+        "sourcePaths": [
+          "WebGLTemplates/WXTemplate2022/TemplateData/webmemd-icon.png",
+          "WebGLTemplates/WXTemplate2022TJ/TemplateData/webmemd-icon.png"
+        ]
+      }
     }
   ],
-  "reviewed": 0,
-  "pendingOrBlocked": 84,
+  "reviewed": 63,
+  "pendingOrBlocked": 21,
   "removedReviewPaths": [],
   "reviewComplete": false,
-  "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence."
+  "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",
+  "targetByteMatchCount": 63
 }

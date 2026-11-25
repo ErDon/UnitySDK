@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "platform": "TikTok",
+  "reviews": [
+    {
+      "path": "images/background.png",
+      "sha256": "e430cc1ea369eb3e6aece786f15d1e0b35ce6275d686258d6251308dd89c72b1",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/backgroundportrait.png. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "images/unity_logo.png",
+      "sha256": "9876d0e4f7caf5180358697ee78ef9d1b688367b4a7f31d6f9ecf01ce76cc1f6",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/images/unity_logo.png. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "plugin-config.js",
+      "sha256": "ee4a6205c59e3b15e3fc191f1fe4fa4eb2ce67f7a224f3412a897520def01ae2",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/plugin-config.js. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "plugin.js",
+      "sha256": "93e25bd22663b61f922cc73d78538297772ee5466c60de42b810c0cbee42306d",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/plugin.js. Byte attribution only; no runtime or module-isolation claim."
+    },
+    {
+      "path": "plugin.provenance.json",
+      "sha256": "28e22759c5171859add635ae63ce6f5c87521b937b3b9ca6a8f024d10822d970",
+      "verdict": "target",
+      "reviewer": "Codex byte-attribution review 2026-11-25",
+      "evidenceReference": "inventory-sha256:e4b8e1c5e16043e355cfb99489dc33b554c450188c474c0b9cbe95253aad2962",
+      "reason": "Exact size and SHA-256 match to target baseline: DefaultTemplate/plugin.provenance.json. Byte attribution only; no runtime or module-isolation claim."
+    }
+  ]
+}

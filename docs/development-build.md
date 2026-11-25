@@ -126,3 +126,8 @@ python tools/review-export-isolation.py --inventory compatibility/wechat-export-
 2026-11-25 对已有导出库存进行实物哈希复核：微信84项、抖音13项、TikTok17项。初始待审报告保存在 compatibility/*-review-2026-11-25.json，尚未放行。微信库存根目录包括 minigame 子目录；抖音/TikTok 库存根目录是 tt-minigame 本身。
 
 抖音 plugin-config.js 仅匹配 TikTok 文件基线，但此前已在抖音官方工具 DLL 中找到完整文本，见 compatibility/douyin-plugin-config-review-2026-11-24.json。这不是确认混入 TikTok SDK；生成来源和最终包完整隔离仍需结合其他证据审核，暂不自动消除阻断。
+
+
+来源核对增量：`--vendor-inventory` 可重复传入导出报告使用的全部平台基线。工具首先验证每个库存文件本身的 SHA-256 与导出报告一致，拒绝遗漏、重复或被修改的基线；再给目标平台完全一致的文件附上 sourcePaths 和 inventorySha256。该证据仅证明目标平台基线包含相同字节，不证明生成路径或所有模块裁剪。
+
+2026-11-25 已保存三份 `compatibility/*-review-decisions-2026-11-25.json`：微信63项、抖音2项、TikTok5项完成目标字节来源审查；对应报告剩余21/11/12项待审或阻断。共70项已核对、44项未放行。所有结论仍绑定文件哈希；没有用“未发现字符串”填充任何审查结论。

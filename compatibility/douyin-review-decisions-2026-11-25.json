@@ -49,6 +49,14 @@
       "reviewer": "Codex content review 2026-11-25",
       "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
       "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "path": "game.js",
+      "sha256": "0f2341d748d0a769d8387c0344697f3e13ebdf0181dbb530b8de7e09440cc626",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Complete inventoried target template matches after consistent placeholder substitutions; all non-placeholder bytes preserved. Local exact reconstruction verified; debug address substitution is recorded by hash where present. Runtime and full isolation not certified."
     }
   ]
 }

@@ -19,7 +19,7 @@
     {
       "path": "game.js",
       "sha256": "0f2341d748d0a769d8387c0344697f3e13ebdf0181dbb530b8de7e09440cc626",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 4196,
       "targetByteEvidence": null
     },
@@ -104,8 +104,8 @@
       "targetByteEvidence": null
     }
   ],
-  "reviewed": 6,
-  "pendingOrBlocked": 7,
+  "reviewed": 7,
+  "pendingOrBlocked": 6,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

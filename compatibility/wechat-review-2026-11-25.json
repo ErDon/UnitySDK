@@ -32,7 +32,7 @@
     {
       "path": "minigame/game.js",
       "sha256": "2e0e007eef68804d2399c478964346a05089de5ade2801de11316959811ae1a9",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 8188,
       "targetByteEvidence": null
     },
@@ -103,7 +103,7 @@
     {
       "path": "minigame/unity-namespace.js",
       "sha256": "520b6bc6383555d830beac87bfe094bb6bfd13187b840b39f3e8d93dd34dc259",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 9011,
       "targetByteEvidence": null
     },
@@ -941,8 +941,8 @@
       }
     }
   ],
-  "reviewed": 72,
-  "pendingOrBlocked": 12,
+  "reviewed": 74,
+  "pendingOrBlocked": 10,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

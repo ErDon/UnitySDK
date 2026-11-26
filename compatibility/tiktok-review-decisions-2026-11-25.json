@@ -89,6 +89,30 @@
       "reviewer": "Codex content review 2026-11-25",
       "evidenceReference": "compatibility/export-content-review-2026-11-25.json",
       "reason": "Zero-length subpackage entry contains no executable code or SDK bytes; no conclusion about its containing package."
+    },
+    {
+      "path": "game.js",
+      "sha256": "f0d5a36879a90d40eab2f12470a1ce3eefe7dc01b905abceca9a5b880b467ebc",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Complete inventoried target template matches after consistent placeholder substitutions; all non-placeholder bytes preserved. Local exact reconstruction verified; debug address substitution is recorded by hash where present. Runtime and full isolation not certified."
+    },
+    {
+      "path": "unity-namespace.js",
+      "sha256": "387850337a3fd248bc77a6cfd0bcc1ec03d837e4f2c91b368f330be400b7077f",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Complete inventoried target template matches after consistent placeholder substitutions; all non-placeholder bytes preserved. Local exact reconstruction verified; debug address substitution is recorded by hash where present. Runtime and full isolation not certified."
+    },
+    {
+      "path": "webgl-wasm-split.js",
+      "sha256": "b87d4fce279dbaf306305a6d93cae2ef88d61b16b1d3703965787a70e9822639",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Complete inventoried target template matches after consistent placeholder substitutions; all non-placeholder bytes preserved. Local exact reconstruction verified; debug address substitution is recorded by hash where present. Runtime and full isolation not certified."
     }
   ]
 }

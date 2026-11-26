@@ -577,6 +577,22 @@
       "reviewer": "Codex template reconstruction review 2026-11-25",
       "evidenceReference": "compatibility/wechat-template-review-2026-11-25.json",
       "reason": "Entire file exactly reconstructed from inventoried target template with explicit substitutions and recorded UTF-8 encoding/BOM choice; no line-ending normalization or ignored regions. No runtime or full-isolation claim."
+    },
+    {
+      "path": "minigame/unity-namespace.js",
+      "sha256": "520b6bc6383555d830beac87bfe094bb6bfd13187b840b39f3e8d93dd34dc259",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Complete inventoried target template matches after consistent placeholder substitutions; all non-placeholder bytes preserved. Local exact reconstruction verified; debug address substitution is recorded by hash where present. Runtime and full isolation not certified."
+    },
+    {
+      "path": "minigame/game.js",
+      "sha256": "2e0e007eef68804d2399c478964346a05089de5ade2801de11316959811ae1a9",
+      "verdict": "target",
+      "reviewer": "Codex complete template comparison 2026-11-26",
+      "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
+      "reason": "Exact byte reconstruction from inventoried template including quoted preload placeholder removal; no other changes. No runtime or isolation certification."
     }
   ]
 }

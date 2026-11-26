@@ -1214,3 +1214,11 @@ Unity 增加通用类型化 PreparedPaymentLauncher<T> / UnityPreparedRequestCli
 - [x] 补充文档复核命令，明确升级后必须重新审查。
 
 本轮增强已记录证据的可复现性，不新增文件放行。文件进度89/114，主计划78/90，Android8/9不变。
+
+### 剩余25项实物检查（2026-11-26）
+
+- [x] 对25项逐一核对哈希，检查适用的 JavaScript 语法、Brotli 解压、Wasm 模块有效性及同次 Unity 原始产物完整字节匹配。
+- [x] 6个生成脚本完成固定平台库存模板还原，包含微信启动/namespace、抖音启动、TikTok启动/namespace/split配置；记录所有显式替换，调试连接地址只保存替换值哈希。
+- [ ] 其余19项来源与完整隔离尚未通过；结构检查与原件一致不能代替构建输入和链接依赖归属证明。
+
+证据见 compatibility/remaining-artifact-inspection-2026-11-26.json 与 generated-template-review-2026-11-26.json。当前95/114文件有审查记录，剩余微信10、抖音6、TikTok3项阻断。25项均有检查结果不表示25项全部通过，主计划78/90不变。

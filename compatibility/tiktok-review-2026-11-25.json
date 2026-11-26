@@ -19,7 +19,7 @@
     {
       "path": "game.js",
       "sha256": "f0d5a36879a90d40eab2f12470a1ce3eefe7dc01b905abceca9a5b880b467ebc",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 4513,
       "targetByteEvidence": null
     },
@@ -114,7 +114,7 @@
     {
       "path": "unity-namespace.js",
       "sha256": "387850337a3fd248bc77a6cfd0bcc1ec03d837e4f2c91b368f330be400b7077f",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 437,
       "targetByteEvidence": null
     },
@@ -135,7 +135,7 @@
     {
       "path": "webgl-wasm-split.js",
       "sha256": "b87d4fce279dbaf306305a6d93cae2ef88d61b16b1d3703965787a70e9822639",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 894,
       "targetByteEvidence": null
     },
@@ -147,8 +147,8 @@
       "targetByteEvidence": null
     }
   ],
-  "reviewed": 11,
-  "pendingOrBlocked": 6,
+  "reviewed": 14,
+  "pendingOrBlocked": 3,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

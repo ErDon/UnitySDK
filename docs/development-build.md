@@ -154,6 +154,14 @@ SDK 自有运行时不依赖 C# 工作线程，WebGL 构建检查拒绝开启 `P
 
 ### 内容审查增量（2026-11-25）
 
+模板证据现在可以直接复核（2026-11-26）：
+
+```powershell
+python tools/verify-template-review.py --review compatibility/wechat-template-review-2026-11-25.json --inventory '<原始平台完整库存.json>' --source-root '<对应官方SDK根目录>' --export-root '<微信导出根目录，包含minigame>'
+```
+
+工具校验原库存哈希、源文件大小与哈希、替换规则、编码和完整导出字节，不执行脚本。任何变化都需重新审查，不能通过更新哈希直接继承旧结论。成功仅证明记录中的模板还原可重复；不会放行运行或完整隔离验收。
+
 最新逐文件记录为微信72项、抖音6项、TikTok11项，共89项；待审或阻断分别12/7/6项，共25项。此前70/44为历史进度。
 
 `compatibility/export-content-review-2026-11-25.json` 补充14项：7个零字节入口不包含可执行内容；6份 JSON 经过完整内容检查，属于声明式配置；1个 TikTok StreamingAssets 探针与工程源文件逐字节相等。配置引用的外部 UnityPlugin 仍需独立验证，配置审查不等于插件代码通过，原占位 App ID 和开发配置问题也未解除。

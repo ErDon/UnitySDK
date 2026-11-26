@@ -593,6 +593,14 @@
       "reviewer": "Codex complete template comparison 2026-11-26",
       "evidenceReference": "compatibility/generated-template-review-2026-11-26.json",
       "reason": "Exact byte reconstruction from inventoried template including quoted preload placeholder removal; no other changes. No runtime or isolation certification."
+    },
+    {
+      "path": "webgl/TemplateData/style.css",
+      "sha256": "e54c74b515a2086fa96807b78a046728d8c44ce55e95ad13c1fe12e7e2a68c4c",
+      "verdict": "target",
+      "reviewer": "Codex CSS template review 2026-11-26",
+      "evidenceReference": "compatibility/wechat-css-review-2026-11-26.json",
+      "reason": "Exact target template byte reconstruction using background color and splash style only."
     }
   ]
 }

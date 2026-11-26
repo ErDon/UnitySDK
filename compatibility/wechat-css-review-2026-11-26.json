@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "platform": "WeChat",
+  "path": "webgl/TemplateData/style.css",
+  "sha256": "e54c74b515a2086fa96807b78a046728d8c44ce55e95ad13c1fe12e7e2a68c4c",
+  "sourcePath": "WebGLTemplates/WXTemplate2022/TemplateData/style.css",
+  "sourceSha256": "f0de04a2bf45f74f20d9c45e81035397a4a55498d803a0a12bef48a347a87054",
+  "inventorySha256": "2d241df4e361af17e54d23c99c4c4723b1e585fadf2c9a31a19a333e1a582c79",
+  "replacementMap": {
+    "{{{ BACKGROUND_COLOR }}}": "#1F1F20",
+    "{{{ SPLASH_SCREEN_STYLE.toLowerCase() }}}": "dark"
+  },
+  "exactByteReconstruction": true
+}

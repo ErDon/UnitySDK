@@ -884,7 +884,7 @@
     {
       "path": "webgl/TemplateData/style.css",
       "sha256": "e54c74b515a2086fa96807b78a046728d8c44ce55e95ad13c1fe12e7e2a68c4c",
-      "state": "pending-review",
+      "state": "review-recorded",
       "bytes": 1444,
       "targetByteEvidence": null
     },
@@ -941,8 +941,8 @@
       }
     }
   ],
-  "reviewed": 74,
-  "pendingOrBlocked": 10,
+  "reviewed": 75,
+  "pendingOrBlocked": 9,
   "removedReviewPaths": [],
   "reviewComplete": false,
   "limitation": "Records supplied human attribution only. Does not establish vendor authenticity, runtime behavior or semantic code absence.",

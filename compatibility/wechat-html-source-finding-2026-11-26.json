@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "finding": "Local project HTML template differs from inventoried official template",
+  "files": [
+    {
+      "path": ".tests/vendor/wechat-official-conversion/WebGLTemplates/WXTemplate2022/index.html",
+      "sha256": "376c697dd2c16da3d808faaeb83a3953e1d08c3092ada24edf8983368251eabf"
+    },
+    {
+      "path": ".tests/WeChatBuildProject/Assets/WebGLTemplates/WXTemplate2022/index.html",
+      "sha256": "5db0bcc8d4c510b66dd8e22fc237d0c6a8a6d02ff26149bea5eedc2dd1fb3301"
+    },
+    {
+      "path": ".tests/WeChatBuildProject/Builds/WeChatConversion-20261123-133637/webgl/index.html",
+      "sha256": "d54540a33c42aedd5b3d4bef040d3549bc86c80a876b63eeadcf632f31a1d54d"
+    }
+  ],
+  "differences": [
+    "Local and exported template omit WX_SyncFunction_tnnt",
+    "Local and exported template replace WX_ClassConstructor with WX_ClassOneWayFunction"
+  ],
+  "disposition": "requires-local-modification-provenance",
+  "limitation": "Observed differences do not establish malicious code or foreign SDK inclusion; attribution cannot be inferred from the official template alone."
+}
